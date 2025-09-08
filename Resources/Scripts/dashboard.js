@@ -2,8 +2,44 @@
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Check authentication first
+    if (!checkAuthentication()) {
+        return;
+    }
+    
     initializeDashboard();
 });
+
+// Check authentication
+function checkAuthentication() {
+    const session = userManager.getCurrentSession();
+    
+    if (!session) {
+        showNotification('Please log in to access the dashboard.', 'warning');
+        setTimeout(() => {
+            window.location.href = './login.html';
+        }, 2000);
+        return false;
+    }
+    
+    // Update user info in sidebar
+    updateUserInfo(session);
+    return true;
+}
+
+// Update user info in sidebar
+function updateUserInfo(session) {
+    const userNameElement = document.querySelector('.user-name');
+    const userEmailElement = document.querySelector('.user-email');
+    
+    if (userNameElement) {
+        userNameElement.textContent = `${session.firstName} ${session.lastName}`;
+    }
+    
+    if (userEmailElement) {
+        userEmailElement.textContent = session.email;
+    }
+}
 
 // Initialize all dashboard functionality
 function initializeDashboard() {
@@ -70,8 +106,11 @@ function handleNavigation(linkText) {
 function handleSignOut() {
     if (confirm('Are you sure you want to sign out?')) {
         showNotification('Signing out...', 'info');
+        
+        // Clear session
+        userManager.clearSession();
+        
         setTimeout(() => {
-            // In a real app, this would redirect to login
             window.location.href = './login.html';
         }, 1000);
     }
