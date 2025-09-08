@@ -2,6 +2,15 @@
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is already logged in
+    if (userManager.isLoggedIn()) {
+        showNotification('You are already logged in. Redirecting to dashboard...', 'info');
+        setTimeout(() => {
+            window.location.href = './dashboard.html';
+        }, 2000);
+        return;
+    }
+    
     initializeLoginPage();
 });
 
@@ -254,27 +263,35 @@ function handleLogin(e) {
     // Show loading state
     setButtonLoading(form.querySelector('button[type="submit"]'), true);
     
-    // Simulate API call
+    // Get form data
+    const email = formData.get('loginEmail') || document.getElementById('loginEmail').value;
+    const password = formData.get('loginPassword') || document.getElementById('loginPassword').value;
+    
+    // Validate credentials using UserManager
     setTimeout(() => {
-        const email = formData.get('loginEmail') || document.getElementById('loginEmail').value;
-        const password = formData.get('loginPassword') || document.getElementById('loginPassword').value;
+        const validation = userManager.validateLogin(email, password);
         
-        // Simulate authentication
-        if (email && password) {
-            showNotification('Login successful! Redirecting...', 'success');
+        if (validation.success) {
+            // Create session
+            const session = userManager.createSession(validation.user);
             
-            // Simulate redirect after 2 seconds
-            setTimeout(() => {
-                // Redirect to dashboard
-                console.log('Redirecting to dashboard...');
-                window.location.href = './dashboard.html';
-            }, 2000);
+            if (session) {
+                showNotification('Login successful! Redirecting...', 'success');
+                
+                // Redirect to dashboard after 2 seconds
+                setTimeout(() => {
+                    console.log('Redirecting to dashboard...');
+                    window.location.href = './dashboard.html';
+                }, 2000);
+            } else {
+                showNotification('Failed to create session. Please try again.', 'danger');
+            }
         } else {
-            showNotification('Invalid email or password.', 'danger');
+            showNotification(validation.message, 'danger');
         }
         
         setButtonLoading(form.querySelector('button[type="submit"]'), false);
-    }, 2000);
+    }, 1000);
 }
 
 // Handle register form submission
@@ -311,21 +328,35 @@ function handleRegister(e) {
     // Show loading state
     setButtonLoading(form.querySelector('button[type="submit"]'), true);
     
-    // Simulate API call
+    // Get form data
+    const userData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('registerEmail').value.trim(),
+        password: password
+    };
+    
+    // Create account using UserManager
     setTimeout(() => {
-        showNotification('Account created successfully! Please check your email to verify your account.', 'success');
+        const result = userManager.createUser(userData);
         
-        // Clear form
-        form.reset();
-        
-        // Switch to login tab
-        const loginTab = document.getElementById('login-tab');
-        if (loginTab) {
-            loginTab.click();
+        if (result.success) {
+            showNotification('Account created successfully! You can now sign in.', 'success');
+            
+            // Clear form
+            form.reset();
+            
+            // Switch to login tab
+            const loginTab = document.getElementById('login-tab');
+            if (loginTab) {
+                loginTab.click();
+            }
+        } else {
+            showNotification(result.message, 'danger');
         }
         
         setButtonLoading(form.querySelector('button[type="submit"]'), false);
-    }, 2000);
+    }, 1000);
 }
 
 // Set button loading state
