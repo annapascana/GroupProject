@@ -341,10 +341,17 @@ function handleCardClick(type, code) {
     const typeNames = {
         'workout': 'Workout Buddy',
         'study': 'Study Group',
+        'travel': 'Travel',
         'innovate': 'UA Innovate'
     };
     
     const typeName = typeNames[type] || type;
+    
+    // Special handling for travel card
+    if (type === 'travel') {
+        openTravelPage();
+        return;
+    }
     
     showNotification(`Opening ${typeName} collaboration: ${code}`, 'info');
     
@@ -352,6 +359,15 @@ function handleCardClick(type, code) {
     setTimeout(() => {
         console.log(`Navigating to ${type} collaboration: ${code}`);
         // window.location.href = `./collaboration.html?type=${type}&code=${code}`;
+    }, 1000);
+}
+
+// Open travel page function
+function openTravelPage() {
+    showNotification('Opening Travel page...', 'info');
+    
+    setTimeout(() => {
+        window.location.href = './Pages/EmilyGarcia/travel.html';
     }, 1000);
 }
 
