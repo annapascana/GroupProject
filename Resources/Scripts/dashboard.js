@@ -329,8 +329,18 @@ function setupCardClicks() {
             }
             
             const cardType = this.getAttribute('data-type');
-            const cardCode = this.querySelector('.card-code').textContent;
             
+            // Special handling for travel card
+            if (cardType === 'travel') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Travel card clicked, navigating to travel page...');
+                alert('Travel card clicked! Navigating to travel page...');
+                window.location.href = '../Pages/EmilyGarcia/travel.html';
+                return;
+            }
+            
+            const cardCode = this.querySelector('.card-code').textContent;
             handleCardClick(cardType, cardCode);
         });
     });

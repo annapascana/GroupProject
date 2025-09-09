@@ -1,180 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Buddy - Find Your Travel Companion</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="travel.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UA Student Travel Finder</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="travel.css">
 </head>
 <body>
-    <div class="container-fluid">
-        <!-- Header -->
-        <header class="travel-header">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h1><i class="bi bi-airplane"></i> Travel Buddy</h1>
-                    <p class="lead">Find travel companions for airports, trips home, and more!</p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createTripModal">
-                        <i class="bi bi-plus-circle"></i> Create Trip
-                    </button>
+
+<div class="container-fluid p-3">
+
+    <!-- Header -->
+    <header class="travel-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1><i class="bi bi-airplane"></i> UA Student Travel Finder</h1>
+                <p class="lead">Find safe travel buddies, split costs, and plan trips with UA classmates!</p>
+            </div>
+            <div class="col-md-6 text-md-end text-center mt-3 mt-md-0">
+                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createTripModal">
+                    <i class="bi bi-plus-circle"></i> Create Trip
+                </button>
+
+                <button class="btn btn-warning btn-lg" onclick="resetAllTrips()" style="margin-left: 10px;">
+                    <i class="bi bi-arrow-clockwise"></i> Reset All
+                </button>
+            </div>
+        </div>
+        <div class="mt-3">
+            <span id="resultsCount">0 trips found</span>
+        </div>
+    </header>
+
+    <!-- Search & Filter -->
+    <div class="search-section mb-4">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="search-bar position-relative">
+                    <i class="bi bi-search position-absolute"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search destinations, trip types, or classmates">
                 </div>
             </div>
-        </header>
+            <div class="col-md-4">
+                 <select id="tripTypeFilter" class="form-select">
+                     <option value="all">All Trip Types</option>
+                     <option value="airport">Airport Trips</option>
+                     <option value="home">Trips Home</option>
+                     <option value="weekend">Weekend Getaways</option>
+                     <option value="awaygames">Away Games</option>
+                     <option value="other">Other</option>
+                 </select>
+            </div>
+        </div>
+    </div>
 
-        <!-- Search and Filter Section -->
-        <div class="search-section">
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="search-bar">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="searchInput" placeholder="Search destinations, airports, or trip types..." class="form-control">
-                    </div>
+     <!-- Trip Tabs -->
+     <ul class="nav nav-tabs mb-4" id="tripTabs" role="tablist">
+         <li class="nav-item" role="presentation">
+             <button class="nav-link active" id="active-trips-tab" data-bs-toggle="tab" data-bs-target="#active-trips" type="button" role="tab">
+                 <i class="bi bi-calendar-check"></i> Available Trips
+             </button>
+         </li>
+         <li class="nav-item" role="presentation">
+             <button class="nav-link" id="my-trips-tab" data-bs-toggle="tab" data-bs-target="#my-trips" type="button" role="tab">
+                 <i class="bi bi-person-check"></i> My Trips
+             </button>
+         </li>
+         <li class="nav-item" role="presentation">
+             <button class="nav-link" id="past-trips-tab" data-bs-toggle="tab" data-bs-target="#past-trips" type="button" role="tab">
+                 <i class="bi bi-clock-history"></i> Past Trips
+             </button>
+         </li>
+         <li class="nav-item" role="presentation">
+             <button class="nav-link" id="full-trips-tab" data-bs-toggle="tab" data-bs-target="#full-trips" type="button" role="tab">
+                 <i class="bi bi-people-fill"></i> Full Trips
+             </button>
+         </li>
+     </ul>
+
+     <!-- Tab Content -->
+     <div class="tab-content" id="tripTabsContent">
+         <div class="tab-pane fade show active" id="active-trips" role="tabpanel">
+             <div class="trips-grid" id="tripsGrid"></div>
+         </div>
+         <div class="tab-pane fade" id="my-trips" role="tabpanel">
+             <div class="trips-grid" id="myTripsGrid"></div>
+         </div>
+         <div class="tab-pane fade" id="past-trips" role="tabpanel">
+             <div class="trips-grid" id="pastTripsGrid"></div>
+         </div>
+         <div class="tab-pane fade" id="full-trips" role="tabpanel">
+             <div class="trips-grid" id="fullTripsGrid"></div>
+         </div>
+     </div>
+
+    <!-- Create Trip Modal -->
+    <div class="modal fade" id="createTripModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Trip</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="col-md-4">
-                    <select id="tripTypeFilter" class="form-select">
-                        <option value="all">All Trip Types</option>
-                        <option value="airport">Airport Trips</option>
-                        <option value="home">Trips Home</option>
-                        <option value="weekend">Weekend Getaways</option>
-                        <option value="other">Other</option>
-                    </select>
+                <div class="modal-body">
+                    <form id="createTripForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Trip Type</label>
+                                 <select id="tripType" class="form-select" required>
+                                     <option value="">Select Type</option>
+                                     <option value="airport">Airport Trip</option>
+                                     <option value="home">Trip Home</option>
+                                     <option value="weekend">Weekend Getaway</option>
+                                     <option value="awaygames">Away Games</option>
+                                     <option value="other">Other</option>
+                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Destination</label>
+                                <input type="text" id="destination" class="form-control" placeholder="Enter destination" required>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Date</label>
+                                <input type="date" id="tripDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Time</label>
+                                <input type="time" id="tripTime" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Total Seats</label>
+                                <input type="number" id="totalSeats" class="form-control" min="1" max="8" value="4" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Total Gas Cost ($)</label>
+                                <input type="number" id="gasCost" class="form-control" step="0.01" placeholder="0.00" required>
+                                <small id="gasCostPreview" class="text-muted">0.00 per person</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Notes</label>
+                            <textarea id="tripNotes" class="form-control" rows="3" placeholder="Additional information..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="createTripBtn">Create Trip</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Trip Cards Grid -->
-        <div class="trips-grid" id="tripsGrid">
-            <!-- Sample Trip Cards -->
-            <div class="trip-card" data-type="airport" data-destination="Birmingham Airport">
-                <div class="trip-header">
-                    <h5><i class="bi bi-airplane-fill"></i> Airport Trip</h5>
-                    <span class="badge bg-primary">Open</span>
-                </div>
-                <div class="trip-details">
-                    <p><strong>Destination:</strong> Birmingham Airport (BHM)</p>
-                    <p><strong>Date:</strong> Dec 15, 2024</p>
-                    <p><strong>Time:</strong> 2:00 PM</p>
-                    <p><strong>Seats Available:</strong> 2/4</p>
-                    <p><strong>Gas Cost per Person:</strong> $8.50</p>
-                </div>
-                <div class="trip-footer">
-                    <button class="btn btn-success btn-sm">Join Trip</button>
-                    <span class="trip-creator">Created by: Sarah Johnson</span>
-                </div>
-            </div>
+    </div>
 
-            <div class="trip-card" data-type="home" data-destination="Montgomery">
-                <div class="trip-header">
-                    <h5><i class="bi bi-house-fill"></i> Trip Home</h5>
-                    <span class="badge bg-success">Open</span>
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatModalLabel">
+                        <i class="bi bi-chat-dots"></i> Trip Chat
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="trip-details">
-                    <p><strong>Destination:</strong> Montgomery, AL</p>
-                    <p><strong>Date:</strong> Dec 20, 2024</p>
-                    <p><strong>Time:</strong> 5:00 PM</p>
-                    <p><strong>Seats Available:</strong> 1/3</p>
-                    <p><strong>Gas Cost per Person:</strong> $12.00</p>
-                </div>
-                <div class="trip-footer">
-                    <button class="btn btn-success btn-sm">Join Trip</button>
-                    <span class="trip-creator">Created by: Mike Chen</span>
-                </div>
-            </div>
-
-            <div class="trip-card" data-type="weekend" data-destination="Atlanta">
-                <div class="trip-header">
-                    <h5><i class="bi bi-geo-alt-fill"></i> Weekend Trip</h5>
-                    <span class="badge bg-warning">Almost Full</span>
-                </div>
-                <div class="trip-details">
-                    <p><strong>Destination:</strong> Atlanta, GA</p>
-                    <p><strong>Date:</strong> Dec 22, 2024</p>
-                    <p><strong>Time:</strong> 8:00 AM</p>
-                    <p><strong>Seats Available:</strong> 1/4</p>
-                    <p><strong>Gas Cost per Person:</strong> $15.75</p>
-                </div>
-                <div class="trip-footer">
-                    <button class="btn btn-success btn-sm">Join Trip</button>
-                    <span class="trip-creator">Created by: Emily Garcia</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Create Trip Modal -->
-        <div class="modal fade" id="createTripModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Trip</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="createTripForm">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="tripType" class="form-label">Trip Type</label>
-                                        <select id="tripType" class="form-select" required>
-                                            <option value="">Select Type</option>
-                                            <option value="airport">Airport Trip</option>
-                                            <option value="home">Trip Home</option>
-                                            <option value="weekend">Weekend Getaway</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="destination" class="form-label">Destination</label>
-                                        <input type="text" id="destination" class="form-control" placeholder="Enter destination" required>
-                                    </div>
-                                </div>
+                <div class="modal-body">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be loaded here -->
+                        </div>
+                        <div class="chat-input">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="chatInput" placeholder="Type your message...">
+                                <button class="btn btn-primary" type="button" id="sendMessageBtn">
+                                    <i class="bi bi-send"></i>
+                                </button>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="tripDate" class="form-label">Date</label>
-                                        <input type="date" id="tripDate" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="tripTime" class="form-label">Time</label>
-                                        <input type="time" id="tripTime" class="form-control" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="totalSeats" class="form-label">Total Seats Available</label>
-                                        <input type="number" id="totalSeats" class="form-control" min="1" max="8" value="4" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="gasCost" class="form-label">Total Gas Cost ($)</label>
-                                        <input type="number" id="gasCost" class="form-control" step="0.01" placeholder="0.00" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="tripNotes" class="form-label">Additional Notes</label>
-                                <textarea id="tripNotes" class="form-control" rows="3" placeholder="Any additional information about the trip..."></textarea>
-                            </div>
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                <strong>Automatic Cost Calculation:</strong> Gas cost will be automatically divided among all passengers.
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="createTripBtn">Create Trip</button>
+                        </div>
                     </div>
                 </div>
             </div>
