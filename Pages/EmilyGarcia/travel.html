@@ -31,17 +31,41 @@
             </div>
             <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
                 <div class="nav-right">
-                    <div class="user-profile me-3" id="userProfile">
+                    <div class="user-profile me-3" id="userProfile" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-avatar">
                             <i class="bi bi-person-circle"></i>
+                            <span class="emergency-warning" id="emergencyWarning" style="display: none;" title="Emergency contacts required">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </span>
                         </div>
                         <div class="profile-info">
                             <div class="profile-name" id="profileName">Loading...</div>
                             <div class="profile-email" id="profileEmail">Loading...</div>
                         </div>
                     </div>
-                    <button class="btn btn-outline-secondary btn-sm" id="refreshBtn">
+                    <ul class="dropdown-menu dropdown-menu-end" id="profileDropdown">
+                        <li><h6 class="dropdown-header">Profile Settings</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="openEmergencyContactsModal()">
+                            <i class="bi bi-shield-check"></i> Emergency Contacts
+                            <span class="badge bg-warning ms-2" id="emergencyBadge" style="display: none;">Required</span>
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="openProfileSettings()">
+                            <i class="bi bi-gear"></i> Settings
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a></li>
+                    </ul>
+                    <button class="btn btn-outline-secondary btn-sm me-2" id="refreshBtn">
                         <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                    <button class="btn btn-outline-info btn-sm me-2" id="notificationBtn" data-bs-toggle="modal" data-bs-target="#notificationModal">
+                        <i class="bi bi-bell"></i>
+                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="notificationBadge" style="display: none;">0</span>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" id="themeToggle">
+                        <i class="bi bi-moon" id="themeIcon"></i>
                     </button>
                 </div>
             </div>
@@ -67,6 +91,14 @@
                             <i class="bi bi-person-check"></i>
                             <span id="myTripsCount">0 my trips</span>
                         </div>
+                        <div class="stat-item">
+                            <i class="bi bi-currency-dollar"></i>
+                            <span id="avgCost">$0 avg cost</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="bi bi-graph-up"></i>
+                            <span id="totalSavings">$0 saved</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -77,6 +109,57 @@
             </div>
         </div>
     </header>
+
+
+    <!-- Analytics Dashboard -->
+    <div class="analytics-dashboard mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div class="analytics-content">
+                        <h6>Popular Destination</h6>
+                        <p id="popularDestination">Atlanta Airport</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="analytics-content">
+                        <h6>Peak Travel Time</h6>
+                        <p id="peakTravelTime">Friday 3-5 PM</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="analytics-content">
+                        <h6>Active Travelers</h6>
+                        <p id="activeTravelers">127 students</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="analytics-content">
+                        <h6>Average Rating</h6>
+                        <p id="averageRating">4.8/5.0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Search & Filter -->
     <div class="search-section mb-4">
@@ -117,6 +200,7 @@
             </div>
         </div>
     </div>
+
 
      <!-- Trip Tabs -->
      <ul class="nav nav-tabs mb-4" id="tripTabs" role="tablist">
@@ -291,6 +375,339 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationModalLabel">
+                        <i class="bi bi-bell"></i> Notifications
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="notification-list" id="notificationList">
+                        <!-- Notifications will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" id="clearAllBtn" onclick="clearAllNotifications()">
+                        <i class="bi bi-trash"></i> Clear All
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="markAllReadBtn" onclick="markAllNotificationsRead()">
+                        <i class="bi bi-check-all"></i> Mark All Read
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trip Groups Modal -->
+    <div class="modal fade" id="tripGroupsModal" tabindex="-1" aria-labelledby="tripGroupsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tripGroupsModalLabel">
+                        <i class="bi bi-people"></i> Trip Groups & Social Feed
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="socialTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab">
+                                <i class="bi bi-people"></i> Trip Groups
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="feed-tab" data-bs-toggle="tab" data-bs-target="#feed" type="button" role="tab">
+                                <i class="bi bi-chat-square-text"></i> Social Feed
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="socialTabContent">
+                        <div class="tab-pane fade show active" id="groups" role="tabpanel">
+                            <div class="trip-groups-list" id="tripGroupsList">
+                                <!-- Trip groups will be dynamically added here -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="feed" role="tabpanel">
+                            <div class="social-feed">
+                                <div class="post-composer">
+                                    <div class="composer-header">
+                                        <h6><i class="bi bi-pencil-square"></i> Share Something</h6>
+                                    </div>
+                                    <div class="composer-body">
+                                        <textarea class="form-control" id="postContent" placeholder="Share your travel experience, ask for advice, or connect with other travelers..." rows="3"></textarea>
+                                        <div class="composer-actions">
+                                            <div class="composer-options">
+                                                <button class="btn btn-outline-secondary btn-sm" onclick="addLocationToPost()">
+                                                    <i class="bi bi-geo-alt"></i> Add Location
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm" onclick="addTripToPost()">
+                                                    <i class="bi bi-car-front"></i> Add Trip
+                                                </button>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm" onclick="createPost()">
+                                                <i class="bi bi-send"></i> Post
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="feed-posts" id="socialFeedPosts">
+                                    <!-- Posts will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="createGroupBtn">Create Group</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts Modal -->
+    <div class="modal fade" id="emergencyContactsModal" tabindex="-1" aria-labelledby="emergencyContactsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emergencyContactsModalLabel">
+                        <i class="bi bi-shield-check"></i> Emergency Contacts
+                        <span class="badge bg-warning ms-2" id="emergencyRequiredBadge" style="display: none;">Required</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" id="emergencyAlert" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Emergency contacts are required for your safety!</strong> Please add at least one emergency contact to continue using the travel app.
+                    </div>
+                    <div class="emergency-contacts">
+                        <!-- Manual Contact Entry Form -->
+                        <div class="add-contact-form mb-4">
+                            <h6><i class="bi bi-person-plus"></i> Add Emergency Contact</h6>
+                            <form id="emergencyContactForm">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="contactName" class="form-label">Full Name *</label>
+                                        <input type="text" class="form-control" id="contactName" name="name" required 
+                                               placeholder="Enter full name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="contactRelationship" class="form-label">Relationship *</label>
+                                        <select class="form-select" id="contactRelationship" name="relationship" required>
+                                            <option value="">Select relationship</option>
+                                            <option value="Parent">Parent</option>
+                                            <option value="Guardian">Guardian</option>
+                                            <option value="Sibling">Sibling</option>
+                                            <option value="Spouse">Spouse</option>
+                                            <option value="Friend">Friend</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="contactPhone" class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="contactPhone" name="phone" required 
+                                               placeholder="(555) 123-4567" maxlength="14">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="contactEmail" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="contactEmail" name="email" 
+                                               placeholder="contact@example.com">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="contactNotes" class="form-label">Additional Notes</label>
+                                        <textarea class="form-control" id="contactNotes" name="notes" rows="2" 
+                                                  placeholder="Any additional information about this contact..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-plus"></i> Add Contact
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearContactForm()">
+                                            <i class="bi bi-arrow-clockwise"></i> Clear Form
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- CSV Upload Section -->
+                        <div class="contact-upload-section mb-4">
+                            <h6><i class="bi bi-upload"></i> Bulk Upload (CSV)</h6>
+                            <div class="upload-area" id="contactUploadArea" onclick="document.getElementById('contactFileInput').click()">
+                                <i class="bi bi-cloud-upload"></i>
+                                <p>Click to upload CSV file</p>
+                                <small class="text-muted">Format: Name, Relationship, Phone, Email, Notes</small>
+                            </div>
+                            <input type="file" id="contactFileInput" accept=".csv" style="display: none;" onchange="handleCSVUpload(event)">
+                        </div>
+
+                        <!-- Default Emergency Contacts -->
+                        <div class="default-contacts mb-4">
+                            <h6><i class="bi bi-shield-check"></i> Default Emergency Contacts</h6>
+                            <div class="contact-list" id="defaultContactList">
+                                <div class="contact-item">
+                                    <div class="contact-info">
+                                        <strong>Emergency Services</strong>
+                                        <span class="contact-phone">911</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="callEmergency('911')">
+                                        <i class="bi bi-telephone"></i> Call
+                                    </button>
+                                </div>
+                                <div class="contact-item">
+                                    <div class="contact-info">
+                                        <strong>Campus Security</strong>
+                                        <span class="contact-phone">(205) 348-5454</span>
+                                    </div>
+                                    <button class="btn btn-outline-warning btn-sm" onclick="callEmergency('(205) 348-5454')">
+                                        <i class="bi bi-telephone"></i> Call
+                                    </button>
+                                </div>
+                                <div class="contact-item">
+                                    <div class="contact-info">
+                                        <strong>UA Police</strong>
+                                        <span class="contact-phone">(205) 348-5454</span>
+                                    </div>
+                                    <button class="btn btn-outline-info btn-sm" onclick="callEmergency('(205) 348-5454')">
+                                        <i class="bi bi-telephone"></i> Call
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User's Custom Contacts -->
+                        <div class="user-contacts">
+                            <h6><i class="bi bi-list"></i> Your Emergency Contacts</h6>
+                            <div class="contact-list" id="emergencyContactList">
+                                <!-- User contacts will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="saveEmergencyContacts()">Save Contacts</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Modal -->
+    <div class="modal fade" id="safetyModal" tabindex="-1" aria-labelledby="safetyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="safetyModalLabel">
+                        <i class="bi bi-shield-check"></i> Safety Center
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="safety-content">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Emergency Contacts</h6>
+                                <div class="emergency-contacts">
+                                    <div class="contact-upload-section">
+                                        <div class="upload-area" id="contactUploadArea">
+                                            <i class="bi bi-cloud-upload"></i>
+                                            <p>Upload Emergency Contacts</p>
+                                            <small>Drag & drop a CSV file or click to browse</small>
+                                            <input type="file" id="contactFileInput" accept=".csv" style="display: none;">
+                                        </div>
+                                        <div class="contact-list" id="emergencyContactList">
+                                            <div class="contact-item">
+                                                <strong>Emergency Services:</strong> 911
+                                                <button class="btn btn-outline-danger btn-sm ms-2" onclick="callEmergency('911')">Call</button>
+                                            </div>
+                                            <div class="contact-item">
+                                                <strong>Campus Security:</strong> (205) 348-5454
+                                                <button class="btn btn-outline-warning btn-sm ms-2" onclick="callEmergency('(205) 348-5454')">Call</button>
+                                            </div>
+                                            <div class="contact-item">
+                                                <strong>UA Police:</strong> (205) 348-5454
+                                                <button class="btn btn-outline-info btn-sm ms-2" onclick="callEmergency('(205) 348-5454')">Call</button>
+                                            </div>
+                                        </div>
+                                        <div class="add-contact-form" style="display: none;" id="addContactForm">
+                                            <h6>Add Emergency Contact</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" id="contactName" placeholder="Contact Name">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input type="tel" class="form-control" id="contactPhone" placeholder="Phone Number">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" id="contactRelation" placeholder="Relationship">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <button class="btn btn-primary btn-sm" onclick="addEmergencyContact()">Add Contact</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="toggleAddContactForm()">
+                                            <i class="bi bi-plus"></i> Add Contact Manually
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Safety Checklist</h6>
+                                <div class="safety-checklist">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="shareLocation">
+                                        <label class="form-check-label" for="shareLocation">Share location with friends</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="verifyDriver">
+                                        <label class="form-check-label" for="verifyDriver">Verify driver identity</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkVehicle">
+                                        <label class="form-check-label" for="checkVehicle">Check vehicle condition</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-main" id="fabMain">
+            <i class="bi bi-plus"></i>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab-item" data-bs-toggle="modal" data-bs-target="#createTripModal" title="Create Trip">
+                <i class="bi bi-plus-circle"></i>
+            </button>
+            <button class="fab-item" data-bs-toggle="modal" data-bs-target="#tripGroupsModal" title="Trip Groups">
+                <i class="bi bi-people"></i>
+            </button>
+            <button class="fab-item" data-bs-toggle="modal" data-bs-target="#safetyModal" title="Safety Center">
+                <i class="bi bi-shield-check"></i>
+            </button>
+            <button class="fab-item" id="shareLocationBtn" title="Share Location">
+                <i class="bi bi-geo-alt"></i>
+            </button>
         </div>
     </div>
 

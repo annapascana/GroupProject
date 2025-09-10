@@ -1,3 +1,959 @@
+// Analytics System
+function setupAnalytics() {
+    updateAnalytics();
+    setInterval(updateAnalytics, 30000); // Update every 30 seconds
+}
+
+function updateAnalytics() {
+    const trips = getAllTrips();
+    const analytics = calculateAnalytics(trips);
+    
+    updateElement('popularDestination', analytics.popularDestination);
+    updateElement('peakTravelTime', analytics.peakTravelTime);
+    updateElement('activeTravelers', `${analytics.activeTravelers} students`);
+    updateElement('averageRating', `${analytics.averageRating}/5.0`);
+    updateElement('avgCost', `$${analytics.avgCost} avg cost`);
+    updateElement('totalSavings', `$${analytics.totalSavings} saved`);
+}
+
+function calculateAnalytics(trips) {
+    const destinations = {};
+    const timeSlots = {};
+    let totalCost = 0;
+    let totalSavings = 0;
+    let totalRatings = 0;
+    let ratingCount = 0;
+    
+    trips.forEach(trip => {
+        // Popular destinations
+        destinations[trip.destination] = (destinations[trip.destination] || 0) + 1;
+        
+        // Peak travel times
+        const hour = new Date(trip.date).getHours();
+        const timeSlot = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
+        timeSlots[timeSlot] = (timeSlots[timeSlot] || 0) + 1;
+        
+        // Cost analysis
+        totalCost += parseFloat(trip.gasCost) || 0;
+        totalSavings += (parseFloat(trip.gasCost) || 0) * 0.3; // Assume 30% savings
+        
+        // Ratings (simulated)
+        const rating = 4.0 + Math.random();
+        totalRatings += rating;
+        ratingCount++;
+    });
+    
+    const popularDestination = Object.keys(destinations).reduce((a, b) => 
+        destinations[a] > destinations[b] ? a : b, 'Atlanta Airport');
+    
+    const peakTime = Object.keys(timeSlots).reduce((a, b) => 
+        timeSlots[a] > timeSlots[b] ? a : b, 'Afternoon');
+    
+    return {
+        popularDestination,
+        peakTravelTime: `${peakTime} 3-5 PM`,
+        activeTravelers: Math.max(50, trips.length * 3),
+        averageRating: (totalRatings / Math.max(1, ratingCount)).toFixed(1),
+        avgCost: (totalCost / Math.max(1, trips.length)).toFixed(0),
+        totalSavings: Math.round(totalSavings)
+    };
+}
+
+// Notification System
+function setupNotifications() {
+    // Clean up any duplicate emergency contact notifications first
+    cleanupDuplicateEmergencyNotifications();
+    loadNotifications();
+    setInterval(checkForNewNotifications, 60000); // Check every minute
+}
+
+// Clean up duplicate emergency contact notifications
+function cleanupDuplicateEmergencyNotifications() {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    const emergencyNotifications = notifications.filter(n => n.title === 'Emergency Contacts Required');
+    
+    if (emergencyNotifications.length > 1) {
+        // Remove all emergency contact notifications
+        const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
+        
+        // Add back just one
+        const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+        if (contacts.length === 0) {
+            filteredNotifications.unshift({
+                id: Date.now().toString(),
+                title: 'Emergency Contacts Required',
+                message: 'Please add emergency contacts to your profile for safety.',
+                type: 'warning',
+                timestamp: new Date().toISOString(),
+                read: false
+            });
+        }
+        
+        localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+    }
+}
+
+function loadNotifications() {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    displayNotifications(notifications);
+    updateNotificationBadge(notifications.filter(n => !n.read).length);
+}
+
+function updateNotificationBadge(count) {
+    const badge = getCachedElement('notificationBadge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function displayNotifications(notifications) {
+    const container = getCachedElement('notificationList');
+    if (!container) return;
+    
+    if (notifications.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">No notifications yet</div>';
+        return;
+    }
+    
+    container.innerHTML = notifications.map(notification => `
+        <div class="notification-item ${notification.read ? '' : 'unread'}" data-id="${notification.id}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${notification.title}</h6>
+                    <p class="mb-1">${notification.message}</p>
+                    <small class="notification-time">${formatTime(notification.timestamp)}</small>
+                </div>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="markNotificationRead('${notification.id}')" title="Mark as read">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeNotification('${notification.id}')" title="Remove notification">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addNotification(title, message, type = 'info') {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    const notification = {
+        id: Date.now().toString(),
+        title,
+        message,
+        type,
+        timestamp: new Date().toISOString(),
+        read: false
+    };
+    
+    notifications.unshift(notification);
+    localStorage.setItem('travel_notifications', JSON.stringify(notifications));
+    
+    loadNotifications();
+    showToast(message, type);
+}
+
+function markNotificationRead(id) {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    const notification = notifications.find(n => n.id === id);
+    if (notification) {
+        notification.read = true;
+        localStorage.setItem('travel_notifications', JSON.stringify(notifications));
+        loadNotifications();
+    }
+}
+
+function markAllNotificationsRead() {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    notifications.forEach(notification => {
+        notification.read = true;
+    });
+    localStorage.setItem('travel_notifications', JSON.stringify(notifications));
+    loadNotifications();
+    showToast('All notifications marked as read', 'success');
+}
+
+function removeNotification(id) {
+    if (confirm('Are you sure you want to remove this notification?')) {
+        const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+        const filteredNotifications = notifications.filter(notification => notification.id !== id);
+        localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+        loadNotifications();
+        showToast('Notification removed', 'info');
+    }
+}
+
+function clearAllNotifications() {
+    if (confirm('Are you sure you want to clear all notifications? This action cannot be undone.')) {
+        localStorage.removeItem('travel_notifications');
+        loadNotifications();
+        showToast('All notifications cleared', 'success');
+    }
+}
+
+function checkForNewNotifications() {
+    // Simulate new notifications
+    if (Math.random() < 0.1) { // 10% chance
+        const messages = [
+            'New trip to Atlanta Airport available!',
+            'Your trip to Birmingham is tomorrow',
+            'Gas prices dropped 5% for your route',
+            'Someone joined your trip to Nashville'
+        ];
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        addNotification('Trip Update', message, 'info');
+    }
+}
+
+// Theme Toggle System
+function setupThemeToggle() {
+    const themeToggle = getCachedElement('themeToggle');
+    if (!themeToggle) return;
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('travel_theme') || 'light';
+    setTheme(savedTheme);
+    
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    });
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('travel_theme', theme);
+    
+    const themeIcon = getCachedElement('themeIcon');
+    if (themeIcon) {
+        themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    }
+}
+
+// Floating Action Button
+function setupFloatingActionButton() {
+    const fabMain = getCachedElement('fabMain');
+    const fabMenu = getCachedElement('fabMenu');
+    
+    if (!fabMain || !fabMenu) return;
+    
+    fabMain.addEventListener('click', () => {
+        fabMain.classList.toggle('active');
+        fabMenu.classList.toggle('active');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+            fabMain.classList.remove('active');
+            fabMenu.classList.remove('active');
+        }
+    });
+}
+
+// PWA Support
+function setupPWA() {
+    // Only register service worker if we're running on a proper server (not file://)
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
+    } else {
+        console.log('Service Worker not supported or running on file:// protocol');
+    }
+    
+    // Show install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallBanner();
+    });
+    
+    // Handle install
+    window.addEventListener('appinstalled', () => {
+        hideInstallBanner();
+        addNotification('App Installed', 'Travel app installed successfully!', 'success');
+    });
+}
+
+function showInstallBanner() {
+    const banner = document.createElement('div');
+    banner.className = 'pwa-install-banner';
+    banner.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Install Travel App for better experience</span>
+            <div>
+                <button class="btn btn-light btn-sm me-2" onclick="hideInstallBanner()">Not Now</button>
+                <button class="btn btn-warning btn-sm" onclick="installApp()">Install</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.classList.add('show'), 100);
+}
+
+function hideInstallBanner() {
+    const banner = document.querySelector('.pwa-install-banner');
+    if (banner) {
+        banner.classList.remove('show');
+        setTimeout(() => banner.remove(), 300);
+    }
+}
+
+function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                addNotification('Installing', 'Installing app...', 'info');
+            }
+            deferredPrompt = null;
+        });
+    }
+}
+
+// Safety Features
+function setupSafetyFeatures() {
+    const shareLocationBtn = getCachedElement('shareLocationBtn');
+    if (shareLocationBtn) {
+        shareLocationBtn.addEventListener('click', shareLocation);
+    }
+}
+
+function shareLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            const location = `${latitude},${longitude}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Location',
+                    text: 'Sharing my location for safety',
+                    url: `https://maps.google.com/?q=${location}`
+                });
+            } else {
+                navigator.clipboard.writeText(location);
+                showToast('Location copied to clipboard', 'success');
+            }
+        });
+    } else {
+        showToast('Location sharing not supported', 'warning');
+    }
+}
+
+// Trip Groups
+function setupTripGroups() {
+    loadTripGroups();
+    loadSocialFeed();
+}
+
+function loadTripGroups() {
+    const groups = JSON.parse(localStorage.getItem('travel_groups') || '[]');
+    displayTripGroups(groups);
+}
+
+function displayTripGroups(groups) {
+    const container = getCachedElement('tripGroupsList');
+    if (!container) return;
+    
+    if (groups.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">No trip groups yet</div>';
+        return;
+    }
+    
+    container.innerHTML = groups.map(group => `
+        <div class="trip-group-card">
+            <h6>${group.name}</h6>
+            <p class="text-muted">${group.description}</p>
+            <div class="group-members">
+                ${group.members.map(member => `
+                    <div class="member-avatar" title="${member.name}">
+                        ${member.name.charAt(0)}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Utility Functions
+function updateElement(id, content) {
+    const element = getCachedElement(id);
+    if (element) {
+        element.textContent = content;
+    }
+}
+
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+}
+
+function getAllTrips() {
+    const trips = [];
+    const grids = ['tripsGrid', 'myTripsGrid', 'fullTripsGrid', 'pastTripsGrid'];
+    
+    grids.forEach(gridId => {
+        const grid = getCachedElement(gridId);
+        if (grid) {
+            const cards = grid.querySelectorAll('.trip-card');
+            cards.forEach(card => {
+                const trip = extractTripData(card);
+                if (trip) trips.push(trip);
+            });
+        }
+    });
+    
+    return trips;
+}
+
+function extractTripData(card) {
+    try {
+        const destination = card.querySelector('.trip-destination')?.textContent || '';
+        const date = card.querySelector('.trip-date')?.textContent || '';
+        const cost = card.querySelector('.trip-cost')?.textContent || '$0';
+        const gasCost = cost.replace('$', '').replace(' per person', '');
+        
+        return {
+            destination,
+            date,
+            gasCost: parseFloat(gasCost) || 0
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+
+
+// Emergency Contacts Functions
+function toggleAddContactForm() {
+    const form = getCachedElement('addContactForm');
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function addEmergencyContact() {
+    const form = document.getElementById('emergencyContactForm');
+    const formData = new FormData(form);
+    
+    const contact = {
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        relationship: formData.get('relationship'),
+        email: formData.get('email'),
+        notes: formData.get('notes'),
+        id: Date.now()
+    };
+    
+    if (!contact.name || !contact.phone || !contact.relationship) {
+        showToast('Please fill in all required fields (Name, Phone, Relationship)', 'warning');
+        return;
+    }
+    
+    let contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    contacts.push(contact);
+    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    
+    loadEmergencyContacts();
+    clearContactForm();
+    showToast('Emergency contact added successfully', 'success');
+    
+    // Check if we now have contacts and remove emergency contact notifications
+    checkEmergencyContactsRequirement();
+}
+
+function clearContactForm() {
+    document.getElementById('emergencyContactForm').reset();
+}
+
+// Format phone number for display (show first 3 digits with parentheses, then asterisks)
+function formatPhoneForDisplay(phone) {
+    if (!phone) return '';
+    
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+    
+    if (digits.length < 3) return phone;
+    
+    // Show first 3 digits with parentheses, then asterisks for the rest
+    const areaCode = digits.substring(0, 3);
+    const asterisks = '*'.repeat(Math.max(0, digits.length - 3));
+    
+    return `(${areaCode})${asterisks}`;
+}
+
+// Format full phone number with proper formatting
+function formatFullPhone(phone) {
+    if (!phone) return '';
+    
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+    
+    if (digits.length === 10) {
+        // Format as (XXX) XXX-XXXX
+        return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`;
+    } else if (digits.length === 11 && digits[0] === '1') {
+        // Format as 1 (XXX) XXX-XXXX
+        return `1 (${digits.substring(1, 4)}) ${digits.substring(4, 7)}-${digits.substring(7)}`;
+    } else {
+        // Return original if not standard length
+        return phone;
+    }
+}
+
+// Toggle phone number display between masked and full
+function togglePhoneDisplay(element, fullPhone) {
+    const currentText = element.textContent;
+    const maskedPhone = formatPhoneForDisplay(fullPhone);
+    const formattedFullPhone = formatFullPhone(fullPhone);
+    
+    if (currentText === maskedPhone) {
+        element.textContent = formattedFullPhone;
+        element.title = 'Click to hide full number';
+    } else {
+        element.textContent = maskedPhone;
+        element.title = 'Click to reveal full number';
+    }
+}
+
+// Format phone number input as user types
+function formatPhoneInput(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove all non-digits
+    
+    if (value.length >= 6) {
+        // Format as (XXX) XXX-XXXX
+        value = `(${value.substring(0, 3)}) ${value.substring(3, 6)}-${value.substring(6, 10)}`;
+    } else if (value.length >= 3) {
+        // Format as (XXX) XXX
+        value = `(${value.substring(0, 3)}) ${value.substring(3)}`;
+    } else if (value.length > 0) {
+        // Format as (XXX
+        value = `(${value}`;
+    }
+    
+    input.value = value;
+}
+
+// Add form submission handler for emergency contacts
+function setupEmergencyContactForm() {
+    const form = document.getElementById('emergencyContactForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            addEmergencyContact();
+        });
+    }
+    
+    // Add phone number formatting to the phone input
+    const phoneInput = document.getElementById('contactPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            formatPhoneInput(e.target);
+        });
+        
+        // Handle backspace and delete properly
+        phoneInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                // Allow backspace to work naturally
+                setTimeout(() => {
+                    formatPhoneInput(e.target);
+                }, 0);
+            }
+        });
+    }
+}
+
+function removeContact(contactId) {
+    let contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    contacts = contacts.filter(contact => contact.id !== contactId);
+    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    loadEmergencyContacts();
+    showToast('Contact removed', 'info');
+    
+    // Check if we still have contacts and update notifications
+    checkEmergencyContactsRequirement();
+}
+
+function callEmergency(phone) {
+    if (confirm(`Call ${phone}?`)) {
+        window.location.href = `tel:${phone}`;
+    }
+}
+
+// Social Features Functions
+function createPost() {
+    const content = getCachedElement('postContent')?.value;
+    if (!content.trim()) {
+        showToast('Please enter some content for your post', 'warning');
+        return;
+    }
+    
+    const post = {
+        id: Date.now(),
+        content: content,
+        author: 'You',
+        timestamp: new Date(),
+        likes: 0,
+        comments: []
+    };
+    
+    // Save to localStorage
+    const posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+    posts.unshift(post);
+    localStorage.setItem('social_posts', JSON.stringify(posts));
+    
+    // Clear form
+    getCachedElement('postContent').value = '';
+    
+    // Refresh feed
+    loadSocialFeed();
+    
+    showToast('Post created successfully!', 'success');
+}
+
+function loadSocialFeed() {
+    const posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+    const feedContainer = getCachedElement('socialFeedPosts');
+    
+    if (!feedContainer) return;
+    
+    if (posts.length === 0) {
+        feedContainer.innerHTML = `
+            <div class="empty-feed">
+                <i class="bi bi-chat-square-text"></i>
+                <h6>No posts yet</h6>
+                <p>Be the first to share something with the travel community!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    feedContainer.innerHTML = posts.map(post => `
+        <div class="social-post">
+            <div class="post-header">
+                <div class="post-author">
+                    <i class="bi bi-person-circle"></i>
+                    <strong>${post.author}</strong>
+                </div>
+                <div class="post-time">${formatTime(post.timestamp)}</div>
+            </div>
+            <div class="post-content">${post.content}</div>
+            <div class="post-actions">
+                <button class="btn btn-outline-primary btn-sm" onclick="likePost(${post.id})">
+                    <i class="bi bi-heart"></i> ${post.likes}
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="commentOnPost(${post.id})">
+                    <i class="bi bi-chat"></i> Comment
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="sharePost(${post.id})">
+                    <i class="bi bi-share"></i> Share
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function likePost(postId) {
+    const posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+        post.likes++;
+        localStorage.setItem('social_posts', JSON.stringify(posts));
+        loadSocialFeed();
+    }
+}
+
+function commentOnPost(postId) {
+    const comment = prompt('Add a comment:');
+    if (comment) {
+        const posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            post.comments.push({
+                author: 'You',
+                content: comment,
+                timestamp: new Date()
+            });
+            localStorage.setItem('social_posts', JSON.stringify(posts));
+            loadSocialFeed();
+        }
+    }
+}
+
+function sharePost(postId) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Travel Post',
+            text: 'Check out this travel post!',
+            url: window.location.href
+        });
+    } else {
+        showToast('Post shared!', 'success');
+    }
+}
+
+function addLocationToPost() {
+    const textarea = getCachedElement('postContent');
+    if (textarea) {
+        textarea.value += ' 📍 [Current Location]';
+        textarea.focus();
+    }
+}
+
+function addTripToPost() {
+    const textarea = getCachedElement('postContent');
+    if (textarea) {
+        textarea.value += ' 🚗 [Trip Reference]';
+        textarea.focus();
+    }
+}
+
+// Trip Groups Functions
+function loadTripGroups() {
+    const groups = JSON.parse(localStorage.getItem('trip_groups') || '[]');
+    const groupsContainer = getCachedElement('tripGroupsList');
+    
+    if (!groupsContainer) return;
+    
+    if (groups.length === 0) {
+        groupsContainer.innerHTML = `
+            <div class="empty-groups">
+                <i class="bi bi-people"></i>
+                <h6>No groups yet</h6>
+                <p>Create your first trip group to connect with other travelers!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    groupsContainer.innerHTML = groups.map(group => `
+        <div class="trip-group-card">
+            <div class="group-header">
+                <h6>${group.name}</h6>
+                <span class="badge bg-primary">${group.members.length} members</span>
+            </div>
+            <div class="group-description">${group.description}</div>
+            <div class="group-members">
+                ${group.members.map(member => `
+                    <div class="member-avatar">
+                        <i class="bi bi-person-fill"></i>
+                        <small>${member}</small>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="group-actions">
+                <button class="btn btn-primary btn-sm" onclick="joinGroup('${group.id}')">Join Group</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="viewGroup('${group.id}')">View Details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function createGroup() {
+    const name = prompt('Enter group name:');
+    if (!name) return;
+    
+    const description = prompt('Enter group description:');
+    
+    const group = {
+        id: Date.now(),
+        name: name,
+        description: description || 'No description',
+        members: ['You'],
+        created: new Date()
+    };
+    
+    const groups = JSON.parse(localStorage.getItem('trip_groups') || '[]');
+    groups.push(group);
+    localStorage.setItem('trip_groups', JSON.stringify(groups));
+    
+    loadTripGroups();
+    showToast('Group created successfully!', 'success');
+}
+
+function joinGroup(groupId) {
+    const groups = JSON.parse(localStorage.getItem('trip_groups') || '[]');
+    const group = groups.find(g => g.id == groupId);
+    if (group && !group.members.includes('You')) {
+        group.members.push('You');
+        localStorage.setItem('trip_groups', JSON.stringify(groups));
+        loadTripGroups();
+        showToast('Joined group successfully!', 'success');
+    }
+}
+
+function viewGroup(groupId) {
+    const groups = JSON.parse(localStorage.getItem('trip_groups') || '[]');
+    const group = groups.find(g => g.id == groupId);
+    if (group) {
+        alert(`Group: ${group.name}\nDescription: ${group.description}\nMembers: ${group.members.join(', ')}`);
+    }
+}
+
+// Emergency Contacts Profile Functions
+function openEmergencyContactsModal() {
+    const modal = new bootstrap.Modal(document.getElementById('emergencyContactsModal'));
+    loadEmergencyContacts();
+    checkEmergencyContactsRequirement();
+    modal.show();
+}
+
+function loadEmergencyContacts() {
+    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const contactList = getCachedElement('emergencyContactList');
+    
+    if (!contactList) return;
+    
+    // Clear existing user contacts
+    contactList.innerHTML = '';
+    
+    // Add user's emergency contacts
+    contacts.forEach(contact => {
+        const contactItem = document.createElement('div');
+        contactItem.className = 'contact-item';
+        contactItem.innerHTML = `
+            <div class="contact-info">
+                <strong>${contact.name}</strong>
+                <span class="contact-relationship">${contact.relationship}</span>
+                <span class="contact-phone" title="Click to reveal full number" onclick="togglePhoneDisplay(this, '${contact.phone}')" style="cursor: pointer;">${formatPhoneForDisplay(contact.phone)}</span>
+                ${contact.email ? `<span class="contact-email">${contact.email}</span>` : ''}
+                ${contact.notes ? `<div class="contact-notes">${contact.notes}</div>` : ''}
+            </div>
+            <div class="contact-actions">
+                <button class="btn btn-outline-primary btn-sm" onclick="callEmergency('${contact.phone}')">
+                    <i class="bi bi-telephone"></i> Call
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="removeContact(${contact.id})">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+        `;
+        contactList.appendChild(contactItem);
+    });
+    
+    // Show message if no contacts
+    if (contacts.length === 0) {
+        contactList.innerHTML = '<div class="text-muted text-center py-3">No emergency contacts added yet</div>';
+    }
+}
+
+function saveEmergencyContacts() {
+    const contacts = [];
+    const contactItems = document.querySelectorAll('#emergencyContactList .contact-item');
+    
+    contactItems.forEach(item => {
+        const text = item.textContent;
+        const nameMatch = text.match(/^([^(]+)\s*\(([^)]+)\):\s*(.+?)\s*Call/);
+        if (nameMatch && !text.includes('Emergency Services') && !text.includes('Campus Security') && !text.includes('UA Police')) {
+            contacts.push({
+                name: nameMatch[1].trim(),
+                relation: nameMatch[2].trim(),
+                phone: nameMatch[3].trim()
+            });
+        }
+    });
+    
+    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    checkEmergencyContactsRequirement();
+    showToast('Emergency contacts saved successfully!', 'success');
+}
+
+function checkEmergencyContactsRequirement() {
+    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const hasContacts = contacts.length > 0;
+    
+    // Update UI indicators
+    const warningIcon = getCachedElement('emergencyWarning');
+    const emergencyBadge = getCachedElement('emergencyBadge');
+    const emergencyRequiredBadge = getCachedElement('emergencyRequiredBadge');
+    const emergencyAlert = getCachedElement('emergencyAlert');
+    
+    if (warningIcon) {
+        warningIcon.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyBadge) {
+        emergencyBadge.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyRequiredBadge) {
+        emergencyRequiredBadge.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyAlert) {
+        emergencyAlert.style.display = hasContacts ? 'none' : 'block';
+    }
+    
+    // Manage notifications - ensure only ONE emergency contact notification exists
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    const emergencyNotifications = notifications.filter(n => n.title === 'Emergency Contacts Required');
+    
+    if (hasContacts) {
+        // Remove ALL emergency contact notifications if contacts exist
+        if (emergencyNotifications.length > 0) {
+            const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
+            localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+            loadNotifications();
+            showToast('Emergency contacts requirement satisfied!', 'success');
+        }
+    } else {
+        // Only add notification if NONE exists (prevent duplicates)
+        if (emergencyNotifications.length === 0) {
+            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning');
+        } else if (emergencyNotifications.length > 1) {
+            // If somehow multiple exist, remove all and add just one
+            const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
+            localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning');
+            loadNotifications();
+        }
+    }
+    
+    return hasContacts;
+}
+
+
+function openProfileSettings() {
+    showToast('Profile settings coming soon!', 'info');
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        // Clear user data
+        localStorage.removeItem('current_user');
+        localStorage.removeItem('user_emergency_contacts');
+        
+        // Redirect to login
+        window.location.href = '../../Resources/login.html';
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
 });
@@ -367,6 +1323,18 @@ function initializeApp() {
     setupRefresh();
     loadUserProfile();
     
+    // Check emergency contacts requirement
+    checkEmergencyContactsRequirement();
+    
+    setupAnalytics();
+    setupNotifications();
+    setupThemeToggle();
+    setupFloatingActionButton();
+    setupPWA();
+    setupSafetyFeatures();
+    setupTripGroups();
+    setupEmergencyContactForm();
+    
     // Clear only example trips cache, keep joined trips data
     localStorage.removeItem('example_trips_loaded');
     localStorage.removeItem('example_trips');
@@ -375,7 +1343,6 @@ function initializeApp() {
     clearDuplicates();
     
     loadTrips();
-    restoreJoinedTrips();
     clearDuplicates(); // Clear duplicates again after loading
     updateEmptyStates();
 }
@@ -618,7 +1585,13 @@ async function deleteTrip(button) {
 function setupJoinLeave() {
     console.log('Setting up join/leave event listeners');
     document.addEventListener('click', async e => {
-        console.log('Click detected on:', e.target);
+        // Skip clicks on navbar elements to avoid conflicts
+        if (e.target.closest('.travel-navbar') || 
+            e.target.closest('.fab-container') ||
+            e.target.closest('.modal') ||
+            e.target.closest('.toast-container')) {
+            return;
+        }
         
         if (e.target.classList.contains('join-trip-btn')) {
             console.log('Join/Leave button clicked');
@@ -650,6 +1623,22 @@ async function joinTrip(btn) {
     console.log('joinTrip function called');
     const card = btn.closest('.trip-card');
     console.log('Card found:', card);
+    
+    // Check if this is a past trip
+    const dateElement = card.querySelector('.trip-details p:nth-child(2)');
+    if (dateElement) {
+        const dateText = dateElement.textContent.replace('Date: ', '');
+        const tripDate = new Date(dateText);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        tripDate.setHours(0, 0, 0, 0);
+        
+        if (tripDate < today) {
+            showToast('Cannot join past trips! This trip has already passed.', 'error');
+            return;
+        }
+    }
+    
     const seats = card.querySelector('.trip-details p:nth-child(4)');
     console.log('Seats element:', seats);
     let [available, total] = seats.textContent.match(/\d+/g).map(Number);
@@ -1649,10 +2638,24 @@ function createExampleTripCard(tripData) {
         'other': 'Other Trip'
     };
     
-    const badgeClass = tripData.availableSeats === 0 ? 'bg-danger' : 
+    // Check if trip date has passed
+    const tripDate = new Date(tripData.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    tripDate.setHours(0, 0, 0, 0);
+    const isPastTrip = tripDate < today;
+    
+    const badgeClass = isPastTrip ? 'bg-secondary' :
+                      tripData.availableSeats === 0 ? 'bg-danger' : 
                       tripData.availableSeats === 1 ? 'bg-warning' : 'bg-primary';
-    const badgeText = tripData.availableSeats === 0 ? 'Full' : 
+    const badgeText = isPastTrip ? 'Past Trip' :
+                     tripData.availableSeats === 0 ? 'Full' : 
                      tripData.availableSeats === 1 ? 'Almost Full' : 'Open';
+    
+    // Create join button based on trip status
+    const joinButton = isPastTrip ? 
+        '<button class="btn btn-secondary btn-sm" disabled title="Cannot join past trips">Past Trip</button>' :
+        '<button class="btn btn-success btn-sm join-trip-btn">Join Trip</button>';
     
     card.innerHTML = `
         <div class="trip-header">
@@ -1669,7 +2672,7 @@ function createExampleTripCard(tripData) {
             ${tripData.notes ? `<p><strong>Notes:</strong> ${tripData.notes}</p>` : ''}
         </div>
         <div class="trip-footer">
-            <button class="btn btn-success btn-sm join-trip-btn">Join Trip</button>
+            ${joinButton}
             <button class="btn btn-info btn-sm chat-trip-btn" data-destination="${tripData.destination}" data-creator="${tripData.creator}" style="display: none;">
                 <i class="bi bi-chat-dots"></i> Chat
             </button>
