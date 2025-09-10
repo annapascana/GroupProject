@@ -14,6 +14,41 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="workout.css">
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+      // Dark mode functionality
+      function toggleDarkMode() {
+        const body = document.body;
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const darkModeText = document.getElementById('darkModeText');
+        
+        if (body.getAttribute('data-theme') === 'dark') {
+          body.removeAttribute('data-theme');
+          darkModeIcon.className = 'bi bi-moon-fill';
+          darkModeText.textContent = 'Dark Mode';
+          localStorage.setItem('theme', 'light');
+        } else {
+          body.setAttribute('data-theme', 'dark');
+          darkModeIcon.className = 'bi bi-sun-fill';
+          darkModeText.textContent = 'Light Mode';
+          localStorage.setItem('theme', 'dark');
+        }
+      }
+      
+      // Load saved theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const darkModeText = document.getElementById('darkModeText');
+        
+        if (savedTheme === 'dark') {
+          document.body.setAttribute('data-theme', 'dark');
+          darkModeIcon.className = 'bi bi-sun-fill';
+          darkModeText.textContent = 'Light Mode';
+        }
+      });
+    </script>
 </head>
 <body>
     <!-- Navigation -->
@@ -41,6 +76,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#">
                             <i class="bi bi-person-circle me-1"></i>Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="toggleDarkMode()">
+                            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                            <span id="darkModeText">Dark Mode</span>
                         </a>
                     </li>
                 </ul>

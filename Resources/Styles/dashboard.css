@@ -18,6 +18,20 @@
   --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Dark Mode Variables */
+[data-theme="dark"] {
+  --main-bg: #1a1a1a;
+  --card-bg: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-muted: #888888;
+  --border-color: #404040;
+  --sidebar-bg: #1e1e1e;
+  --sidebar-hover: #2a2a2a;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* Global Styles */
 * {
   margin: 0;
@@ -339,6 +353,22 @@ body {
   height: 200px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--crimson-primary), var(--crimson-dark));
+}
+
+.card-theme-icon {
+  font-size: 4rem;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.collaboration-card:hover .card-theme-icon {
+  transform: scale(1.1);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .card-image img {

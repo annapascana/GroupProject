@@ -13,6 +13,41 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="travel.css">
+
+<!-- Dark Mode Toggle Script -->
+<script>
+  // Dark mode functionality
+  function toggleDarkMode() {
+    const body = document.body;
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    if (body.getAttribute('data-theme') === 'dark') {
+      body.removeAttribute('data-theme');
+      if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill';
+      if (darkModeText) darkModeText.textContent = 'Dark Mode';
+      localStorage.setItem('theme', 'light');
+    } else {
+      body.setAttribute('data-theme', 'dark');
+      if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill';
+      if (darkModeText) darkModeText.textContent = 'Light Mode';
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+  
+  // Load saved theme on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    if (savedTheme === 'dark') {
+      document.body.setAttribute('data-theme', 'dark');
+      if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill';
+      if (darkModeText) darkModeText.textContent = 'Light Mode';
+    }
+  });
+</script>
 </head>
 <body>
 
@@ -31,6 +66,10 @@
             </div>
             <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
                 <div class="nav-right">
+                    <button class="btn btn-outline-secondary btn-sm me-3" onclick="toggleDarkMode()">
+                        <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                        <span id="darkModeText">Dark Mode</span>
+                    </button>
                     <div class="user-profile me-3" id="userProfile" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-avatar">
                             <i class="bi bi-person-circle"></i>

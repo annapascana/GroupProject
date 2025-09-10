@@ -47,12 +47,6 @@
           <ul class="nav-list">
             <li class="nav-item">
               <a href="#" class="nav-link">
-                <i class="bi bi-building"></i>
-                <span>Institution Page</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link">
                 <i class="bi bi-person"></i>
                 <span>Anna Miller</span>
               </a>
@@ -83,20 +77,14 @@
             </li>
             <li class="nav-item">
               <a href="#" class="nav-link">
-                <i class="bi bi-clipboard-check"></i>
-                <span>Progress</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="bi bi-tools"></i>
-                <span>Tools</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link">
                 <i class="bi bi-question-circle"></i>
                 <span>Help</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link" onclick="toggleDarkMode()">
+                <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                <span id="darkModeText">Dark Mode</span>
               </a>
             </li>
             <li class="nav-item">
@@ -191,15 +179,16 @@
         <!-- Content Grid -->
         <div class="content-grid" id="contentGrid">
           <!-- Workout Buddy Card -->
-          <div class="collaboration-card" data-type="workout" data-status="open">
+          <div class="collaboration-card" data-type="workout" data-status="open" style="cursor: pointer;" onclick="if(confirm('Go to Workout page?')) window.location.href='../Pages/jaxon/workout.html'">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iI0RDMTRDMCIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPldPUktPVVQ8L3RleHQ+Cjwvc3ZnPgo=" alt="Workout Buddy">
+              <div class="card-theme-icon">
+                <i class="bi bi-heart-pulse-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">44212.202540</div>
-              <div class="card-code">202540-FIT-302-003</div>
+              <div class="card-code">Workout Buddy</div>
               <div class="card-status open">Open</div>
-              <div class="card-instructor">Chris Whaley</div>
+              <div class="card-instructor">Jaxon Dunlevy</div>
               <div class="card-actions">
                 <button class="btn-favorite" title="Add to favorites">
                   <i class="bi bi-star"></i>
@@ -211,11 +200,12 @@
           <!-- Study Group Card -->
           <div class="collaboration-card" data-type="study" data-status="open">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iIzAwN0JGRiIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlNUVURZPC90ZXh0Pgo8L3N2Zz4K" alt="Study Group">
+              <div class="card-theme-icon">
+                <i class="bi bi-book-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">41086.202540</div>
-              <div class="card-code">202540-STU-300-015</div>
+              <div class="card-code">Study Group</div>
               <div class="card-status open">Open</div>
               <div class="card-instructor">Melinda Wallace</div>
               <div class="card-actions">
@@ -229,11 +219,12 @@
           <!-- UA Innovate Card -->
           <div class="collaboration-card" data-type="innovate" data-status="open">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iIzI4QTc0NSIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPklOTk9WQVRFPC90ZXh0Pgo8L3N2Zz4K" alt="UA Innovate">
+              <div class="card-theme-icon">
+                <i class="bi bi-lightbulb-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">44088.202540</div>
-              <div class="card-code">202540-INO-346-008</div>
+              <div class="card-code">UA Innovate</div>
               <div class="card-status open">Open</div>
               <div class="card-instructor">Anne Herfurth</div>
               <div class="card-actions">
@@ -245,13 +236,14 @@
           </div>
 
           <!-- Additional Cards for Demo -->
-          <div class="collaboration-card" data-type="workout" data-status="open">
+          <div class="collaboration-card" data-type="workout" data-status="open" style="cursor: pointer;" onclick="if(confirm('Go to Workout page?')) window.location.href='../Pages/jaxon/workout.html'">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iI0ZGNkI2QiIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZJVE5FU1M8L3RleHQ+Cjwvc3ZnPgo=" alt="Fitness">
+              <div class="card-theme-icon">
+                <i class="bi bi-dumbbell-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">50163.202540</div>
-              <div class="card-code">202540-FIT-200-320</div>
+              <div class="card-code">Fitness Training</div>
               <div class="card-status open">Open</div>
               <div class="card-instructor">Larry Tribble</div>
               <div class="card-actions">
@@ -264,11 +256,12 @@
 
           <div class="collaboration-card" data-type="travel" data-status="open" style="cursor: pointer;" onclick="if(confirm('Go to Travel page?')) window.location.href='../Pages/EmilyGarcia/travel.html'">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iIzAwN0JGRiIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlRSQVZFTDwvdGV4dD4KPC9zdmc+Cg==" alt="Travel">
+              <div class="card-theme-icon">
+                <i class="bi bi-airplane-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">42859.202540</div>
-              <div class="card-code">202540-TRV-321-001</div>
+              <div class="card-code">Travel Companion</div>
               <div class="card-status open">Open</div>
               <div class="card-instructor">Emily Garcia</div>
               <div class="card-actions">
@@ -281,11 +274,12 @@
 
           <div class="collaboration-card" data-type="innovate" data-status="open">
             <div class="card-image">
-              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iI0ZGNkI2QiIvPgo8dGV4dCB4PSIxNTAiIHk9IjExMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlRFQ0g8L3RleHQ+Cjwvc3ZnPgo=" alt="Tech Innovation">
+              <div class="card-theme-icon">
+                <i class="bi bi-laptop-fill"></i>
+              </div>
             </div>
             <div class="card-content">
-              <div class="card-id">41682.202540</div>
-              <div class="card-code">202540-TEC-330-001</div>
+              <div class="card-code">Tech Innovation</div>
               <div class="card-status open">Open</div>
               <div class="card-instructor">Multiple Instructors</div>
               <div class="card-actions">
@@ -340,5 +334,40 @@
     
     <!-- Custom JS -->
     <script src="./Scripts/dashboard.js"></script>
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+      // Dark mode functionality
+      function toggleDarkMode() {
+        const body = document.body;
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const darkModeText = document.getElementById('darkModeText');
+        
+        if (body.getAttribute('data-theme') === 'dark') {
+          body.removeAttribute('data-theme');
+          darkModeIcon.className = 'bi bi-moon-fill';
+          darkModeText.textContent = 'Dark Mode';
+          localStorage.setItem('theme', 'light');
+        } else {
+          body.setAttribute('data-theme', 'dark');
+          darkModeIcon.className = 'bi bi-sun-fill';
+          darkModeText.textContent = 'Light Mode';
+          localStorage.setItem('theme', 'dark');
+        }
+      }
+      
+      // Load saved theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const darkModeText = document.getElementById('darkModeText');
+        
+        if (savedTheme === 'dark') {
+          document.body.setAttribute('data-theme', 'dark');
+          darkModeIcon.className = 'bi bi-sun-fill';
+          darkModeText.textContent = 'Light Mode';
+        }
+      });
+    </script>
   </body>
 </html>
