@@ -208,7 +208,6 @@ function setupFilters() {
 
 // Type filter setup
 function setupTypeFilter() {
-    const typeDropdown = document.querySelector('[data-bs-toggle="dropdown"]');
     const typeItems = document.querySelectorAll('[data-filter]');
     
     typeItems.forEach(item => {
@@ -335,8 +334,20 @@ function setupCardClicks() {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Travel card clicked, navigating to travel page...');
-                alert('Travel card clicked! Navigating to travel page...');
-                window.location.href = '../Pages/EmilyGarcia/travel.html';
+                if (confirm('Go to Travel page?')) {
+                    window.location.href = '../Pages/EmilyGarcia/travel.html';
+                }
+                return;
+            }
+            
+            // Special handling for friend card
+            if (cardType === 'friend') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Friend Match card clicked, navigating to friend match page...');
+                if (confirm('Go to Friend Match page?')) {
+                    window.location.href = '../Pages/Anna/index.html';
+                }
                 return;
             }
             
@@ -351,6 +362,7 @@ function handleCardClick(type, code) {
     const typeNames = {
         'workout': 'Workout Buddy',
         'study': 'Study Group',
+        'friend': 'Friend Match',
         'travel': 'Travel',
         'innovate': 'UA Innovate'
     };
@@ -360,6 +372,15 @@ function handleCardClick(type, code) {
     // Special handling for travel card
     if (type === 'travel') {
         openTravelPage();
+        return;
+    }
+    
+    // Special handling for friend match card
+    if (type === 'friend') {
+        showNotification(`Opening ${typeName} collaboration: ${code}`, 'info');
+        setTimeout(() => {
+            window.location.href = '../Pages/Anna/index.html';
+        }, 1000);
         return;
     }
     
