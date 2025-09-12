@@ -1,82 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>UA Student Travel Finder - Find Safe Travel Buddies & Split Costs</title>
-<meta name="description" content="Connect with UA students for safe travel, split gas costs, and plan trips together. Find travel buddies for airport trips, weekend getaways, and away games.">
-<meta name="keywords" content="University of Alabama, travel, carpool, gas sharing, student travel, safe travel, travel buddies">
-<meta name="author" content="UA Student Travel Finder">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="travel.css">
+    <!-- ========================================
+         TRAVEL PAGE HEAD SECTION
+         ======================================== -->
+    
+    <!-- Basic HTML Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <!-- Page Title and SEO Meta Tags -->
+    <title>UA Student Travel Finder - Find Safe Travel Buddies & Split Costs</title>
+    <meta name="description" content="Connect with UA students for safe travel, split gas costs, and plan trips together. Find travel buddies for airport trips, weekend getaways, and away games.">
+    <meta name="keywords" content="University of Alabama, travel, carpool, gas sharing, student travel, safe travel, travel buddies">
+    <meta name="author" content="UA Student Travel Finder">
+    
+    <!-- External CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts - Inter Font Family -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS Stylesheet -->
+    <link rel="stylesheet" href="travel.css">
 
-<!-- Dark Mode Toggle Script -->
-<script>
-  // Dark mode functionality
-  function toggleDarkMode() {
-    const body = document.body;
-    const darkModeIcon = document.getElementById('darkModeIcon');
-    const darkModeText = document.getElementById('darkModeText');
-    
-    if (body.getAttribute('data-theme') === 'dark') {
-      body.removeAttribute('data-theme');
-      if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill';
-      if (darkModeText) darkModeText.textContent = 'Dark Mode';
-      localStorage.setItem('theme', 'light');
-    } else {
-      body.setAttribute('data-theme', 'dark');
-      if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill';
-      if (darkModeText) darkModeText.textContent = 'Light Mode';
-      localStorage.setItem('theme', 'dark');
-    }
-  }
-  
-  // Load saved theme on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    const savedTheme = localStorage.getItem('theme');
-    const darkModeIcon = document.getElementById('darkModeIcon');
-    const darkModeText = document.getElementById('darkModeText');
-    
-    if (savedTheme === 'dark') {
-      document.body.setAttribute('data-theme', 'dark');
-      if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill';
-      if (darkModeText) darkModeText.textContent = 'Light Mode';
-    }
-  });
-</script>
 </head>
 <body>
 
 <div class="container-fluid p-3">
 
-    <!-- Navigation Bar -->
+    <!-- ========================================
+         TOP NAVIGATION BAR
+         ======================================== -->
     <nav class="travel-navbar mb-3">
         <div class="row align-items-center">
+            <!-- Left Side: Home Button and Page Title -->
             <div class="col-md-6">
                 <div class="nav-left">
+                    <!-- Home Button - Returns to Dashboard -->
                     <button class="btn btn-outline-primary btn-sm me-3" onclick="window.location.href='../../Resources/dashboard.html'">
                         <i class="bi bi-house-door"></i> Home
                     </button>
+                    <!-- Main Page Title with Airplane Icon -->
                     <h1 class="page-title"><i class="bi bi-airplane"></i> UA Student Travel Finder</h1>
                 </div>
             </div>
+            
+            <!-- Right Side: User Profile and Controls -->
             <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
                 <div class="nav-right">
-                    <button class="btn btn-outline-secondary btn-sm me-3" onclick="toggleDarkMode()">
-                        <i class="bi bi-moon-fill" id="darkModeIcon"></i>
-                        <span id="darkModeText">Dark Mode</span>
-                    </button>
+                    <!-- User Profile Dropdown Container -->
                     <div class="user-profile me-3" id="userProfile" data-bs-toggle="dropdown" aria-expanded="false">
+                        <!-- Profile Avatar with Emergency Warning Indicator -->
                         <div class="profile-avatar">
                             <i class="bi bi-person-circle"></i>
+                            <!-- Emergency Warning Badge (hidden by default, shown when no emergency contacts) -->
                             <span class="emergency-warning" id="emergencyWarning" style="display: none;" title="Emergency contacts required">
                                 <i class="bi bi-exclamation-triangle-fill"></i>
                             </span>
                         </div>
+                        <!-- User Information Display -->
                         <div class="profile-info">
                             <div class="profile-name" id="profileName">Loading...</div>
                             <div class="profile-email" id="profileEmail">Loading...</div>
@@ -269,7 +255,9 @@
          </li>
      </ul>
 
-     <!-- Tab Content -->
+     <!-- ========================================
+          TRIP CONTENT AREAS
+          ======================================== -->
      <div class="tab-content" id="tripTabsContent">
          <div class="tab-pane fade show active" id="active-trips" role="tabpanel">
              <div class="loading-state" id="activeTripsLoading" style="display: none;">
@@ -324,6 +312,10 @@
          </div>
      </div>
 
+    <!-- ========================================
+         MODALS SECTION
+         ======================================== -->
+    
     <!-- Create Trip Modal -->
     <div class="modal fade" id="createTripModal" tabindex="-1" aria-labelledby="createTripModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -578,16 +570,6 @@
                             </form>
                         </div>
 
-                        <!-- CSV Upload Section -->
-                        <div class="contact-upload-section mb-4">
-                            <h6><i class="bi bi-upload"></i> Bulk Upload (CSV)</h6>
-                            <div class="upload-area" id="contactUploadArea" onclick="document.getElementById('contactFileInput').click()">
-                                <i class="bi bi-cloud-upload"></i>
-                                <p>Click to upload CSV file</p>
-                                <small class="text-muted">Format: Name, Relationship, Phone, Email, Notes</small>
-                            </div>
-                            <input type="file" id="contactFileInput" accept=".csv" style="display: none;" onchange="handleCSVUpload(event)">
-                        </div>
 
                         <!-- Default Emergency Contacts -->
                         <div class="default-contacts mb-4">
@@ -656,14 +638,7 @@
                             <div class="col-md-6">
                                 <h6>Emergency Contacts</h6>
                                 <div class="emergency-contacts">
-                                    <div class="contact-upload-section">
-                                        <div class="upload-area" id="contactUploadArea">
-                                            <i class="bi bi-cloud-upload"></i>
-                                            <p>Upload Emergency Contacts</p>
-                                            <small>Drag & drop a CSV file or click to browse</small>
-                                            <input type="file" id="contactFileInput" accept=".csv" style="display: none;">
-                                        </div>
-                                        <div class="contact-list" id="emergencyContactList">
+                                        <div class="contact-list" id="safetyEmergencyContactList">
                                             <div class="contact-item">
                                                 <strong>Emergency Services:</strong> 911
                                                 <button class="btn btn-outline-danger btn-sm ms-2" onclick="callEmergency('911')">Call</button>
@@ -677,28 +652,21 @@
                                                 <button class="btn btn-outline-info btn-sm ms-2" onclick="callEmergency('(205) 348-5454')">Call</button>
                                             </div>
                                         </div>
-                                        <div class="add-contact-form" style="display: none;" id="addContactForm">
-                                            <h6>Add Emergency Contact</h6>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <input type="text" class="form-control" id="contactName" placeholder="Contact Name">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input type="tel" class="form-control" id="contactPhone" placeholder="Phone Number">
-                                                </div>
-                                            </div>
-                                            <div class="row mt-2">
-                                                <div class="col-md-6">
-                                                    <input type="text" class="form-control" id="contactRelation" placeholder="Relationship">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <button class="btn btn-primary btn-sm" onclick="addEmergencyContact()">Add Contact</button>
-                                                </div>
+                                        
+                                        <!-- User's Emergency Contacts -->
+                                        <div class="mt-4">
+                                            <h6><i class="bi bi-person-check"></i> Your Emergency Contacts</h6>
+                                            <div class="contact-list" id="safetyUserContactsList">
+                                                <!-- User contacts will be loaded here -->
                                             </div>
                                         </div>
-                                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="toggleAddContactForm()">
-                                            <i class="bi bi-plus"></i> Add Contact Manually
-                                        </button>
+                                        
+                                        <div class="text-center mt-3">
+                                            <p class="text-muted mb-3">To add emergency contacts, use the Emergency Contacts section in your profile.</p>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="manageEmergencyContactsFromSafety()">
+                                                <i class="bi bi-person-plus"></i> Manage Emergency Contacts
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -729,7 +697,9 @@
         </div>
     </div>
 
-    <!-- Floating Action Button -->
+    <!-- ========================================
+         FLOATING ACTION BUTTON
+         ======================================== -->
     <div class="fab-container">
         <button class="fab-main" id="fabMain">
             <i class="bi bi-plus"></i>
@@ -744,9 +714,6 @@
             <button class="fab-item" data-bs-toggle="modal" data-bs-target="#safetyModal" title="Safety Center">
                 <i class="bi bi-shield-check"></i>
             </button>
-            <button class="fab-item" id="shareLocationBtn" title="Share Location">
-                <i class="bi bi-geo-alt"></i>
-            </button>
         </div>
     </div>
 
@@ -755,6 +722,9 @@
         <!-- Toasts will be dynamically added here -->
     </div>
 
+    <!-- ========================================
+         SCRIPTS SECTION
+         ======================================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- User Manager -->
     <script src="../../Resources/Scripts/userManager.js"></script>

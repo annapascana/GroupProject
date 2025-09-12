@@ -24,6 +24,18 @@ function checkAuthentication() {
     
     // Update user info in sidebar
     updateUserInfo(session);
+    
+    // Also try to get current user as a fallback
+    const currentUser = userManager.getCurrentUser();
+    if (currentUser && !session.firstName) {
+        // If session doesn't have name but user does, update with user data
+        updateUserInfo({
+            firstName: currentUser.firstName,
+            lastName: currentUser.lastName,
+            email: currentUser.email
+        });
+    }
+    
     return true;
 }
 
@@ -39,6 +51,12 @@ function updateUserInfo(session) {
     if (userEmailElement) {
         userEmailElement.textContent = session.email;
     }
+    
+    // Also update the navigation link that shows the user's name
+    const navUserNameElement = document.querySelector('.nav-list .nav-item:first-child .nav-link span');
+    if (navUserNameElement) {
+        navUserNameElement.textContent = `${session.firstName} ${session.lastName}`;
+    }
 }
 
 // Initialize all dashboard functionality
@@ -51,6 +69,29 @@ function initializeDashboard() {
     setupMobileMenu();
     setupAccessibility();
     setupAnimations();
+    
+    // Refresh user info after a short delay to ensure it's loaded
+    setTimeout(() => {
+        refreshUserInfo();
+    }, 500);
+}
+
+// Refresh user info from session
+function refreshUserInfo() {
+    const session = userManager.getCurrentSession();
+    if (session) {
+        updateUserInfo(session);
+    } else {
+        // If no session, try to get current user
+        const currentUser = userManager.getCurrentUser();
+        if (currentUser) {
+            updateUserInfo({
+                firstName: currentUser.firstName,
+                lastName: currentUser.lastName,
+                email: currentUser.email
+            });
+        }
+    }
 }
 
 // Navigation Setup

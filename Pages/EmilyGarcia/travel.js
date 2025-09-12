@@ -1,4 +1,8 @@
-// Analytics System
+// ========================================
+// ANALYTICS SYSTEM
+// ========================================
+// Handles real-time analytics calculations and display updates
+
 function setupAnalytics() {
     updateAnalytics();
     setInterval(updateAnalytics, 30000); // Update every 30 seconds
@@ -59,7 +63,11 @@ function calculateAnalytics(trips) {
     };
 }
 
-// Notification System
+// ========================================
+// NOTIFICATION SYSTEM
+// ========================================
+// Manages in-app notifications and alerts
+
 function setupNotifications() {
     // Clean up any duplicate emergency contact notifications first
     cleanupDuplicateEmergencyNotifications();
@@ -324,6 +332,14 @@ function setupSafetyFeatures() {
     if (shareLocationBtn) {
         shareLocationBtn.addEventListener('click', shareLocation);
     }
+    
+    // Load user contacts when Safety Center modal opens
+    const safetyModal = document.getElementById('safetyModal');
+    if (safetyModal) {
+        safetyModal.addEventListener('show.bs.modal', function () {
+            loadSafetyCenterContacts();
+        });
+    }
 }
 
 function shareLocation() {
@@ -439,7 +455,11 @@ function extractTripData(card) {
 
 
 
-// Emergency Contacts Functions
+// ========================================
+// EMERGENCY CONTACTS SYSTEM
+// ========================================
+// Manages user emergency contacts for safety requirements
+
 function toggleAddContactForm() {
     const form = getCachedElement('addContactForm');
     if (form) {
@@ -452,20 +472,70 @@ function addEmergencyContact() {
     const formData = new FormData(form);
     
     const contact = {
-        name: formData.get('name'),
-        phone: formData.get('phone'),
-        relationship: formData.get('relationship'),
-        email: formData.get('email'),
-        notes: formData.get('notes'),
+        name: formData.get('name')?.trim(),
+        phone: formData.get('phone')?.trim(),
+        relationship: formData.get('relationship')?.trim(),
+        email: formData.get('email')?.trim(),
+        notes: formData.get('notes')?.trim(),
         id: Date.now()
     };
     
-    if (!contact.name || !contact.phone || !contact.relationship) {
-        showToast('Please fill in all required fields (Name, Phone, Relationship)', 'warning');
+    // Enhanced validation
+    const errors = [];
+    
+    if (!contact.name) {
+        errors.push('Name is required');
+        document.getElementById('contactName').classList.add('is-invalid');
+    } else {
+        document.getElementById('contactName').classList.remove('is-invalid');
+    }
+    
+    if (!contact.phone) {
+        errors.push('Phone number is required');
+        document.getElementById('contactPhone').classList.add('is-invalid');
+    } else {
+        // Validate phone number format
+        const phoneDigits = contact.phone.replace(/\D/g, '');
+        if (phoneDigits.length < 10) {
+            errors.push('Phone number must be at least 10 digits');
+            document.getElementById('contactPhone').classList.add('is-invalid');
+        } else {
+            document.getElementById('contactPhone').classList.remove('is-invalid');
+        }
+    }
+    
+    if (!contact.relationship) {
+        errors.push('Relationship is required');
+        document.getElementById('contactRelationship').classList.add('is-invalid');
+    } else {
+        document.getElementById('contactRelationship').classList.remove('is-invalid');
+    }
+    
+    // Validate email if provided
+    if (contact.email && !isValidEmail(contact.email)) {
+        errors.push('Please enter a valid email address');
+        document.getElementById('contactEmail').classList.add('is-invalid');
+    } else {
+        document.getElementById('contactEmail').classList.remove('is-invalid');
+    }
+    
+    if (errors.length > 0) {
+        showToast(`Please fix: ${errors.join(', ')}`, 'warning');
         return;
     }
     
+    // Check for duplicate contacts
     let contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const isDuplicate = contacts.some(existingContact => 
+        existingContact.name.toLowerCase() === contact.name.toLowerCase() &&
+        existingContact.phone.replace(/\D/g, '') === contact.phone.replace(/\D/g, '')
+    );
+    
+    if (isDuplicate) {
+        showToast('A contact with this name and phone number already exists', 'warning');
+        return;
+    }
+    
     contacts.push(contact);
     localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
     
@@ -475,6 +545,11 @@ function addEmergencyContact() {
     
     // Check if we now have contacts and remove emergency contact notifications
     checkEmergencyContactsRequirement();
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 function clearContactForm() {
@@ -813,6 +888,29 @@ function openEmergencyContactsModal() {
     modal.show();
 }
 
+function manageEmergencyContactsFromSafety() {
+    // Close the Safety Center modal
+    const safetyModal = bootstrap.Modal.getInstance(document.getElementById('safetyModal'));
+    if (safetyModal) {
+        safetyModal.hide();
+    }
+    
+    // Open the profile dropdown after a short delay
+    setTimeout(() => {
+        const userProfile = document.getElementById('userProfile');
+        if (userProfile) {
+            // Trigger the dropdown to show
+            const dropdown = new bootstrap.Dropdown(userProfile);
+            dropdown.show();
+            
+            // After dropdown shows, open the emergency contacts modal
+            setTimeout(() => {
+                openEmergencyContactsModal();
+            }, 300);
+        }
+    }, 300);
+}
+
 function loadEmergencyContacts() {
     const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
     const contactList = getCachedElement('emergencyContactList');
@@ -849,6 +947,45 @@ function loadEmergencyContacts() {
     // Show message if no contacts
     if (contacts.length === 0) {
         contactList.innerHTML = '<div class="text-muted text-center py-3">No emergency contacts added yet</div>';
+    }
+    
+    // Also load contacts into Safety Center modal
+    loadSafetyCenterContacts();
+}
+
+function loadSafetyCenterContacts() {
+    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const safetyContactList = getCachedElement('safetyUserContactsList');
+    
+    if (!safetyContactList) return;
+    
+    // Clear existing user contacts
+    safetyContactList.innerHTML = '';
+    
+    // Add user's emergency contacts
+    contacts.forEach(contact => {
+        const contactItem = document.createElement('div');
+        contactItem.className = 'contact-item';
+        contactItem.innerHTML = `
+            <div class="contact-info">
+                <strong>${contact.name}</strong>
+                <span class="contact-relationship">${contact.relationship}</span>
+                <span class="contact-phone" title="Click to reveal full number" onclick="togglePhoneDisplay(this, '${contact.phone}')" style="cursor: pointer;">${formatPhoneForDisplay(contact.phone)}</span>
+                ${contact.email ? `<span class="contact-email">${contact.email}</span>` : ''}
+                ${contact.notes ? `<div class="contact-notes">${contact.notes}</div>` : ''}
+            </div>
+            <div class="contact-actions">
+                <button class="btn btn-outline-primary btn-sm" onclick="callEmergency('${contact.phone}')">
+                    <i class="bi bi-telephone"></i> Call
+                </button>
+            </div>
+        `;
+        safetyContactList.appendChild(contactItem);
+    });
+    
+    // Show message if no contacts
+    if (contacts.length === 0) {
+        safetyContactList.innerHTML = '<div class="text-muted text-center py-3">No emergency contacts added yet</div>';
     }
 }
 
@@ -941,6 +1078,12 @@ function logout() {
         // Redirect to login
         window.location.href = '../../Resources/login.html';
     }
+}
+
+// Open Safety Center Modal
+function openSafetyCenterModal() {
+    const safetyModal = new bootstrap.Modal(document.getElementById('safetyModal'));
+    safetyModal.show();
 }
 
 
@@ -1420,22 +1563,109 @@ function setupCreateTrip() {
             createTrip(tripData);
         }
     });
+    
+    // Add keyboard support for form submission
+    const form = document.getElementById('createTripForm');
+    if (form) {
+        form.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                btn.click();
+            }
+        });
+    }
+    
+    // Add real-time validation feedback
+    const formInputs = form.querySelectorAll('input, select');
+    formInputs.forEach(input => {
+        input.addEventListener('blur', () => {
+            // Clear validation errors when user starts typing
+            input.classList.remove('is-invalid');
+        });
+        
+        input.addEventListener('input', () => {
+            // Clear validation errors when user starts typing
+            input.classList.remove('is-invalid');
+        });
+    });
 }
 
 function validateForm() {
-    const fields = ['tripType','destination','tripDate','tripTime','totalSeats','gasCost'];
+    const fields = [
+        {id: 'tripType', name: 'Trip Type'},
+        {id: 'destination', name: 'Destination'},
+        {id: 'tripDate', name: 'Date'},
+        {id: 'tripTime', name: 'Time'},
+        {id: 'totalSeats', name: 'Total Seats'},
+        {id: 'gasCost', name: 'Gas Cost'}
+    ];
+    
     let valid = true;
-    fields.forEach(id => {
-        const f = document.getElementById(id);
-        if (!f.value) {
-            f.classList.add('is-invalid');
+    let missingFields = [];
+    
+    fields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (!element.value || element.value.trim() === '') {
+            element.classList.add('is-invalid');
+            missingFields.push(field.name);
             valid = false;
-        } else f.classList.remove('is-invalid');
+        } else {
+            element.classList.remove('is-invalid');
+            
+            // Additional validation for specific fields
+            if (field.id === 'totalSeats') {
+                const seats = parseInt(element.value);
+                if (seats < 1 || seats > 8) {
+                    element.classList.add('is-invalid');
+                    missingFields.push(`${field.name} (must be 1-8)`);
+                    valid = false;
+                }
+            } else if (field.id === 'gasCost') {
+                const cost = parseFloat(element.value);
+                if (cost <= 0) {
+                    element.classList.add('is-invalid');
+                    missingFields.push(`${field.name} (must be greater than 0)`);
+                    valid = false;
+                }
+            } else if (field.id === 'tripDate') {
+                const tripDate = new Date(element.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                tripDate.setHours(0, 0, 0, 0);
+                
+                if (tripDate < today) {
+                    element.classList.add('is-invalid');
+                    missingFields.push(`${field.name} (cannot be in the past)`);
+                    valid = false;
+                }
+            }
+        }
     });
+    
+    if (!valid) {
+        showToast(`Please fill in: ${missingFields.join(', ')}`, 'warning');
+    }
+    
     return valid;
 }
 
+// ========================================
+// TRIP MANAGEMENT SYSTEM
+// ========================================
+// Handles trip creation, joining, leaving, and deletion
+
 function createTrip(data) {
+    // Check if user has emergency contacts
+    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    if (contacts.length === 0) {
+        showToast('Emergency contacts are required before creating trips! Please add at least one emergency contact.', 'warning');
+        // Open emergency contacts modal
+        setTimeout(() => {
+            openEmergencyContactsModal();
+        }, 1500);
+        return;
+    }
+    
     // Validate trip date before creating
     if (!validateTripDate(data)) {
         showErrorToast('Cannot create a trip for a date that has already passed!');
@@ -1624,6 +1854,22 @@ async function joinTrip(btn) {
     const card = btn.closest('.trip-card');
     console.log('Card found:', card);
     
+    if (!card) {
+        showToast('Error: Could not find trip information', 'error');
+        return;
+    }
+    
+    // Check if user has emergency contacts
+    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    if (contacts.length === 0) {
+        showToast('Emergency contacts are required before joining trips! Please add at least one emergency contact.', 'warning');
+        // Open emergency contacts modal
+        setTimeout(() => {
+            openEmergencyContactsModal();
+        }, 1500);
+        return;
+    }
+    
     // Check if this is a past trip
     const dateElement = card.querySelector('.trip-details p:nth-child(2)');
     if (dateElement) {
@@ -1637,6 +1883,16 @@ async function joinTrip(btn) {
             showToast('Cannot join past trips! This trip has already passed.', 'error');
             return;
         }
+    }
+    
+    // Check if user is already in this trip
+    const joinedTrips = JSON.parse(localStorage.getItem('joined_trips') || '[]');
+    const destination = card.dataset.destination;
+    const isAlreadyJoined = joinedTrips.some(trip => trip.destination === destination);
+    
+    if (isAlreadyJoined) {
+        showToast('You are already part of this trip!', 'info');
+        return;
     }
     
     const seats = card.querySelector('.trip-details p:nth-child(4)');
@@ -2051,15 +2307,44 @@ function setupRefresh() {
             // Add loading animation
             refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
             refreshBtn.disabled = true;
+            refreshBtn.title = 'Refreshing...';
+            
+            // Show loading state
+            showLoadingState();
             
             // Reload trips
             setTimeout(() => {
                 loadTrips();
                 refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
                 refreshBtn.disabled = false;
+                refreshBtn.title = 'Refresh trips';
+                hideLoadingState();
+                showToast('Trips refreshed successfully', 'success');
             }, 1000);
         });
     }
+}
+
+function showLoadingState() {
+    const grids = ['tripsGrid', 'myTripsGrid', 'fullTripsGrid', 'pastTripsGrid'];
+    grids.forEach(gridId => {
+        const grid = document.getElementById(gridId);
+        if (grid) {
+            grid.style.opacity = '0.6';
+            grid.style.pointerEvents = 'none';
+        }
+    });
+}
+
+function hideLoadingState() {
+    const grids = ['tripsGrid', 'myTripsGrid', 'fullTripsGrid', 'pastTripsGrid'];
+    grids.forEach(gridId => {
+        const grid = document.getElementById(gridId);
+        if (grid) {
+            grid.style.opacity = '1';
+            grid.style.pointerEvents = 'auto';
+        }
+    });
 }
 
 function updateEmptyStates() {
@@ -2695,7 +2980,11 @@ function createExampleTripCard(tripData) {
     return card;
 }
 
-// Chat functionality
+// ========================================
+// CHAT SYSTEM
+// ========================================
+// Manages trip-specific chat functionality
+
 function openTripChat(destination, creator) {
     // Check if user has joined this trip
     const allTrips = [...document.querySelectorAll('.trip-card')];
