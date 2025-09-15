@@ -1,0 +1,15 @@
+body{background:linear-gradient(120deg,#fff5f5,#ffeaea)}
+.hero{background:linear-gradient(135deg,#dc3545,#b02a37);color:#fff;border-radius:16px;padding:32px}
+.filter-card{border:0;border-radius:14px;box-shadow:0 10px 30px rgba(220,53,69,.12)}
+.result-card{border:0;border-radius:14px;box-shadow:0 8px 24px rgba(220,53,69,.12)}
+.study-card{transition:transform .15s ease,box-shadow .15s ease}
+.study-card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.badge-soft{background:rgba(220,53,69,.1);color:#dc3545}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:.25rem .6rem;border-radius:999px;background:#f1f5f9;font-size:.8rem}
+.btn{border-radius:12px}
+.btn-primary{background-color:#dc3545;border-color:#dc3545}
+.btn-primary:hover{background-color:#bb2d3b;border-color:#b02a37}
+.btn-outline-secondary{border-color:#dc3545;color:#dc3545}
+.btn-outline-secondary:hover{background-color:#dc3545;color:#fff}
+.btn-sm{border-radius:10px}
+.btn-sm{padding:.5rem 1rem;font-size:.9rem}
