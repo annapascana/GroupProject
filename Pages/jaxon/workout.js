@@ -452,6 +452,10 @@ function viewBuddyProfile(buddyId) {
 
 // Profile creation
 function showCreateProfile() {
+    // Update modal title and button
+    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Your Workout Profile';
+    document.querySelector('#createProfileModal .btn-crimson').innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+    
     const modal = new bootstrap.Modal(document.getElementById('createProfileModal'));
     modal.show();
 }
@@ -465,21 +469,30 @@ function createProfile() {
         return;
     }
 
-    // Create user profile
+    // Check if this is an update or new profile
+    const isUpdate = currentUser !== null;
+
+    // Create user profile with all fields
     currentUser = {
         name: formData.get('profileName'),
         email: formData.get('profileEmail'),
         gender: formData.get('profileGender'),
         year: formData.get('profileYear'),
+        age: formData.get('profileAge'),
+        experience: formData.get('profileExperience'),
+        preferredTime: formData.get('profilePreferredTime'),
+        location: formData.get('profileLocation'),
         goals: [formData.get('profileGoals')],
-        bio: formData.get('profileBio')
+        bio: formData.get('profileBio'),
+        createdAt: isUpdate ? currentUser.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
 
     // Save to localStorage (in a real app, this would go to a database)
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
     // Show success message
-    showNotification('Profile created successfully! You can now search for workout buddies.', 'success');
+    showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
 
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('createProfileModal'));
@@ -487,6 +500,9 @@ function createProfile() {
 
     // Clear form
     form.reset();
+
+    // Display the profile
+    displayUserProfile();
 }
 
 function validateProfileForm() {
@@ -503,13 +519,7 @@ function validateProfileForm() {
         }
     });
 
-    // Validate email format
-    const email = document.getElementById('profileEmail');
-    const emailRegex = /^[^\s@]+@ua\.edu$/;
-    if (email.value && !emailRegex.test(email.value)) {
-        email.classList.add('is-invalid');
-        isValid = false;
-    }
+    // Email validation removed - all emails are considered valid
 
     return isValid;
 }
@@ -519,7 +529,87 @@ function loadUserProfile() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        displayUserProfile();
     }
+}
+
+// Display user profile
+function displayUserProfile() {
+    if (!currentUser) return;
+
+    const profileSection = document.getElementById('profileSection');
+    const profileContent = document.getElementById('profileContent');
+    
+    if (!profileSection || !profileContent) return;
+
+    // Show profile section
+    profileSection.style.display = 'block';
+
+    // Create profile content HTML
+    const profileHtml = `
+        <div class="profile-info-group">
+            <h6><i class="bi bi-person"></i> Personal Information</h6>
+            <p><strong>Name:</strong> ${currentUser.name}</p>
+            <p><strong>Email:</strong> ${currentUser.email}</p>
+            <p><strong>Age:</strong> ${currentUser.age || 'Not specified'}</p>
+            <p><strong>Gender:</strong> ${currentUser.gender ? currentUser.gender.charAt(0).toUpperCase() + currentUser.gender.slice(1) : 'Not specified'}</p>
+        </div>
+        
+        <div class="profile-info-group">
+            <h6><i class="bi bi-mortarboard"></i> Academic Information</h6>
+            <p><strong>Academic Year:</strong> ${currentUser.year ? currentUser.year.charAt(0).toUpperCase() + currentUser.year.slice(1) : 'Not specified'}</p>
+        </div>
+        
+        <div class="profile-info-group">
+            <h6><i class="bi bi-heart-pulse"></i> Fitness Information</h6>
+            <p><strong>Experience Level:</strong> ${currentUser.experience ? currentUser.experience.charAt(0).toUpperCase() + currentUser.experience.slice(1) : 'Not specified'}</p>
+            <p><strong>Primary Goal:</strong> ${currentUser.goals && currentUser.goals[0] ? currentUser.goals[0].replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Not specified'}</p>
+        </div>
+        
+        <div class="profile-info-group">
+            <h6><i class="bi bi-clock"></i> Preferences</h6>
+            <p><strong>Preferred Time:</strong> ${currentUser.preferredTime ? currentUser.preferredTime.charAt(0).toUpperCase() + currentUser.preferredTime.slice(1) : 'Not specified'}</p>
+            <p><strong>Preferred Location:</strong> ${currentUser.location ? currentUser.location.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Not specified'}</p>
+        </div>
+        
+        <div class="profile-bio">
+            <h6><i class="bi bi-chat-text"></i> Bio</h6>
+            <p>${currentUser.bio || 'No bio provided yet.'}</p>
+        </div>
+    `;
+
+    profileContent.innerHTML = profileHtml;
+
+    // Scroll to profile section
+    profileSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Edit profile function
+function editProfile() {
+    if (!currentUser) {
+        showCreateProfile();
+        return;
+    }
+
+    // Update modal title and button for editing
+    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Your Workout Profile';
+    document.querySelector('#createProfileModal .btn-crimson').innerHTML = '<i class="bi bi-check-circle me-2"></i>Update Profile';
+
+    // Populate form with existing data
+    document.getElementById('profileName').value = currentUser.name || '';
+    document.getElementById('profileEmail').value = currentUser.email || '';
+    document.getElementById('profileGender').value = currentUser.gender || '';
+    document.getElementById('profileYear').value = currentUser.year || '';
+    document.getElementById('profileAge').value = currentUser.age || '';
+    document.getElementById('profileExperience').value = currentUser.experience || '';
+    document.getElementById('profilePreferredTime').value = currentUser.preferredTime || '';
+    document.getElementById('profileLocation').value = currentUser.location || '';
+    document.getElementById('profileGoals').value = currentUser.goals && currentUser.goals[0] ? currentUser.goals[0] : '';
+    document.getElementById('profileBio').value = currentUser.bio || '';
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('createProfileModal'));
+    modal.show();
 }
 
 // Utility functions
@@ -607,5 +697,6 @@ window.connectWithBuddy = connectWithBuddy;
 window.viewBuddyProfile = viewBuddyProfile;
 window.showCreateProfile = showCreateProfile;
 window.createProfile = createProfile;
+window.editProfile = editProfile;
 window.scrollToSearch = scrollToSearch;
 window.clearFilters = clearFilters;

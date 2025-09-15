@@ -14,41 +14,6 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="workout.css">
-    
-    <!-- Dark Mode Toggle Script -->
-    <script>
-      // Dark mode functionality
-      function toggleDarkMode() {
-        const body = document.body;
-        const darkModeIcon = document.getElementById('darkModeIcon');
-        const darkModeText = document.getElementById('darkModeText');
-        
-        if (body.getAttribute('data-theme') === 'dark') {
-          body.removeAttribute('data-theme');
-          darkModeIcon.className = 'bi bi-moon-fill';
-          darkModeText.textContent = 'Dark Mode';
-          localStorage.setItem('theme', 'light');
-        } else {
-          body.setAttribute('data-theme', 'dark');
-          darkModeIcon.className = 'bi bi-sun-fill';
-          darkModeText.textContent = 'Light Mode';
-          localStorage.setItem('theme', 'dark');
-        }
-      }
-      
-      // Load saved theme on page load
-      document.addEventListener('DOMContentLoaded', function() {
-        const savedTheme = localStorage.getItem('theme');
-        const darkModeIcon = document.getElementById('darkModeIcon');
-        const darkModeText = document.getElementById('darkModeText');
-        
-        if (savedTheme === 'dark') {
-          document.body.setAttribute('data-theme', 'dark');
-          darkModeIcon.className = 'bi bi-sun-fill';
-          darkModeText.textContent = 'Light Mode';
-        }
-      });
-    </script>
 </head>
 <body>
     <!-- Navigation -->
@@ -74,14 +39,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="#" onclick="showCreateProfile()">
                             <i class="bi bi-person-circle me-1"></i>Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="toggleDarkMode()">
-                            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
-                            <span id="darkModeText">Dark Mode</span>
                         </a>
                     </li>
                 </ul>
@@ -116,6 +75,31 @@
                         <div class="hero-image">
                             <div class="workout-illustration">
                                 <i class="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Display Section -->
+        <section class="profile-section py-5" id="profileSection" style="display: none;">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="profile-card">
+                            <div class="profile-header">
+                                <h2 class="text-center mb-4">
+                                    <i class="bi bi-person-circle me-2"></i>Your Workout Profile
+                                </h2>
+                                <div class="text-center mb-4">
+                                    <button class="btn btn-outline-crimson" onclick="editProfile()">
+                                        <i class="bi bi-pencil me-2"></i>Edit Profile
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-content" id="profileContent">
+                                <!-- Profile content will be populated here -->
                             </div>
                         </div>
                     </div>
@@ -278,7 +262,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-crimson text-white">
-                        <h5 class="modal-title">
+                        <h5 class="modal-title" id="modalTitle">
                             <i class="bi bi-person-plus me-2"></i>Create Your Workout Profile
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -288,15 +272,15 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="profileName" class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="profileName" required>
+                                    <input type="text" class="form-control" id="profileName" name="profileName" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="profileEmail" class="form-label">UA Email</label>
-                                    <input type="email" class="form-control" id="profileEmail" placeholder="username@ua.edu" required>
+                                    <label for="profileEmail" class="form-label">Email</label>
+                                    <input type="text" class="form-control" id="profileEmail" name="profileEmail" placeholder="Enter your email" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="profileGender" class="form-label">Gender</label>
-                                    <select class="form-select" id="profileGender" required>
+                                    <select class="form-select" id="profileGender" name="profileGender" required>
                                         <option value="">Select Gender</option>
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
@@ -306,7 +290,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="profileYear" class="form-label">Academic Year</label>
-                                    <select class="form-select" id="profileYear" required>
+                                    <select class="form-select" id="profileYear" name="profileYear" required>
                                         <option value="">Select Year</option>
                                         <option value="freshman">Freshman</option>
                                         <option value="sophomore">Sophomore</option>
@@ -317,7 +301,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label for="profileGoals" class="form-label">Primary Workout Goals</label>
-                                    <select class="form-select" id="profileGoals" required>
+                                    <select class="form-select" id="profileGoals" name="profileGoals" required>
                                         <option value="">Select Primary Goal</option>
                                         <option value="weight-loss">Weight Loss</option>
                                         <option value="muscle-gain">Muscle Gain</option>
@@ -328,9 +312,43 @@
                                         <option value="sports-specific">Sports Specific</option>
                                     </select>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="profileAge" class="form-label">Age</label>
+                                    <input type="number" class="form-control" id="profileAge" name="profileAge" min="16" max="100" placeholder="Enter your age">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="profileExperience" class="form-label">Fitness Experience Level</label>
+                                    <select class="form-select" id="profileExperience" name="profileExperience">
+                                        <option value="">Select Experience Level</option>
+                                        <option value="beginner">Beginner (0-6 months)</option>
+                                        <option value="intermediate">Intermediate (6 months - 2 years)</option>
+                                        <option value="advanced">Advanced (2+ years)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="profilePreferredTime" class="form-label">Preferred Workout Time</label>
+                                    <select class="form-select" id="profilePreferredTime" name="profilePreferredTime">
+                                        <option value="">Select Preferred Time</option>
+                                        <option value="morning">Morning (6-10 AM)</option>
+                                        <option value="afternoon">Afternoon (12-4 PM)</option>
+                                        <option value="evening">Evening (5-9 PM)</option>
+                                        <option value="night">Night (9-11 PM)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="profileLocation" class="form-label">Preferred Workout Location</label>
+                                    <select class="form-select" id="profileLocation" name="profileLocation">
+                                        <option value="">Select Preferred Location</option>
+                                        <option value="student-recreation-center">Student Recreation Center</option>
+                                        <option value="foster-auditorium">Foster Auditorium</option>
+                                        <option value="coleman-coliseum">Coleman Coliseum</option>
+                                        <option value="outdoor-facilities">Outdoor Facilities</option>
+                                        <option value="off-campus-gyms">Off-Campus Gyms</option>
+                                    </select>
+                                </div>
                                 <div class="col-12">
                                     <label for="profileBio" class="form-label">Bio (Tell us about yourself and your fitness journey)</label>
-                                    <textarea class="form-control" id="profileBio" rows="3" placeholder="Share your fitness goals, interests, and what you're looking for in a workout buddy..."></textarea>
+                                    <textarea class="form-control" id="profileBio" name="profileBio" rows="3" placeholder="Share your fitness goals, interests, and what you're looking for in a workout buddy..."></textarea>
                                 </div>
                             </div>
                         </form>
