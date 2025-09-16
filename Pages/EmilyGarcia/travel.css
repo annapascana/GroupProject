@@ -668,6 +668,31 @@ body::before {
     box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
 }
 
+/* Full Trip Button Styling - Translucent and Disabled */
+.join-trip-btn.full-trip {
+    opacity: 0.4 !important;
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2) !important;
+    pointer-events: none !important;
+}
+
+.join-trip-btn.full-trip:hover {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2) !important;
+}
+
+.join-trip-btn.full-trip::before {
+    display: none !important;
+}
+
+.join-trip-btn.full-trip:active {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2) !important;
+}
+
 .chat-trip-btn {
     background: linear-gradient(135deg, #6c757d, #5a6268) !important;
     border: none !important;
@@ -854,6 +879,39 @@ body::before {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--crimson-primary);
+}
+
+/* Text Color Fixes for White Backgrounds */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Ensure proper contrast on white backgrounds */
+.travel-navbar .text-muted,
+.travel-header .text-muted,
+.search-section .text-muted,
+.analytics-dashboard .text-muted,
+.modal-content .text-muted,
+.custom-toast .text-muted {
+    color: #495057 !important;
+}
+
+/* Fix for empty state text on white backgrounds */
+.empty-state .text-muted,
+.loading-state .text-muted {
+    color: #495057 !important;
+}
+
+/* Fix for form labels and small text on white backgrounds */
+.form-label,
+small,
+.form-text {
+    color: #495057 !important;
+}
+
+/* Fix for dropdown text on white backgrounds */
+.dropdown-menu .text-muted {
+    color: #6c757d !important;
 }
 
 /* Dark Mode Styles */
@@ -1168,6 +1226,23 @@ body::before {
 
 [data-theme="dark"] .text-muted {
     color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .travel-navbar .text-muted,
+[data-theme="dark"] .travel-header .text-muted,
+[data-theme="dark"] .search-section .text-muted,
+[data-theme="dark"] .analytics-dashboard .text-muted,
+[data-theme="dark"] .modal-content .text-muted,
+[data-theme="dark"] .custom-toast .text-muted,
+[data-theme="dark"] .empty-state .text-muted,
+[data-theme="dark"] .loading-state .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .form-label,
+[data-theme="dark"] small,
+[data-theme="dark"] .form-text {
+    color: var(--text-primary) !important;
 }
 
 [data-theme="dark"] .text-primary {

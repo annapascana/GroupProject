@@ -222,10 +222,28 @@ class UserManager {
                 this.saveUser(user);
             }
             
+            // Trigger fresh start check for travel section
+            this.triggerTravelFreshStart(user);
+            
             return session;
         } catch (error) {
             console.error('Error creating session:', error);
             return null;
+        }
+    }
+
+    // Trigger fresh start for travel section when new user logs in
+    triggerTravelFreshStart(user) {
+        try {
+            // Check if travel page functions are available
+            if (typeof window.checkForFreshStart === 'function') {
+                window.checkForFreshStart(user);
+            } else {
+                // If travel functions aren't loaded yet, store the user ID for later check
+                localStorage.setItem('travel_pending_fresh_start', user.id);
+            }
+        } catch (error) {
+            console.error('Error triggering travel fresh start:', error);
         }
     }
 

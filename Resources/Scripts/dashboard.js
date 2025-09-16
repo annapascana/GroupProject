@@ -61,6 +61,8 @@ function updateUserInfo(session) {
 
 // Initialize all dashboard functionality
 function initializeDashboard() {
+    console.log('Initializing dashboard...');
+    
     setupNavigation();
     setupViewToggle();
     setupSearch();
@@ -74,6 +76,12 @@ function initializeDashboard() {
     setTimeout(() => {
         refreshUserInfo();
     }, 500);
+    
+    // Ensure favorites are loaded after everything is set up
+    setTimeout(() => {
+        console.log('Loading favorites...');
+        loadFavorites();
+    }, 100);
 }
 
 // Refresh user info from session
@@ -197,6 +205,19 @@ function updateViewButtons(isGridView) {
     }
 }
 
+// Debounce utility function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // Search Setup
 function setupSearch() {
     const searchInput = document.querySelector('.search-input');
@@ -245,6 +266,7 @@ function setupFilters() {
     setupTypeFilter();
     setupStatusFilter();
     setupItemsPerPage();
+    setupFavoritesFilter();
 }
 
 // Type filter setup
@@ -341,6 +363,69 @@ function updateFilterTag(text) {
     }
 }
 
+// Setup favorites filter
+function setupFavoritesFilter() {
+    // Add favorites filter button to the filter controls
+    const filterControls = document.querySelector('.filter-controls');
+    if (filterControls) {
+        const favoritesFilter = document.createElement('div');
+        favoritesFilter.className = 'dropdown';
+        favoritesFilter.innerHTML = `
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="favoritesFilterBtn">
+                <i class="bi bi-star"></i> Favorites
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" data-favorites="all">All Items</a></li>
+                <li><a class="dropdown-item" href="#" data-favorites="favorites">Favorites Only</a></li>
+            </ul>
+        `;
+        
+        filterControls.appendChild(favoritesFilter);
+        
+        // Add event listeners
+        const favoritesItems = favoritesFilter.querySelectorAll('[data-favorites]');
+        favoritesItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-favorites');
+                applyFavoritesFilter(filter);
+                
+                // Update button text
+                const btn = document.getElementById('favoritesFilterBtn');
+                if (btn) {
+                    const icon = filter === 'favorites' ? 'bi-star-fill' : 'bi-star';
+                    btn.innerHTML = `<i class="bi ${icon}"></i> ${filter === 'favorites' ? 'Favorites Only' : 'Favorites'}`;
+                }
+            });
+        });
+    }
+}
+
+// Apply favorites filter
+function applyFavoritesFilter(filter) {
+    const cards = document.querySelectorAll('.collaboration-card');
+    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    
+    cards.forEach(card => {
+        const cardCode = card.querySelector('.card-code').textContent;
+        const isFavorited = favorites.includes(cardCode);
+        
+        if (filter === 'all') {
+            card.style.display = 'block';
+            card.classList.add('fade-in');
+        } else if (filter === 'favorites') {
+            if (isFavorited) {
+                card.style.display = 'block';
+                card.classList.add('fade-in');
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+    
+    updateResultsCount();
+}
+
 // Update results count
 function updateResultsCount() {
     const visibleCards = document.querySelectorAll('.collaboration-card[style*="block"], .collaboration-card:not([style*="none"])');
@@ -362,9 +447,19 @@ function setupCardClicks() {
     const cards = document.querySelectorAll('.collaboration-card');
     
     cards.forEach(card => {
+        // Remove any existing onclick handlers
+        card.removeAttribute('onclick');
+        
         card.addEventListener('click', function(e) {
-            // Don't trigger if clicking on favorite button
-            if (e.target.closest('.btn-favorite')) {
+            // Don't trigger if clicking on favorite button or its children
+            if (e.target.closest('.btn-favorite') || e.target.classList.contains('btn-favorite')) {
+                console.log('Click on favorite button, not navigating');
+                return;
+            }
+            
+            // Don't trigger if clicking on the star icon itself
+            if (e.target.classList.contains('bi-star') || e.target.classList.contains('bi-star-fill')) {
+                console.log('Click on star icon, not navigating');
                 return;
             }
             
@@ -388,6 +483,28 @@ function setupCardClicks() {
                 console.log('Friend Match card clicked, navigating to friend match page...');
                 if (confirm('Go to Friend Match page?')) {
                     window.location.href = '../Pages/Anna/index.html';
+                }
+                return;
+            }
+            
+            // Special handling for workout card
+            if (cardType === 'workout') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Workout card clicked, navigating to workout page...');
+                if (confirm('Go to Workout page?')) {
+                    window.location.href = '../Pages/jaxon/workout.html';
+                }
+                return;
+            }
+            
+            // Special handling for study card
+            if (cardType === 'study') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Study card clicked, navigating to study page...');
+                if (confirm('Go to Study Group page?')) {
+                    window.location.href = '../Pages/Sofia/study.html';
                 }
                 return;
             }
@@ -448,26 +565,102 @@ function setupFavoriteButtons() {
     const favoriteButtons = document.querySelectorAll('.btn-favorite');
     
     favoriteButtons.forEach(button => {
+        // Remove any existing event listeners
+        button.removeEventListener('click', toggleFavorite);
+        
+        // Add click event listener with proper event handling
         button.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('Favorite button clicked - preventing navigation');
             toggleFavorite(this);
+            return false;
+        });
+        
+        // Also add mousedown event to prevent any other interactions
+        button.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Prevent any other mouse events from bubbling
+        button.addEventListener('mouseup', function(e) {
+            e.stopPropagation();
         });
     });
+    
+    // Load existing favorites on page load
+    loadFavorites();
+}
+
+// Load favorites from localStorage
+function loadFavorites() {
+    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    const cards = document.querySelectorAll('.collaboration-card');
+    
+    cards.forEach(card => {
+        const cardCode = card.querySelector('.card-code').textContent;
+        const favoriteButton = card.querySelector('.btn-favorite');
+        
+        if (favorites.includes(cardCode)) {
+            favoriteButton.classList.add('favorited');
+            favoriteButton.querySelector('i').className = 'bi bi-star-fill';
+        }
+    });
+}
+
+// Save favorites to localStorage
+function saveFavorites(favorites) {
+    localStorage.setItem('dashboard_favorites', JSON.stringify(favorites));
 }
 
 // Toggle favorite
 function toggleFavorite(button) {
-    const isFavorited = button.classList.contains('favorited');
+    console.log('toggleFavorite called');
+    
+    const card = button.closest('.collaboration-card');
+    if (!card) {
+        console.error('Could not find parent card');
+        return;
+    }
+    
+    const cardCodeElement = card.querySelector('.card-code');
+    if (!cardCodeElement) {
+        console.error('Could not find card-code element');
+        return;
+    }
+    
+    const cardCode = cardCodeElement.textContent;
     const icon = button.querySelector('i');
+    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    
+    console.log('Card code:', cardCode);
+    console.log('Current favorites:', favorites);
+    
+    const isFavorited = button.classList.contains('favorited');
+    console.log('Is favorited:', isFavorited);
     
     if (isFavorited) {
         button.classList.remove('favorited');
         icon.className = 'bi bi-star';
-        showNotification('Removed from favorites', 'info');
+        // Remove from favorites array
+        const index = favorites.indexOf(cardCode);
+        if (index > -1) {
+            favorites.splice(index, 1);
+        }
+        saveFavorites(favorites);
+        showNotification(`Removed "${cardCode}" from favorites`, 'info');
+        console.log('Removed from favorites');
     } else {
         button.classList.add('favorited');
         icon.className = 'bi bi-star-fill';
-        showNotification('Added to favorites', 'success');
+        // Add to favorites array
+        if (!favorites.includes(cardCode)) {
+            favorites.push(cardCode);
+        }
+        saveFavorites(favorites);
+        showNotification(`Added "${cardCode}" to favorites`, 'success');
+        console.log('Added to favorites');
     }
 }
 
@@ -645,3 +838,31 @@ const utils = {
 
 // Export utils for potential external use
 window.CrimsonCollabDashboard = utils;
+
+// Debug function to test favorites functionality
+window.testFavorites = function() {
+    console.log('Testing favorites functionality...');
+    const buttons = document.querySelectorAll('.btn-favorite');
+    console.log('Found', buttons.length, 'favorite buttons');
+    
+    buttons.forEach((button, index) => {
+        console.log(`Button ${index}:`, button);
+        const card = button.closest('.collaboration-card');
+        const cardCode = card ? card.querySelector('.card-code').textContent : 'Unknown';
+        console.log(`Card ${index} code:`, cardCode);
+    });
+    
+    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    console.log('Current favorites in localStorage:', favorites);
+};
+
+// Debug function to manually trigger favorite
+window.triggerFavorite = function(cardIndex = 0) {
+    const buttons = document.querySelectorAll('.btn-favorite');
+    if (buttons[cardIndex]) {
+        console.log('Triggering favorite for button', cardIndex);
+        toggleFavorite(buttons[cardIndex]);
+    } else {
+        console.error('Button not found at index', cardIndex);
+    }
+};

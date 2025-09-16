@@ -69,37 +69,13 @@ function calculateAnalytics(trips) {
 // Manages in-app notifications and alerts
 
 function setupNotifications() {
-    // Clean up any duplicate emergency contact notifications first
-    cleanupDuplicateEmergencyNotifications();
+    // Load notifications first, then check emergency contacts requirement
     loadNotifications();
+    checkEmergencyContactsRequirement();
     setInterval(checkForNewNotifications, 60000); // Check every minute
 }
 
-// Clean up duplicate emergency contact notifications
-function cleanupDuplicateEmergencyNotifications() {
-    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
-    const emergencyNotifications = notifications.filter(n => n.title === 'Emergency Contacts Required');
-    
-    if (emergencyNotifications.length > 1) {
-        // Remove all emergency contact notifications
-        const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
-        
-        // Add back just one
-        const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
-        if (contacts.length === 0) {
-            filteredNotifications.unshift({
-                id: Date.now().toString(),
-                title: 'Emergency Contacts Required',
-                message: 'Please add emergency contacts to your profile for safety.',
-                type: 'warning',
-                timestamp: new Date().toISOString(),
-                read: false
-            });
-        }
-        
-        localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
-    }
-}
+// Clean up duplicate emergency contact notifications (handled in checkEmergencyContactsRequirement)
 
 function loadNotifications() {
     const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
@@ -151,6 +127,14 @@ function displayNotifications(notifications) {
 
 function addNotification(title, message, type = 'info') {
     const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    
+    // Check if a notification with the same title already exists
+    const existingNotification = notifications.find(n => n.title === title);
+    if (existingNotification) {
+        console.log('Notification with title "' + title + '" already exists, skipping duplicate');
+        return;
+    }
+    
     const notification = {
         id: Date.now().toString(),
         title,
@@ -1182,6 +1166,8 @@ function loadUserProfile() {
             const currentUser = userManager.getCurrentUser();
             
             if (currentUser) {
+                // Check if this is a new user login (fresh start required)
+                checkForFreshStart(currentUser);
                 updateProfileDisplay(currentUser);
             } else {
                 // No user logged in, show default
@@ -1207,6 +1193,160 @@ function loadUserProfile() {
             lastName: '',
             email: 'student@ua.edu'
         });
+    }
+}
+
+// Check if fresh start is needed for new user login
+function checkForFreshStart(currentUser) {
+    const lastUserId = localStorage.getItem('travel_last_user_id');
+    const currentUserId = currentUser.id;
+    
+    // If this is a different user or first time, clear all travel data
+    if (lastUserId !== currentUserId) {
+        console.log('New user detected, clearing travel data for fresh start');
+        clearAllTravelData();
+        localStorage.setItem('travel_last_user_id', currentUserId);
+        showToast('Welcome! Starting fresh for your travel experience.', 'info');
+    }
+    
+    // Clear any pending fresh start request
+    localStorage.removeItem('travel_pending_fresh_start');
+}
+
+// Make function globally available for userManager
+window.checkForFreshStart = checkForFreshStart;
+
+// Manual trigger for testing fresh start (can be called from browser console)
+window.triggerFreshStart = function() {
+    console.log('Manually triggering fresh start...');
+    clearAllTravelData();
+    localStorage.removeItem('travel_last_user_id');
+    showToast('Fresh start triggered manually!', 'info');
+};
+
+// Check for pending fresh start requests (when userManager triggers before travel.js loads)
+function checkPendingFreshStart() {
+    const pendingUserId = localStorage.getItem('travel_pending_fresh_start');
+    if (pendingUserId) {
+        const lastUserId = localStorage.getItem('travel_last_user_id');
+        if (lastUserId !== pendingUserId) {
+            console.log('Pending fresh start detected, clearing travel data');
+            clearAllTravelData();
+            localStorage.setItem('travel_last_user_id', pendingUserId);
+            showToast('Welcome! Starting fresh for your travel experience.', 'info');
+        }
+        localStorage.removeItem('travel_pending_fresh_start');
+    }
+}
+
+// Clear all travel-related data for fresh start
+function clearAllTravelData() {
+    try {
+        // Clear all travel-related localStorage keys
+        const travelKeys = [
+            'travel_notifications',
+            'travel_theme',
+            'travel_groups',
+            'user_emergency_contacts',
+            'social_posts',
+            'trip_groups',
+            'ua_trips',
+            'example_trips_loaded',
+            'example_trips',
+            'travel_search_history',
+            'travel_filters',
+            'travel_chat_messages',
+            'travel_analytics_cache',
+            'travel_user_preferences',
+            'travel_safety_checklist',
+            'travel_pwa_installed'
+        ];
+        
+        travelKeys.forEach(key => {
+            localStorage.removeItem(key);
+        });
+        
+        // Clear any cached elements
+        if (window.elementCache) {
+            window.elementCache.clear();
+        }
+        
+        // Reset UI state
+        resetUIState();
+        
+        console.log('All travel data cleared for fresh start');
+    } catch (error) {
+        console.error('Error clearing travel data:', error);
+    }
+}
+
+// Reset UI state to initial condition
+function resetUIState() {
+    try {
+        // Clear search input
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Clear filter selects
+        const tripTypeFilter = document.getElementById('tripTypeFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        if (tripTypeFilter) tripTypeFilter.value = 'all';
+        if (sortFilter) sortFilter.value = 'date';
+        
+        // Clear filter tags
+        const activeFilters = document.getElementById('activeFilters');
+        if (activeFilters) {
+            activeFilters.innerHTML = '';
+        }
+        
+        // Clear notification badge
+        const notificationBadge = document.getElementById('notificationBadge');
+        if (notificationBadge) {
+            notificationBadge.style.display = 'none';
+        }
+        
+        // Reset theme to light
+        setTheme('light');
+        
+        // Clear any open modals
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        });
+        
+        // Clear trip grids
+        const grids = ['tripsGrid', 'myTripsGrid', 'pastTripsGrid', 'fullTripsGrid'];
+        grids.forEach(gridId => {
+            const grid = document.getElementById(gridId);
+            if (grid) {
+                grid.innerHTML = '';
+            }
+        });
+        
+        // Reset tab badges
+        const badges = ['availableTripsBadge', 'myTripsBadge', 'pastTripsBadge', 'fullTripsBadge'];
+        badges.forEach(badgeId => {
+            const badge = document.getElementById(badgeId);
+            if (badge) {
+                badge.textContent = '0';
+            }
+        });
+        
+        // Reset analytics
+        updateElement('resultsCount', '0 trips found');
+        updateElement('activeTripsCount', '0 active');
+        updateElement('myTripsCount', '0 my trips');
+        updateElement('avgCost', '$0 avg cost');
+        updateElement('totalSavings', '$0 saved');
+        
+        console.log('UI state reset to initial condition');
+    } catch (error) {
+        console.error('Error resetting UI state:', error);
     }
 }
 
@@ -1459,6 +1599,9 @@ function setupAutoUpdates() {
 }
 
 function initializeApp() {
+    // Check for pending fresh start requests first
+    checkPendingFreshStart();
+    
     setupSearch();
     setupFilter();
     setupCreateTrip();
@@ -1466,11 +1609,8 @@ function initializeApp() {
     setupRefresh();
     loadUserProfile();
     
-    // Check emergency contacts requirement
-    checkEmergencyContactsRequirement();
-    
     setupAnalytics();
-    setupNotifications();
+    setupNotifications(); // This will call checkEmergencyContactsRequirement()
     setupThemeToggle();
     setupFloatingActionButton();
     setupPWA();
@@ -1870,6 +2010,13 @@ async function joinTrip(btn) {
         return;
     }
     
+    // Check if trip is full (button has full-trip class)
+    if (btn.classList.contains('full-trip')) {
+        console.log('Trip is full, cannot join');
+        showToast('Sorry, this trip is full!', 'warning');
+        return;
+    }
+    
     // Check if this is a past trip
     const dateElement = card.querySelector('.trip-details p:nth-child(2)');
     if (dateElement) {
@@ -2131,9 +2278,45 @@ function removeParticipant(card) {
 
 function updateBadge(card, seats) {
     const badge = card.querySelector('.badge');
-    if(seats===0){badge.textContent='Full'; badge.className='badge bg-danger';}
-    else if(seats<=2){badge.textContent='Almost Full'; badge.className='badge bg-warning';}
-    else{badge.textContent='Open'; badge.className='badge bg-primary';}
+    const joinBtn = card.querySelector('.join-trip-btn');
+    
+    if(seats===0){
+        badge.textContent='Full'; 
+        badge.className='badge bg-danger';
+        // Add full-trip class to make button translucent
+        if(joinBtn && !joinBtn.classList.contains('joined')){
+            joinBtn.classList.add('full-trip');
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Trip Full';
+            joinBtn.title = 'Trip is full';
+        }
+    }
+    else if(seats<=2){
+        badge.textContent='Almost Full'; 
+        badge.className='badge bg-warning';
+        // Remove full-trip class if it exists
+        if(joinBtn){
+            joinBtn.classList.remove('full-trip');
+            joinBtn.disabled = false;
+            if(!joinBtn.classList.contains('joined')){
+                joinBtn.textContent = 'Join Trip';
+                joinBtn.title = '';
+            }
+        }
+    }
+    else{
+        badge.textContent='Open'; 
+        badge.className='badge bg-primary';
+        // Remove full-trip class if it exists
+        if(joinBtn){
+            joinBtn.classList.remove('full-trip');
+            joinBtn.disabled = false;
+            if(!joinBtn.classList.contains('joined')){
+                joinBtn.textContent = 'Join Trip';
+                joinBtn.title = '';
+            }
+        }
+    }
 }
 
 function filterTrips(term){
@@ -2940,7 +3123,9 @@ function createExampleTripCard(tripData) {
     // Create join button based on trip status
     const joinButton = isPastTrip ? 
         '<button class="btn btn-secondary btn-sm" disabled title="Cannot join past trips">Past Trip</button>' :
-        '<button class="btn btn-success btn-sm join-trip-btn">Join Trip</button>';
+        tripData.availableSeats === 0 ? 
+            '<button class="btn btn-success btn-sm join-trip-btn full-trip" disabled title="Trip is full">Trip Full</button>' :
+            '<button class="btn btn-success btn-sm join-trip-btn">Join Trip</button>';
     
     card.innerHTML = `
         <div class="trip-header">
