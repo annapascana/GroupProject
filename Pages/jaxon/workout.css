@@ -2,10 +2,10 @@
 
 /* Root Variables */
 :root {
-  --crimson-primary: #dc143c;
-  --crimson-dark: #b71c1c;
-  --crimson-light: #ff6b6b;
-  --crimson-gradient: linear-gradient(135deg, #dc143c 0%, #b71c1c 100%);
+  --crimson-primary: #9E1B32;
+  --crimson-dark: #7A1528;
+  --crimson-light: #C22B4A;
+  --crimson-gradient: linear-gradient(135deg, #9E1B32 0%, #7A1528 100%);
   --white: #ffffff;
   --light-gray: #f8f9fa;
   --medium-gray: #6c757d;

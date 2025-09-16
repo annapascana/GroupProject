@@ -2,12 +2,12 @@
 
 /* Root Variables */
 :root {
-  --crimson-primary: #dc143c;
-  --crimson-dark: #b71c1c;
-  --crimson-light: #ff6b6b;
+  --crimson-primary: #9E1B32;
+  --crimson-dark: #7A1528;
+  --crimson-light: #C22B4A;
   --sidebar-bg: #2c2c2c;
   --sidebar-hover: #3a3a3a;
-  --sidebar-active: #dc143c;
+  --sidebar-active: #9E1B32;
   --main-bg: #f8f9fa;
   --card-bg: #ffffff;
   --text-primary: #2c3e50;
@@ -422,7 +422,7 @@ body {
 
 .card-status.closed {
   background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  color: #9E1B32;
 }
 
 .card-status.full {
@@ -862,7 +862,7 @@ body {
 
 [data-theme="dark"] .card-status.closed {
   background: rgba(220, 53, 69, 0.2);
-  color: #f87171;
+  color: #C22B4A;
 }
 
 [data-theme="dark"] .card-status.full {

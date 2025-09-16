@@ -3345,7 +3345,7 @@ function setupChatInput() {
         } else if (!message) {
             // Show brief feedback for empty message
             chatInput.placeholder = 'Please enter a message...';
-            chatInput.style.borderColor = '#dc3545';
+            chatInput.style.borderColor = '#9E1B32';
             setTimeout(() => {
                 chatInput.placeholder = 'Type your message...';
                 chatInput.style.borderColor = '';

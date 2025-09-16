@@ -1,9 +1,9 @@
 :root {
-    --crimson-primary: #dc143c;
-    --crimson-dark: #b71c1c;
-    --crimson-light: #ff6b7a;
-    --crimson-gradient: linear-gradient(135deg, #dc143c, #b71c1c);
-    --crimson-gradient-light: linear-gradient(135deg, #ff6b7a, #dc143c);
+    --crimson-primary: #9E1B32;
+    --crimson-dark: #7A1528;
+    --crimson-light: #C22B4A;
+    --crimson-gradient: linear-gradient(135deg, #9E1B32, #7A1528);
+    --crimson-gradient-light: linear-gradient(135deg, #C22B4A, #9E1B32);
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
     --text-light: #8e9aaf;
@@ -11,7 +11,7 @@
     --success-light: #d4edda;
     --warning-color: #ffc107;
     --warning-light: #fff3cd;
-    --danger-color: #dc3545;
+    --danger-color: #9E1B32;
     --danger-light: #f8d7da;
     --info-color: #17a2b8;
     --info-light: #d1ecf1;
@@ -739,7 +739,7 @@ body::before {
 }
 
 .badge.bg-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    background: linear-gradient(135deg, #9E1B32, #7A1528) !important;
 }
 
 /* Trip Type Icons Enhancement */
@@ -808,16 +808,16 @@ body::before {
 
 /* Delete Trip Button Styling */
 .delete-trip-btn {
-    background: #dc3545 !important; /* Red delete button */
-    border-color: #dc3545 !important;
+    background: #9E1B32 !important; /* Red delete button */
+    border-color: #9E1B32 !important;
     color: white !important;
     margin-left: 0.5rem;
     transition: all 0.3s ease;
 }
 
 .delete-trip-btn:hover {
-    background: #c82333 !important;
-    border-color: #bd2130 !important;
+    background: #7A1528 !important;
+    border-color: #5A0F1C !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
@@ -922,8 +922,8 @@ small,
     --text-secondary: #b0b0b0;
     --card-bg: #2d2d2d;
     --border-color: #404040;
-    --crimson-primary: #DC143C;
-    --crimson-dark: #B22222;
+    --crimson-primary: #9E1B32;
+    --crimson-dark: #7A1528;
 }
 
 [data-theme="dark"] body {
@@ -1079,18 +1079,18 @@ small,
 }
 
 [data-theme="dark"] .notification-item .btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background-color: #9E1B32;
+    border-color: #9E1B32;
     color: white;
 }
 
 [data-theme="dark"] #clearAllBtn {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: linear-gradient(135deg, #9E1B32, #7A1528);
     color: white;
 }
 
 [data-theme="dark"] #clearAllBtn:hover {
-    background: linear-gradient(135deg, #c82333, #bd2130);
+    background: linear-gradient(135deg, #7A1528, #5A0F1C);
 }
 
 [data-theme="dark"] .trip-group-card {
@@ -1266,7 +1266,7 @@ small,
 }
 
 [data-theme="dark"] .text-danger {
-    color: #dc3545 !important;
+    color: #9E1B32 !important;
 }
 
 [data-theme="dark"] .border {
@@ -1403,15 +1403,15 @@ small,
 }
 
 .notification-item .btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background-color: #9E1B32;
+    border-color: #9E1B32;
     color: white;
     transform: scale(1.05);
 }
 
 /* Clear All Button Styling */
 #clearAllBtn {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: linear-gradient(135deg, #9E1B32, #7A1528);
     border: none;
     color: white;
     font-weight: 500;
@@ -1419,7 +1419,7 @@ small,
 }
 
 #clearAllBtn:hover {
-    background: linear-gradient(135deg, #c82333, #bd2130);
+    background: linear-gradient(135deg, #7A1528, #5A0F1C);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
@@ -2464,7 +2464,7 @@ small,
     color: #721c24;
     padding: 1rem;
     border-radius: 10px;
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid #9E1B32;
     margin: 1rem 0;
 }
 
@@ -2576,11 +2576,11 @@ small,
 }
 
 .custom-toast.error {
-    border-left-color: #dc3545;
+    border-left-color: #9E1B32;
 }
 
 .custom-toast.error .toast-header {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    background: linear-gradient(135deg, #9E1B32, #C22B4A);
 }
 
 .custom-toast.info {

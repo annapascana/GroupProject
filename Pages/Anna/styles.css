@@ -1,6 +1,6 @@
 /* CSS Variables */
 :root {
-  --primary-color: #dc143c;
+  --primary-color: #9E1B32;
   --primary-dark: #b0112e;
   --secondary-color: #6c757d;
   --success-color: #28a745;
@@ -8,7 +8,7 @@
   --info-color: #17a2b8;
   --light-color: #f8f9fa;
   --dark-color: #343a40;
-  --crimson-gradient: linear-gradient(135deg, #dc143c 0%, #b0112e 100%);
+  --crimson-gradient: linear-gradient(135deg, #9E1B32 0%, #7A1528 100%);
 }
 
 /* Global Styles */
@@ -566,13 +566,13 @@ body {
 }
 
 .btn-outline-danger {
-  border: 2px solid #dc3545;
-  color: #dc3545;
+  border: 2px solid #9E1B32;
+  color: #9E1B32;
   background: transparent;
 }
 
 .btn-outline-danger:hover {
-  background: #dc3545;
+  background: #9E1B32;
   color: white;
 }
 
