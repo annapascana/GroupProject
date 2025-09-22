@@ -12,6 +12,16 @@ function checkProfileStatus() {
     console.log('Profile exists:', hasProfile);
     
     if (hasProfile) {
+        // Check if this is a new profile (just created)
+        const profileData = JSON.parse(localStorage.getItem('uaFriendMatch_profileData') || '{}');
+        const isNewProfile = profileData.isNewProfile === true;
+        
+        if (isNewProfile) {
+            // Mark profile as no longer new
+            profileData.isNewProfile = false;
+            localStorage.setItem('uaFriendMatch_profileData', JSON.stringify(profileData));
+        }
+        
         showMainApp();
     } else {
         showProfileCreation();
@@ -70,6 +80,11 @@ function showSection(sectionId) {
     
     // Update active nav link
     updateActiveNavLink(sectionId);
+    
+    // Initialize messages display if showing messages section
+    if (sectionId === 'messages') {
+        initializeMessagesDisplay();
+    }
 }
 
 // Update active navigation link
@@ -170,8 +185,11 @@ function saveProfile() {
         year,
         bio,
         interests,
-        lookingFor
+        lookingFor,
+        isNewProfile: true  // Mark as new profile
     };
+    
+    console.log('Profile created for new user');
     
     // Save to localStorage
     localStorage.setItem('uaFriendMatch_profileCreated', 'true');
@@ -224,94 +242,436 @@ function findMatches() {
     showNotification('Finding potential matches...', 'info');
     
     setTimeout(() => {
-        showNotification('Found 5 potential matches! Check out the Quick Match section.', 'success');
+        generatePotentialMatches();
+        showNotification('Found potential matches! Check them out below.', 'success');
     }, 2000);
 }
 
-function viewConnections() {
-    showNotification('Loading your connections...', 'info');
+// Generate potential matches in the Potential Matches section
+function generatePotentialMatches() {
+    const container = document.getElementById('potentialMatchesContainer');
+    if (!container) return;
     
-    setTimeout(() => {
-        showSection('matches');
-        showNotification('Showing your current connections.', 'success');
-    }, 1000);
+    // Clear existing content
+    container.innerHTML = '';
+    
+    // Generate 3-5 random potential matches
+    const numMatches = Math.floor(Math.random() * 3) + 3; // 3-5 matches
+    const matches = [];
+    
+    for (let i = 0; i < numMatches; i++) {
+        matches.push(getRandomMatch());
+    }
+    
+    // Create matches grid
+    const matchesGrid = document.createElement('div');
+    matchesGrid.className = 'potential-matches-grid';
+    matchesGrid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    `;
+    
+    matches.forEach(match => {
+        const matchCard = createPotentialMatchCard(match);
+        matchesGrid.appendChild(matchCard);
+    });
+    
+    container.appendChild(matchesGrid);
 }
 
-function likeMatch(matchId) {
-    showNotification(`You liked ${matchId}!`, 'success');
+// Create a potential match card
+function createPotentialMatchCard(match) {
+    const card = document.createElement('div');
+    card.className = 'potential-match-card';
+    card.style.cssText = `
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: all 0.3s ease;
+    `;
     
-    setTimeout(() => {
-        showNotification('It\'s a match! You can now message each other.', 'success');
-        moveToMatches(matchId);
-        hideQuickMatch();
-    }, 1000);
+    card.innerHTML = `
+        <div class="match-avatar" style="
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #dc143c 0%, #b0112e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+        ">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="match-info">
+            <h4 style="color: #343a40; font-weight: 600; margin-bottom: 0.5rem;">${match.name}</h4>
+            <p class="text-muted" style="margin-bottom: 1rem;">${match.major} • ${match.year}</p>
+            <div class="interests" style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                ${match.interests.map(interest => `<span class="badge bg-primary">${interest}</span>`).join('')}
+            </div>
+        </div>
+        <div class="match-actions" style="display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn btn-success" onclick="likePotentialMatch('${match.id}')" style="
+                min-width: 100px;
+                padding: 0.5rem 1rem;
+                font-weight: 600;
+                border-radius: 25px;
+            ">
+                <i class="bi bi-heart-fill"></i> Like
+            </button>
+            <button class="btn btn-outline-secondary" onclick="passPotentialMatch('${match.id}')" style="
+                min-width: 100px;
+                padding: 0.5rem 1rem;
+                font-weight: 600;
+                border-radius: 25px;
+            ">
+                <i class="bi bi-x"></i> Pass
+            </button>
+        </div>
+    `;
+    
+    // Add hover effect
+    card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-5px)';
+        card.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.15)';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
+    });
+    
+    return card;
 }
 
-function passMatch(matchId) {
-    showNotification(`You passed on ${matchId}.`, 'info');
-    hideQuickMatch();
+// Handle liking a potential match
+function likePotentialMatch(matchId) {
+    console.log('User liked potential match:', matchId);
     
-    setTimeout(() => {
-        showNotification('Loading next potential match...', 'info');
-        loadNextQuickMatch();
-    }, 1000);
-}
-
-function hideQuickMatch() {
-    const quickMatchCard = document.querySelector('.quick-match-card');
-    if (quickMatchCard) {
-        quickMatchCard.style.opacity = '0';
-        quickMatchCard.style.transform = 'translateY(-20px)';
+    // Find the match card that was liked
+    const matchCards = document.querySelectorAll('.potential-match-card');
+    let matchData = null;
+    
+    matchCards.forEach(card => {
+        const likeButton = card.querySelector(`button[onclick*="${matchId}"]`);
+        if (likeButton) {
+            const nameElement = card.querySelector('h4');
+            const detailsElement = card.querySelector('.text-muted');
+            const interestsElements = card.querySelectorAll('.badge');
+            
+            if (nameElement && detailsElement) {
+                const name = nameElement.textContent;
+                const details = detailsElement.textContent;
+                const [major, year] = details.split(' • ');
+                const interests = Array.from(interestsElements).map(el => el.textContent.trim());
+                
+                matchData = {
+                    id: matchId,
+                    name: name,
+                    major: major,
+                    year: year,
+                    interests: interests,
+                    likedAt: new Date().toISOString() // Add timestamp for verification
+                };
+            }
+        }
+    });
+    
+    if (matchData) {
+        showNotification(`You liked ${matchData.name}!`, 'success');
+        
         setTimeout(() => {
-            quickMatchCard.style.display = 'none';
-        }, 300);
+            showNotification('It\'s a match! You can now message each other.', 'success');
+            addMatchedUser(matchData);
+            removePotentialMatchCard(matchId);
+        }, 1000);
+    } else {
+        console.error('Could not find match data for ID:', matchId);
+        showNotification('Error: Could not process your like. Please try again.', 'danger');
     }
 }
 
-function loadNextQuickMatch() {
-    const quickMatchCard = document.querySelector('.quick-match-card');
-    if (quickMatchCard) {
-        // Show loading state
-        quickMatchCard.innerHTML = `
+// Handle passing on a potential match
+function passPotentialMatch(matchId) {
+    showNotification(`You passed on this match.`, 'info');
+    removePotentialMatchCard(matchId);
+}
+
+// Remove a potential match card from the display
+function removePotentialMatchCard(matchId) {
+    const matchCards = document.querySelectorAll('.potential-match-card');
+    matchCards.forEach(card => {
+        const likeButton = card.querySelector(`button[onclick*="${matchId}"]`);
+        if (likeButton) {
+            // Add fade out animation
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                card.remove();
+                checkIfNoMoreMatches();
+            }, 500);
+        }
+    });
+}
+
+// Check if there are no more potential matches and show empty state
+function checkIfNoMoreMatches() {
+    const container = document.getElementById('potentialMatchesContainer');
+    const remainingCards = container.querySelectorAll('.potential-match-card');
+    
+    if (remainingCards.length === 0) {
+        container.innerHTML = `
             <div class="text-center">
-                <div class="spinner-border text-primary mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                <div class="empty-potential-matches">
+                    <div class="empty-icon mb-3">
+                        <i class="bi bi-people" style="font-size: 4rem; color: #dc143c; opacity: 0.3;"></i>
+                    </div>
+                    <h4 class="text-muted">No more potential matches</h4>
+                    <p class="text-muted">Click "Find Matches" again to discover more people!</p>
                 </div>
-                <p>Finding your next match...</p>
             </div>
         `;
-        quickMatchCard.style.display = 'block';
-        quickMatchCard.style.opacity = '1';
-        quickMatchCard.style.transform = 'translateY(0)';
-        
-        // Simulate loading new match
-        setTimeout(() => {
-            const newMatch = getRandomMatch();
-            quickMatchCard.innerHTML = `
-                <div class="match-profile">
-                    <div class="profile-avatar">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                    <div class="profile-info">
-                        <h4>${newMatch.name}</h4>
-                        <p class="text-muted">${newMatch.major} • ${newMatch.year}</p>
-                        <div class="interests">
-                            ${newMatch.interests.map(interest => `<span class="badge bg-primary">${interest}</span>`).join('')}
-                        </div>
-                    </div>
-                </div>
-                <div class="match-actions">
-                    <button class="btn btn-success btn-lg" onclick="likeMatch('${newMatch.id}')">
-                        <i class="bi bi-heart-fill"></i> Like
-                    </button>
-                    <button class="btn btn-outline-secondary btn-lg" onclick="passMatch('${newMatch.id}')">
-                        <i class="bi bi-x"></i> Pass
-                    </button>
-                </div>
-            `;
-        }, 2000);
     }
 }
+
+function viewConnections() {
+    showNotification('Loading your messages...', 'info');
+    
+    setTimeout(() => {
+        showSection('messages');
+        initializeMessagesDisplay();
+        showNotification('Showing your messages.', 'success');
+    }, 1000);
+}
+
+// Add a matched user to the list
+function addMatchedUser(matchData) {
+    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    
+    // Check if user already exists
+    const existingUser = matchedUsers.find(user => user.id === matchData.id);
+    if (!existingUser) {
+        matchedUsers.push({
+            ...matchData,
+            matchedAt: new Date().toISOString(),
+            messages: []
+        });
+        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        console.log('Added matched user:', matchData.name);
+    }
+}
+
+// Initialize messages display
+function initializeMessagesDisplay() {
+    const matchedUsersList = document.getElementById('matchedUsersList');
+    if (!matchedUsersList) return;
+    
+    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    
+    if (matchedUsers.length === 0) {
+        matchedUsersList.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-heart" style="font-size: 2rem; opacity: 0.3;"></i>
+                <p class="mt-2">No matches yet</p>
+                <small>Like someone to start messaging!</small>
+            </div>
+        `;
+    } else {
+        matchedUsersList.innerHTML = '';
+        matchedUsers.forEach(user => {
+            const userItem = createMatchedUserItem(user);
+            matchedUsersList.appendChild(userItem);
+        });
+    }
+}
+
+// Create a matched user item
+function createMatchedUserItem(user) {
+    const item = document.createElement('div');
+    item.className = 'matched-user-item';
+    item.onclick = () => selectUserToMessage(user);
+    
+    item.innerHTML = `
+        <div class="matched-user-avatar">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="matched-user-info">
+            <h6>${user.name}</h6>
+            <p>${user.major} • ${user.year}</p>
+        </div>
+    `;
+    
+    return item;
+}
+
+// Select a user to message
+function selectUserToMessage(user) {
+    // Remove active class from all items
+    document.querySelectorAll('.matched-user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to selected item
+    event.currentTarget.classList.add('active');
+    
+    // Show chat interface
+    showChatInterface(user);
+}
+
+// Show chat interface for selected user
+function showChatInterface(user) {
+    const chatArea = document.getElementById('chatArea');
+    if (!chatArea) return;
+    
+    chatArea.innerHTML = `
+        <div class="chat-header">
+            <div class="chat-header-avatar">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="chat-header-info">
+                <h5>${user.name}</h5>
+                <p>${user.major} • ${user.year}</p>
+            </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            ${renderMessages(user.messages || [])}
+        </div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." onkeypress="handleMessageKeyPress(event, '${user.id}')">
+            <button class="send-button" onclick="sendMessage('${user.id}')">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    `;
+    
+    // Scroll to bottom of messages
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+// Render messages
+function renderMessages(messages) {
+    if (messages.length === 0) {
+        return `
+            <div class="text-center text-muted">
+                <p>No messages yet. Start the conversation!</p>
+            </div>
+        `;
+    }
+    
+    return messages.map(message => `
+        <div class="message ${message.sender === 'user' ? 'message-sent' : 'message-received'}">
+            <div class="message-content">
+                <p>${message.text}</p>
+                <small class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Handle message input key press
+function handleMessageKeyPress(event, userId) {
+    if (event.key === 'Enter') {
+        sendMessage(userId);
+    }
+}
+
+// Send a message
+function sendMessage(userId) {
+    const messageInput = document.getElementById('messageInput');
+    const messageText = messageInput.value.trim();
+    
+    if (!messageText) return;
+    
+    // Get matched users
+    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const user = matchedUsers.find(u => u.id === userId);
+    
+    if (user) {
+        // Add message to user's messages
+        if (!user.messages) user.messages = [];
+        user.messages.push({
+            text: messageText,
+            sender: 'user',
+            timestamp: new Date().toISOString()
+        });
+        
+        // Save back to localStorage
+        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        
+        // Clear input
+        messageInput.value = '';
+        
+        // Re-render messages
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.innerHTML = renderMessages(user.messages);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Simulate response after a delay
+        setTimeout(() => {
+            simulateResponse(userId);
+        }, 1000 + Math.random() * 2000);
+    }
+}
+
+// Simulate a response from the matched user
+function simulateResponse(userId) {
+    const responses = [
+        "Hey! How are you doing?",
+        "That sounds great!",
+        "I'd love to hang out sometime!",
+        "What are you up to this weekend?",
+        "That's so cool!",
+        "I'm doing well, thanks for asking!",
+        "Want to grab coffee sometime?",
+        "I'm free this afternoon if you want to meet up!",
+        "That's awesome!",
+        "I'm really excited to get to know you better!"
+    ];
+    
+    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const user = matchedUsers.find(u => u.id === userId);
+    
+    if (user) {
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        if (!user.messages) user.messages = [];
+        user.messages.push({
+            text: randomResponse,
+            sender: 'match',
+            timestamp: new Date().toISOString()
+        });
+        
+        // Save back to localStorage
+        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        
+        // Re-render messages
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.innerHTML = renderMessages(user.messages);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+}
+
 
 function getRandomMatch() {
     const matches = [
@@ -348,42 +708,6 @@ function getRandomMatch() {
     return matches[Math.floor(Math.random() * matches.length)];
 }
 
-function moveToMatches(matchId) {
-    const matchesGrid = document.querySelector('.matches-grid');
-    if (matchesGrid) {
-        const matchData = getRandomMatch();
-        const newMatchCard = document.createElement('div');
-        newMatchCard.className = 'match-card';
-        newMatchCard.innerHTML = `
-            <div class="match-avatar">
-                <i class="bi bi-person-circle"></i>
-            </div>
-            <div class="match-info">
-                <h4>${matchData.name}</h4>
-                <p class="text-muted">${matchData.major} • ${matchData.year}</p>
-                <div class="interests">
-                    ${matchData.interests.map(interest => `<span class="badge bg-primary">${interest}</span>`).join('')}
-                </div>
-            </div>
-            <div class="match-actions">
-                <button class="btn btn-primary" onclick="messageMatch('${matchData.id}')">
-                    <i class="bi bi-chat"></i> Message
-                </button>
-            </div>
-        `;
-        
-        matchesGrid.appendChild(newMatchCard);
-        
-        // Add animation
-        newMatchCard.style.opacity = '0';
-        newMatchCard.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            newMatchCard.style.transition = 'all 0.5s ease';
-            newMatchCard.style.opacity = '1';
-            newMatchCard.style.transform = 'translateY(0)';
-        }, 100);
-    }
-}
 
 function messageMatch(matchId) {
     showNotification(`Opening conversation with ${matchId}...`, 'info');

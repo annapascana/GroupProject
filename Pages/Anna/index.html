@@ -43,11 +43,6 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" onclick="showSection('matches')">
-                <i class="bi bi-heart me-1"></i>My Matches
-              </a>
-            </li>
-            <li class="nav-item">
               <a class="nav-link" href="#" onclick="showSection('messages')">
                 <i class="bi bi-chat me-1"></i>Messages
               </a>
@@ -227,38 +222,23 @@
                   </div>
                   <h3>My Connections</h3>
                   <p>View your current friends and connections.</p>
-                  <button class="btn btn-secondary" onclick="viewConnections()">View Connections</button>
+                  <button class="btn btn-secondary" onclick="viewConnections()">View Messages</button>
                 </div>
               </div>
             </div>
             
-            <!-- Quick Match Section -->
+            <!-- Potential Matches Section -->
             <div class="row mt-5">
               <div class="col-12">
-                <h2 class="text-center mb-4">Quick Match</h2>
-                <div class="quick-match-container">
-                  <div class="quick-match-card">
-                    <div class="match-profile">
-                      <div class="profile-avatar">
-                        <i class="bi bi-person-circle"></i>
+                <h2 class="text-center mb-4">Potential Matches</h2>
+                <div class="potential-matches-container" id="potentialMatchesContainer">
+                  <div class="text-center">
+                    <div class="empty-potential-matches">
+                      <div class="empty-icon mb-3">
+                        <i class="bi bi-people" style="font-size: 4rem; color: #dc143c; opacity: 0.3;"></i>
                       </div>
-                      <div class="profile-info">
-                        <h4>Sarah Johnson</h4>
-                        <p class="text-muted">Computer Science • Junior</p>
-                        <div class="interests">
-                          <span class="badge bg-primary">Programming</span>
-                          <span class="badge bg-success">Gaming</span>
-                          <span class="badge bg-warning">Coffee</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="match-actions">
-                      <button class="btn btn-success btn-lg" onclick="likeMatch('sarah')">
-                        <i class="bi bi-heart-fill"></i> Like
-                      </button>
-                      <button class="btn btn-outline-secondary btn-lg" onclick="passMatch('sarah')">
-                        <i class="bi bi-x"></i> Pass
-                      </button>
+                      <h4 class="text-muted">No potential matches yet</h4>
+                      <p class="text-muted">Click "Find Matches" to discover people you might connect with!</p>
                     </div>
                   </div>
                 </div>
@@ -267,36 +247,6 @@
           </div>
         </section>
 
-        <!-- My Matches Section -->
-        <section id="matches" class="content-section" style="display: none;">
-          <div class="container">
-            <div class="page-header">
-              <h1>My Matches</h1>
-              <p class="lead">People you've connected with</p>
-            </div>
-            
-            <div class="matches-grid">
-              <div class="match-card">
-                <div class="match-avatar">
-                  <i class="bi bi-person-circle"></i>
-                </div>
-                <div class="match-info">
-                  <h4>Alex Chen</h4>
-                  <p class="text-muted">Business • Senior</p>
-                  <div class="interests">
-                    <span class="badge bg-primary">Photography</span>
-                    <span class="badge bg-success">Hiking</span>
-                  </div>
-                </div>
-                <div class="match-actions">
-                  <button class="btn btn-primary" onclick="messageMatch('alex')">
-                    <i class="bi bi-chat"></i> Message
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <!-- Messages Section -->
         <section id="messages" class="content-section" style="display: none;">
@@ -307,15 +257,29 @@
             </div>
             
             <div class="messages-container">
-              <div class="conversation-list">
-                <div class="conversation-item" onclick="openConversation('alex')">
-                  <div class="conversation-avatar">
-                    <i class="bi bi-person-circle"></i>
+              <div class="row">
+                <!-- Matched Users List -->
+                <div class="col-md-4">
+                  <div class="matched-users-panel">
+                    <h4 class="mb-3">Your Matches</h4>
+                    <div id="matchedUsersList" class="matched-users-list">
+                      <!-- Matched users will be dynamically loaded here -->
+                    </div>
                   </div>
-                  <div class="conversation-info">
-                    <h5>Alex Chen</h5>
-                    <p class="text-muted">Hey! Want to grab coffee sometime?</p>
-                    <small class="text-muted">2 hours ago</small>
+                </div>
+                
+                <!-- Chat Area -->
+                <div class="col-md-8">
+                  <div class="chat-panel">
+                    <div id="chatArea" class="chat-area">
+                      <div class="empty-chat-state text-center">
+                        <div class="empty-icon mb-3">
+                          <i class="bi bi-chat" style="font-size: 4rem; color: #dc143c; opacity: 0.3;"></i>
+                        </div>
+                        <h4 class="text-muted">Select a match to start chatting</h4>
+                        <p class="text-muted">Choose someone from your matches to begin a conversation!</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
