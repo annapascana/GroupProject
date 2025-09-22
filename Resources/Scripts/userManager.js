@@ -222,8 +222,8 @@ class UserManager {
                 this.saveUser(user);
             }
             
-            // Trigger fresh start check for travel section
-            this.triggerTravelFreshStart(user);
+            // Trigger fresh start check for entire website
+            this.triggerWebsiteFreshStart(user);
             
             return session;
         } catch (error) {
@@ -232,19 +232,31 @@ class UserManager {
         }
     }
 
-    // Trigger fresh start for travel section when new user logs in
-    triggerTravelFreshStart(user) {
+    // Trigger fresh start for entire website when new user logs in
+    triggerWebsiteFreshStart(user) {
         try {
-            // Check if travel page functions are available
+            // Clear all user data across the entire website
+            if (typeof window.clearAllUserData === 'function') {
+                window.clearAllUserData();
+                console.log('All website data cleared for new user:', user.email);
+            } else {
+                // Fallback: store pending fresh start request
+                localStorage.setItem('travel_pending_fresh_start', user.id);
+                console.log('Fresh start request stored for later processing');
+            }
+            
+            // Also trigger travel-specific fresh start
             if (typeof window.checkForFreshStart === 'function') {
                 window.checkForFreshStart(user);
-            } else {
-                // If travel functions aren't loaded yet, store the user ID for later check
-                localStorage.setItem('travel_pending_fresh_start', user.id);
             }
         } catch (error) {
-            console.error('Error triggering travel fresh start:', error);
+            console.error('Error triggering website fresh start:', error);
         }
+    }
+    
+    // Keep old function name for backward compatibility
+    triggerTravelFreshStart(user) {
+        this.triggerWebsiteFreshStart(user);
     }
 
     // Get current session

@@ -125,7 +125,7 @@ function displayNotifications(notifications) {
     `).join('');
 }
 
-function addNotification(title, message, type = 'info') {
+function addNotification(title, message, type = 'info', showToastNotification = true) {
     const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
     
     // Check if a notification with the same title already exists
@@ -148,7 +148,11 @@ function addNotification(title, message, type = 'info') {
     localStorage.setItem('travel_notifications', JSON.stringify(notifications));
     
     loadNotifications();
-    showToast(message, type);
+    
+    // Only show toast if explicitly requested (prevents duplicate toasts)
+    if (showToastNotification) {
+        showToast(message, type);
+    }
 }
 
 function markNotificationRead(id) {
@@ -508,8 +512,9 @@ function addEmergencyContact() {
         return;
     }
     
-    // Check for duplicate contacts
-    let contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    // Check for duplicate contacts using user-specific storage
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    let contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     const isDuplicate = contacts.some(existingContact => 
         existingContact.name.toLowerCase() === contact.name.toLowerCase() &&
         existingContact.phone.replace(/\D/g, '') === contact.phone.replace(/\D/g, '')
@@ -521,19 +526,68 @@ function addEmergencyContact() {
     }
     
     contacts.push(contact);
-    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    localStorage.setItem(userSpecificKey, JSON.stringify(contacts));
+    
+    console.log('Emergency contact saved:', {
+        userSpecificKey: userSpecificKey,
+        contact: contact,
+        totalContacts: contacts.length,
+        allContacts: contacts
+    });
     
     loadEmergencyContacts();
     clearContactForm();
     showToast('Emergency contact added successfully', 'success');
     
-    // Check if we now have contacts and remove emergency contact notifications
-    checkEmergencyContactsRequirement();
+    // Update UI indicators and notifications after adding contact
+    updateEmergencyContactUI();
 }
 
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+}
+
+// Update emergency contact UI indicators without creating duplicate notifications
+function updateEmergencyContactUI() {
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
+    const hasContacts = contacts.length > 0;
+    
+    // Update UI indicators only
+    const warningIcon = getCachedElement('emergencyWarning');
+    const emergencyBadge = getCachedElement('emergencyBadge');
+    const emergencyRequiredBadge = getCachedElement('emergencyRequiredBadge');
+    const emergencyAlert = getCachedElement('emergencyAlert');
+    
+    if (warningIcon) {
+        warningIcon.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyBadge) {
+        emergencyBadge.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyRequiredBadge) {
+        emergencyRequiredBadge.style.display = hasContacts ? 'none' : 'inline';
+    }
+    
+    if (emergencyAlert) {
+        emergencyAlert.style.display = hasContacts ? 'none' : 'block';
+    }
+    
+    // Only remove existing emergency contact notifications if contacts exist
+    if (hasContacts) {
+        const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+        const emergencyNotifications = notifications.filter(n => n.title === 'Emergency Contacts Required');
+        
+        if (emergencyNotifications.length > 0) {
+            const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
+            localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+            loadNotifications();
+            showToast('Emergency contacts requirement satisfied!', 'success');
+        }
+    }
 }
 
 function clearContactForm() {
@@ -638,9 +692,10 @@ function setupEmergencyContactForm() {
 }
 
 function removeContact(contactId) {
-    let contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    let contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     contacts = contacts.filter(contact => contact.id !== contactId);
-    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    localStorage.setItem(userSpecificKey, JSON.stringify(contacts));
     loadEmergencyContacts();
     showToast('Contact removed', 'info');
     
@@ -896,10 +951,21 @@ function manageEmergencyContactsFromSafety() {
 }
 
 function loadEmergencyContacts() {
-    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     const contactList = getCachedElement('emergencyContactList');
     
-    if (!contactList) return;
+    console.log('Loading emergency contacts:', {
+        userSpecificKey: userSpecificKey,
+        contactsCount: contacts.length,
+        contacts: contacts,
+        contactListElement: contactList
+    });
+    
+    if (!contactList) {
+        console.error('Emergency contact list element not found!');
+        return;
+    }
     
     // Clear existing user contacts
     contactList.innerHTML = '';
@@ -938,7 +1004,8 @@ function loadEmergencyContacts() {
 }
 
 function loadSafetyCenterContacts() {
-    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     const safetyContactList = getCachedElement('safetyUserContactsList');
     
     if (!safetyContactList) return;
@@ -974,28 +1041,26 @@ function loadSafetyCenterContacts() {
 }
 
 function saveEmergencyContacts() {
-    const contacts = [];
-    const contactItems = document.querySelectorAll('#emergencyContactList .contact-item');
+    // The contacts are already saved in localStorage when added via addEmergencyContact()
+    // This function just needs to refresh the display and update requirements
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     
-    contactItems.forEach(item => {
-        const text = item.textContent;
-        const nameMatch = text.match(/^([^(]+)\s*\(([^)]+)\):\s*(.+?)\s*Call/);
-        if (nameMatch && !text.includes('Emergency Services') && !text.includes('Campus Security') && !text.includes('UA Police')) {
-            contacts.push({
-                name: nameMatch[1].trim(),
-                relation: nameMatch[2].trim(),
-                phone: nameMatch[3].trim()
-            });
-        }
-    });
+    console.log('Emergency contacts already saved:', contacts.length, 'contacts');
     
-    localStorage.setItem('user_emergency_contacts', JSON.stringify(contacts));
+    // Refresh the display
+    loadEmergencyContacts();
+    
+    // Update requirements and notifications
     checkEmergencyContactsRequirement();
-    showToast('Emergency contacts saved successfully!', 'success');
+    
+    // Show success message
+    showToast('Emergency contacts are already saved!', 'success');
 }
 
 function checkEmergencyContactsRequirement() {
-    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     const hasContacts = contacts.length > 0;
     
     // Update UI indicators
@@ -1035,12 +1100,12 @@ function checkEmergencyContactsRequirement() {
     } else {
         // Only add notification if NONE exists (prevent duplicates)
         if (emergencyNotifications.length === 0) {
-            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning');
+            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning', false);
         } else if (emergencyNotifications.length > 1) {
             // If somehow multiple exist, remove all and add just one
             const filteredNotifications = notifications.filter(n => n.title !== 'Emergency Contacts Required');
             localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
-            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning');
+            addNotification('Emergency Contacts Required', 'Please add emergency contacts to your profile for safety.', 'warning', false);
             loadNotifications();
         }
     }
@@ -1057,7 +1122,10 @@ function logout() {
     if (confirm('Are you sure you want to logout?')) {
         // Clear user data
         localStorage.removeItem('current_user');
-        localStorage.removeItem('user_emergency_contacts');
+        
+        // Clear user-specific emergency contacts
+        const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+        localStorage.removeItem(userSpecificKey);
         
         // Redirect to login
         window.location.href = '../../Resources/login.html';
@@ -1163,13 +1231,30 @@ function loadUserProfile() {
         // Check if userManager is available
         if (typeof UserManager !== 'undefined') {
             const userManager = new UserManager();
-            const currentUser = userManager.getCurrentUser();
+            
+            // Try to get current user first
+            let currentUser = userManager.getCurrentUser();
+            
+            // If no current user, try to get from session
+            if (!currentUser) {
+                const session = userManager.getCurrentSession();
+                if (session) {
+                    currentUser = {
+                        id: session.userId,
+                        firstName: session.firstName,
+                        lastName: session.lastName,
+                        email: session.email
+                    };
+                }
+            }
             
             if (currentUser) {
+                console.log('User profile loaded:', currentUser);
                 // Check if this is a new user login (fresh start required)
                 checkForFreshStart(currentUser);
                 updateProfileDisplay(currentUser);
             } else {
+                console.log('No user found, showing guest user');
                 // No user logged in, show default
                 updateProfileDisplay({
                     firstName: 'Guest',
@@ -1178,6 +1263,7 @@ function loadUserProfile() {
                 });
             }
         } else {
+            console.log('UserManager not available, showing fallback');
             // Fallback if UserManager is not available
             updateProfileDisplay({
                 firstName: 'Student',
@@ -1207,21 +1293,84 @@ function checkForFreshStart(currentUser) {
         clearAllTravelData();
         localStorage.setItem('travel_last_user_id', currentUserId);
         showToast('Welcome! Starting fresh for your travel experience.', 'info');
+    } else {
+        console.log('Same user logging in, preserving user data');
+        // Same user logging in again - preserve their data
+        showToast('Welcome back! Your data has been restored.', 'success');
     }
     
     // Clear any pending fresh start request
     localStorage.removeItem('travel_pending_fresh_start');
 }
 
-// Make function globally available for userManager
+// Helper functions for user-specific data storage
+function getCurrentUserId() {
+    try {
+        if (typeof UserManager !== 'undefined') {
+            const userManager = new UserManager();
+            const currentUser = userManager.getCurrentUser();
+            return currentUser ? currentUser.id : null;
+        }
+    } catch (error) {
+        console.error('Error getting current user ID:', error);
+    }
+    return null;
+}
+
+function getUserSpecificKey(baseKey) {
+    const userId = getCurrentUserId();
+    const key = userId ? `${baseKey}_${userId}` : baseKey;
+    console.log('Generated user-specific key:', {
+        baseKey: baseKey,
+        userId: userId,
+        generatedKey: key
+    });
+    return key;
+}
+
+// Make functions globally available for userManager
 window.checkForFreshStart = checkForFreshStart;
+window.clearAllUserData = clearAllUserData;
+window.loadUserProfile = loadUserProfile;
+window.updateProfileDisplay = updateProfileDisplay;
 
 // Manual trigger for testing fresh start (can be called from browser console)
 window.triggerFreshStart = function() {
     console.log('Manually triggering fresh start...');
-    clearAllTravelData();
+    clearAllUserData();
     localStorage.removeItem('travel_last_user_id');
-    showToast('Fresh start triggered manually!', 'info');
+    showToast('Fresh start triggered manually! All website data cleared.', 'info');
+};
+
+// Debug function to check user data (can be called from browser console)
+window.debugUserData = function() {
+    console.log('=== DEBUG USER DATA ===');
+    
+    if (typeof UserManager !== 'undefined') {
+        const userManager = new UserManager();
+        const currentUser = userManager.getCurrentUser();
+        const session = userManager.getCurrentSession();
+        
+        console.log('UserManager available:', true);
+        console.log('Current User:', currentUser);
+        console.log('Current Session:', session);
+    } else {
+        console.log('UserManager not available');
+    }
+    
+    console.log('LocalStorage keys:', Object.keys(localStorage));
+    console.log('Travel last user ID:', localStorage.getItem('travel_last_user_id'));
+    console.log('CrimsonCollab session:', localStorage.getItem('crimsonCollab_session'));
+    console.log('CrimsonCollab users:', localStorage.getItem('crimsonCollab_users'));
+    
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    console.log('Profile Name element:', profileName);
+    console.log('Profile Email element:', profileEmail);
+    console.log('Profile Name text:', profileName ? profileName.textContent : 'not found');
+    console.log('Profile Email text:', profileEmail ? profileEmail.textContent : 'not found');
+    
+    console.log('=== END DEBUG ===');
 };
 
 // Check for pending fresh start requests (when userManager triggers before travel.js loads)
@@ -1234,23 +1383,27 @@ function checkPendingFreshStart() {
             clearAllTravelData();
             localStorage.setItem('travel_last_user_id', pendingUserId);
             showToast('Welcome! Starting fresh for your travel experience.', 'info');
+        } else {
+            console.log('Same user detected in pending fresh start, preserving data');
+            showToast('Welcome back! Your data has been restored.', 'success');
         }
         localStorage.removeItem('travel_pending_fresh_start');
     }
 }
 
-// Clear all travel-related data for fresh start
-function clearAllTravelData() {
+// Clear all user-related data across the entire website for fresh start (when switching users)
+function clearAllUserData() {
     try {
-        // Clear all travel-related localStorage keys
-        const travelKeys = [
+        // Clear all user-related localStorage keys across all pages (but preserve user session)
+        const allUserKeys = [
+            // Travel page data
             'travel_notifications',
             'travel_theme',
             'travel_groups',
-            'user_emergency_contacts',
             'social_posts',
             'trip_groups',
             'ua_trips',
+            'joined_trips',
             'example_trips_loaded',
             'example_trips',
             'travel_search_history',
@@ -1259,12 +1412,38 @@ function clearAllTravelData() {
             'travel_analytics_cache',
             'travel_user_preferences',
             'travel_safety_checklist',
-            'travel_pwa_installed'
+            'travel_pwa_installed',
+            
+            // Dashboard data
+            'dashboard_favorites',
+            'theme',
+            
+            // Anna's Friend Match data
+            'uaFriendMatch_profileCreated',
+            'uaFriendMatch_profileData',
+            
+            // Jaxon's Workout data
+            'currentUser',
+            
+            // Sofia's Study data (if any)
+            'study_preferences',
+            'study_groups',
+            'study_matches',
+            
+            // Note: We DON'T clear 'crimsonCollab_users' and 'crimsonCollab_session' 
+            // to preserve user authentication and user data
+            'travel_pending_fresh_start'
         ];
         
-        travelKeys.forEach(key => {
+        allUserKeys.forEach(key => {
             localStorage.removeItem(key);
         });
+        
+        // Also clear user-specific keys for current user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId) {
+            localStorage.removeItem(`user_emergency_contacts_${currentUserId}`);
+        }
         
         // Clear any cached elements
         if (window.elementCache) {
@@ -1274,10 +1453,15 @@ function clearAllTravelData() {
         // Reset UI state
         resetUIState();
         
-        console.log('All travel data cleared for fresh start');
+        console.log('All user data cleared for fresh start across entire website (preserving user session)');
     } catch (error) {
-        console.error('Error clearing travel data:', error);
+        console.error('Error clearing user data:', error);
     }
+}
+
+// Keep the old function name for backward compatibility
+function clearAllTravelData() {
+    clearAllUserData();
 }
 
 // Reset UI state to initial condition
@@ -1351,16 +1535,36 @@ function resetUIState() {
 }
 
 function updateProfileDisplay(user) {
-    const profileName = getCachedElement('profileName');
-    const profileEmail = getCachedElement('profileEmail');
+    console.log('Updating profile display with user:', user);
+    
+    // Try multiple methods to get the elements
+    let profileName = getCachedElement('profileName');
+    let profileEmail = getCachedElement('profileEmail');
+    
+    // Fallback: direct DOM query
+    if (!profileName) {
+        profileName = document.getElementById('profileName');
+        console.log('Using direct DOM query for profileName:', !!profileName);
+    }
+    
+    if (!profileEmail) {
+        profileEmail = document.getElementById('profileEmail');
+        console.log('Using direct DOM query for profileEmail:', !!profileEmail);
+    }
     
     if (profileName) {
         const displayName = user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
+        console.log('Setting profile name to:', displayName);
         profileName.textContent = displayName;
+    } else {
+        console.error('Could not find profileName element');
     }
     
     if (profileEmail) {
+        console.log('Setting profile email to:', user.email);
         profileEmail.textContent = user.email;
+    } else {
+        console.error('Could not find profileEmail element');
     }
 }
 
@@ -1609,6 +1813,24 @@ function initializeApp() {
     setupRefresh();
     loadUserProfile();
     
+    // Retry loading user profile after a short delay in case UserManager wasn't ready
+    setTimeout(() => {
+        const profileName = getCachedElement('profileName') || document.getElementById('profileName');
+        if (profileName && (profileName.textContent === 'Loading...' || profileName.textContent === 'Guest User')) {
+            console.log('Retrying user profile load...');
+            loadUserProfile();
+        }
+    }, 500);
+    
+    // Additional retry after longer delay
+    setTimeout(() => {
+        const profileName = getCachedElement('profileName') || document.getElementById('profileName');
+        if (profileName && (profileName.textContent === 'Loading...' || profileName.textContent === 'Guest User')) {
+            console.log('Second retry for user profile load...');
+            loadUserProfile();
+        }
+    }, 2000);
+    
     setupAnalytics();
     setupNotifications(); // This will call checkEmergencyContactsRequirement()
     setupThemeToggle();
@@ -1795,8 +2017,9 @@ function validateForm() {
 // Handles trip creation, joining, leaving, and deletion
 
 function createTrip(data) {
-    // Check if user has emergency contacts
-    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    // Check if user has emergency contacts using user-specific storage
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     if (contacts.length === 0) {
         showToast('Emergency contacts are required before creating trips! Please add at least one emergency contact.', 'warning');
         // Open emergency contacts modal
@@ -1999,8 +2222,9 @@ async function joinTrip(btn) {
         return;
     }
     
-    // Check if user has emergency contacts
-    const contacts = JSON.parse(localStorage.getItem('user_emergency_contacts') || '[]');
+    // Check if user has emergency contacts using user-specific storage
+    const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
+    const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
     if (contacts.length === 0) {
         showToast('Emergency contacts are required before joining trips! Please add at least one emergency contact.', 'warning');
         // Open emergency contacts modal
@@ -2625,6 +2849,9 @@ function loadTrips(){
         // Restore joined trips first (this will move them to appropriate grids)
         restoreJoinedTrips();
         
+        // Update empty states after restoring joined trips
+        updateEmptyStates();
+        
         // Load my trips (this will show trips that are already in My Trips grid)
         loadMyTrips(myTripsGrid);
         
@@ -3060,20 +3287,15 @@ function loadMyTrips(myTripsGrid) {
     const existingTrips = myTripsGrid.querySelectorAll('.trip-card');
     
     if (existingTrips.length === 0) {
-        // No trips in My Trips grid, show empty state
-        myTripsGrid.innerHTML = `
-            <div class="text-center py-5">
-                <i class="bi bi-calendar-x" style="font-size: 3rem; color: #6c757d;"></i>
-                <h4 class="mt-3 text-muted">No trips yet</h4>
-                <p class="text-muted">Join a trip or create your own to see it here!</p>
-            </div>
-        `;
+        // No trips in My Trips grid, but don't clear the grid - let updateEmptyStates handle the empty state
+        console.log('No trips found in My Trips grid');
     } else {
         // There are trips in My Trips grid, remove any empty state message
         const emptyState = myTripsGrid.querySelector('.text-center');
         if (emptyState) {
             emptyState.remove();
         }
+        console.log('Found', existingTrips.length, 'trips in My Trips grid');
     }
     
     // Update the badge count
@@ -3517,8 +3739,7 @@ function restoreJoinedTrips() {
                 } else {
                     // For joined trips, always move to My Trips tab
                     if (myTripsGrid && !tripCard.closest('#myTripsGrid')) {
-                        const clonedCard = tripCard.cloneNode(true);
-                        myTripsGrid.appendChild(clonedCard);
+                        myTripsGrid.appendChild(tripCard);
                         console.log('Moved joined trip to My Trips:', joinedTrip.destination);
                     }
                     
@@ -3535,11 +3756,6 @@ function restoreJoinedTrips() {
                                 console.log('Also added full joined trip to Full Trips tab:', joinedTrip.destination);
                             }
                         }
-                    }
-                    
-                    // Remove from current grid if not already in My Trips
-                    if (!tripCard.closest('#myTripsGrid')) {
-                        tripCard.remove();
                     }
                 }
                 
