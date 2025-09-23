@@ -509,6 +509,17 @@ function setupCardClicks() {
                 return;
             }
             
+            // Special handling for innovate card
+            if (cardType === 'innovate') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('UA Innovate card clicked, navigating to innovate page...');
+                if (confirm('Go to UA Innovate page?')) {
+                    window.location.href = '../Pages/UAInnovate/innovate.html';
+                }
+                return;
+            }
+            
             const cardCode = this.querySelector('.card-code').textContent;
             handleCardClick(cardType, cardCode);
         });

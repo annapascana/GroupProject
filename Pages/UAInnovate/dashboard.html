@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UA Innovate - Dashboard</title>
+    <link rel="stylesheet" href="innovate.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>UA Innovate Dashboard</h1>
+                    <p>Welcome to your innovation hub</p>
+                </div>
+                <div class="theme-toggle">
+                    <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
+                        <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Profile Summary Card -->
+            <div class="profile-card">
+                <h3>Your Profile</h3>
+                <div id="profileSummary"></div>
+                <button type="button" class="btn-secondary" id="editProfileBtn">Edit Profile</button>
+            </div>
+
+            <!-- Dashboard Actions -->
+            <div class="dashboard-actions">
+                <div class="action-card">
+                    <h3>Create New Group</h3>
+                    <p>Start your own innovation group and invite others to join</p>
+                    <button type="button" class="btn-primary" id="createGroupBtn">Create Group</button>
+                </div>
+
+                <div class="action-card">
+                    <h3>Search Groups</h3>
+                    <p>Find existing groups that match your interests</p>
+                    <button type="button" class="btn-primary" id="searchGroupsBtn">Search Groups</button>
+                </div>
+            </div>
+
+            <!-- Create Group Modal -->
+            <div id="createGroupModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Create New Group</h3>
+                        <span class="close" id="closeCreateModal">&times;</span>
+                    </div>
+                    <form id="createGroupForm" class="group-form">
+                        <div class="form-group">
+                            <label for="groupName">Group Name *</label>
+                            <input type="text" id="groupName" name="groupName" placeholder="Enter group name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="groupDescription">Description *</label>
+                            <textarea id="groupDescription" name="groupDescription" 
+                                    placeholder="Describe your group's purpose and goals" 
+                                    rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="groupFocus">Focus Area *</label>
+                            <select id="groupFocus" name="groupFocus" required>
+                                <option value="">Select focus area</option>
+                                <option value="social-innovation">Social Innovation</option>
+                                <option value="data-analytics">Data Analytics</option>
+                                <option value="fintech">FinTech</option>
+                                <option value="prototype-innovation">Prototype Innovation</option>
+                                <option value="full-stack-development">Full Stack Development</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="groupSize">Preferred Group Size</label>
+                            <select id="groupSize" name="groupSize">
+                                <option value="">Select preferred size</option>
+                                <option value="2">2 members</option>
+                                <option value="3">3 members</option>
+                                <option value="4">4 members</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="groupSkills">Required Skills</label>
+                            <textarea id="groupSkills" name="groupSkills" 
+                                    placeholder="List any specific skills or experience required" 
+                                    rows="3"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Create Group</button>
+                            <button type="button" class="btn-secondary" id="cancelCreateGroup">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search Groups Modal -->
+            <div id="searchGroupsModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Search Groups</h3>
+                        <span class="close" id="closeSearchModal">&times;</span>
+                    </div>
+                    <form id="searchGroupsForm" class="search-form">
+                        <div class="form-group">
+                            <label for="searchQuery">Search Terms</label>
+                            <input type="text" id="searchQuery" name="searchQuery" 
+                                   placeholder="Enter keywords (e.g., AI, web development, data science)">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="searchFocus">Focus Area</label>
+                            <select id="searchFocus" name="searchFocus">
+                                <option value="">Any focus area</option>
+                                <option value="social-innovation">Social Innovation</option>
+                                <option value="data-analytics">Data Analytics</option>
+                                <option value="fintech">FinTech</option>
+                                <option value="prototype-innovation">Prototype Innovation</option>
+                                <option value="full-stack-development">Full Stack Development</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="searchYear">Academic Year</label>
+                            <select id="searchYear" name="searchYear">
+                                <option value="">Any year</option>
+                                <option value="freshman">Freshman</option>
+                                <option value="sophomore">Sophomore</option>
+                                <option value="junior">Junior</option>
+                                <option value="senior">Senior</option>
+                                <option value="graduate">Graduate</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Search Groups</button>
+                            <button type="button" class="btn-secondary" id="cancelSearch">Cancel</button>
+                        </div>
+                    </form>
+
+                    <!-- Search Results -->
+                    <div id="searchResults" class="search-results" style="display: none;">
+                        <h4>Search Results</h4>
+                        <div id="groupsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Groups Section -->
+            <div class="my-groups-section">
+                <h3>My Groups</h3>
+                <div id="myGroupsList" class="groups-list">
+                    <p class="no-groups">You haven't joined any groups yet. Create or search for groups to get started!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

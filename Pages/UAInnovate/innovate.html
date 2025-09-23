@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UA Innovate - Profile Creation</title>
+    <link rel="stylesheet" href="innovate.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>UA Innovate</h1>
+                    <p>Create your profile to get personalized innovation opportunities</p>
+                </div>
+                <div class="theme-toggle">
+                    <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
+                        <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="profile-form-container">
+                <h2>Create Your Innovate Profile</h2>
+                <form id="profileForm" class="profile-form">
+                    <div class="form-group">
+                        <label for="year">Academic Year *</label>
+                        <select id="year" name="year" required>
+                            <option value="">Select your year</option>
+                            <option value="freshman">Freshman</option>
+                            <option value="sophomore">Sophomore</option>
+                            <option value="junior">Junior</option>
+                            <option value="senior">Senior</option>
+                            <option value="graduate">Graduate</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="major">Major *</label>
+                        <input type="text" id="major" name="major" placeholder="Enter your major" required>
+                    </div>
+
+                    <div class="form-group" id="misSemesterGroup" style="display: none;">
+                        <label for="misSemester">MIS Program Semester</label>
+                        <select id="misSemester" name="misSemester">
+                            <option value="">Select semester in MIS program</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="technicalSkills">Technical Skills</label>
+                        <textarea id="technicalSkills" name="technicalSkills" 
+                                placeholder="List your technical skills (e.g., Python, JavaScript, SQL, etc.)" 
+                                rows="4"></textarea>
+                        <small class="help-text">Separate skills with commas or list them on separate lines</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="interests">Innovation Interests</label>
+                        <textarea id="interests" name="interests" 
+                                placeholder="What areas of innovation interest you? (e.g., AI/ML, Web Development, Data Science, etc.)" 
+                                rows="3"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Create Profile</button>
+                        <button type="button" class="btn-secondary" id="clearForm">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="profileSummary" class="profile-summary" style="display: none;">
+                <h3>Profile Created Successfully!</h3>
+                <div id="profileDetails"></div>
+                <button type="button" class="btn-primary" id="editProfile">Edit Profile</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="innovate.js"></script>
+</body>
+</html>
