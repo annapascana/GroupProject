@@ -43,6 +43,11 @@
                             <i class="bi bi-person-circle me-1"></i>Profile
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showMatches()">
+                            <i class="bi bi-heart me-1"></i>Matches
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -56,14 +61,14 @@
                 <div class="row align-items-center min-vh-100">
                     <div class="col-lg-6">
                         <h1 class="display-4 fw-bold text-white mb-4">
-                            Find Your Perfect <span class="text-warning">Workout Buddy</span>
+                            Find Your Perfect <span class="text-mint">Workout Buddy</span>
                         </h1>
                         <p class="lead text-white-50 mb-4">
                             Connect with fellow University of Alabama students who share your fitness goals, 
                             schedule, and workout preferences. Build lasting friendships while achieving your fitness goals together!
                         </p>
                         <div class="d-flex gap-3">
-                            <button class="btn btn-warning btn-lg px-4" onclick="scrollToSearch()">
+                            <button class="btn btn-mint btn-lg px-4" onclick="scrollToSearch()">
                                 <i class="bi bi-search me-2"></i>Find Buddies
                             </button>
                             <button class="btn btn-outline-light btn-lg px-4" onclick="showCreateProfile()">
@@ -253,6 +258,49 @@
                 <!-- Results Grid -->
                 <div class="row" id="resultsGrid">
                     <!-- Results will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Matches Section -->
+        <section class="matches-section py-5" id="matchesSection" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <h2 class="text-center mb-4">
+                            <i class="bi bi-heart me-2"></i>Your Connections
+                        </h2>
+                        <div class="matches-tabs mb-4">
+                            <ul class="nav nav-pills justify-content-center" id="matchesTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="connections-tab" data-bs-toggle="pill" data-bs-target="#connections" type="button" role="tab">
+                                        <i class="bi bi-check-circle me-1"></i>Connected (<span id="connectionsCount">0</span>)
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab">
+                                        <i class="bi bi-clock me-1"></i>Pending Requests (<span id="requestsCount">0</span>)
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="matchesTabContent">
+                    <!-- Connected Buddies -->
+                    <div class="tab-pane fade show active" id="connections" role="tabpanel">
+                        <div class="row" id="connectionsGrid">
+                            <!-- Connected buddies will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Pending Requests -->
+                    <div class="tab-pane fade" id="requests" role="tabpanel">
+                        <div class="row" id="requestsGrid">
+                            <!-- Pending requests will be populated here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

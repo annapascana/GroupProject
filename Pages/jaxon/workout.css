@@ -11,7 +11,7 @@
   --medium-gray: #6c757d;
   --dark-gray: #343a40;
   --success: #28a745;
-  --warning: #ffc107;
+  --warning: #4ECDC4;
   --info: #17a2b8;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -57,6 +57,27 @@ body {
 
 .text-crimson {
   color: var(--crimson-primary) !important;
+}
+
+.text-mint {
+  color: var(--warning) !important;
+}
+
+.btn-mint {
+  background: var(--warning);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.btn-mint:hover {
+  background: #3BA39C;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Navigation */
@@ -352,6 +373,151 @@ body {
 /* Profile Section */
 .profile-section {
   background: var(--light-gray);
+}
+
+/* Matches Section */
+.matches-section {
+  background: var(--light-gray);
+  min-height: 60vh;
+}
+
+.matches-tabs .nav-pills .nav-link {
+  background: white;
+  color: var(--dark-gray);
+  border: 2px solid #e9ecef;
+  margin: 0 0.5rem;
+  border-radius: 25px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.matches-tabs .nav-pills .nav-link.active {
+  background: var(--crimson-gradient);
+  color: white;
+  border-color: var(--crimson-primary);
+}
+
+.matches-tabs .nav-pills .nav-link:hover:not(.active) {
+  background: var(--light-gray);
+  border-color: var(--crimson-primary);
+  color: var(--crimson-primary);
+}
+
+.connection-card,
+.request-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: var(--transition);
+  margin-bottom: 2rem;
+  height: 100%;
+}
+
+.connection-card:hover,
+.request-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.connection-header,
+.request-header {
+  background: var(--light-gray);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.connection-avatar,
+.request-avatar {
+  width: 60px;
+  height: 60px;
+  background: var(--crimson-gradient);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.connection-info,
+.request-info {
+  flex: 1;
+}
+
+.connection-info h5,
+.request-info h5 {
+  margin: 0;
+  color: var(--dark-gray);
+  font-weight: 600;
+}
+
+.connection-info p,
+.request-info p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.connection-status,
+.request-status {
+  flex-shrink: 0;
+}
+
+.connection-body,
+.request-body {
+  padding: 1.5rem;
+}
+
+.connection-goals,
+.request-goals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.connection-bio,
+.request-bio {
+  color: var(--medium-gray);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.connection-actions,
+.request-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Enhanced Profile Modal Styles */
+.profile-details .detail-section h6 {
+  color: var(--crimson-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.availability-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bio-text {
+  color: var(--medium-gray);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.connection-status-badge {
+  margin-top: 0.5rem;
 }
 
 .profile-card {

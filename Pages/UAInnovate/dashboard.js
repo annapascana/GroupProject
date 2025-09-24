@@ -4,26 +4,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM elements
     const profileSummary = document.getElementById('profileSummary');
     const editProfileBtn = document.getElementById('editProfileBtn');
+    const homeBtn = document.getElementById('homeBtn');
     const createGroupBtn = document.getElementById('createGroupBtn');
     const searchGroupsBtn = document.getElementById('searchGroupsBtn');
+    const searchProfilesBtn = document.getElementById('searchProfilesBtn');
     const createGroupModal = document.getElementById('createGroupModal');
     const searchGroupsModal = document.getElementById('searchGroupsModal');
+    const searchProfilesModal = document.getElementById('searchProfilesModal');
     const createGroupForm = document.getElementById('createGroupForm');
     const searchGroupsForm = document.getElementById('searchGroupsForm');
+    const searchProfilesForm = document.getElementById('searchProfilesForm');
     const myGroupsList = document.getElementById('myGroupsList');
 
     // Modal close buttons
     const closeCreateModal = document.getElementById('closeCreateModal');
     const closeSearchModal = document.getElementById('closeSearchModal');
+    const closeSearchProfilesModal = document.getElementById('closeSearchProfilesModal');
     const cancelCreateGroup = document.getElementById('cancelCreateGroup');
     const cancelSearch = document.getElementById('cancelSearch');
+    const cancelSearchProfiles = document.getElementById('cancelSearchProfiles');
 
     // Load user profile and initialize dashboard
     async function initializeDashboard() {
         const profile = await loadUserProfile();
-        if (profile) {
-            displayProfileSummary(profile);
-        }
+        displayProfileSummary(profile);
         await loadMyGroups();
     }
 
@@ -54,6 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display profile summary
     function displayProfileSummary(profile) {
+        if (!profile) {
+            profileSummary.innerHTML = '<div class="profile-placeholder">No profile found. Click "Edit Profile" to create your profile.</div>';
+            profileSummary.classList.add('show');
+            return;
+        }
+
         const isMIS = profile.major.toLowerCase().includes('mis') || 
                      profile.major.toLowerCase().includes('management information systems') ||
                      profile.major.toLowerCase().includes('information systems');
@@ -95,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         profileSummary.innerHTML = summaryHTML;
+        profileSummary.classList.add('show');
     }
 
     // Format technical skills
@@ -204,16 +215,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners for modals
     createGroupBtn.addEventListener('click', () => showModal(createGroupModal));
     searchGroupsBtn.addEventListener('click', () => showModal(searchGroupsModal));
+    searchProfilesBtn.addEventListener('click', () => showModal(searchProfilesModal));
 
     closeCreateModal.addEventListener('click', () => hideModal(createGroupModal));
     closeSearchModal.addEventListener('click', () => hideModal(searchGroupsModal));
+    closeSearchProfilesModal.addEventListener('click', () => hideModal(searchProfilesModal));
     cancelCreateGroup.addEventListener('click', () => hideModal(createGroupModal));
     cancelSearch.addEventListener('click', () => hideModal(searchGroupsModal));
+    cancelSearchProfiles.addEventListener('click', () => hideModal(searchProfilesModal));
 
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === createGroupModal) hideModal(createGroupModal);
         if (e.target === searchGroupsModal) hideModal(searchGroupsModal);
+        if (e.target === searchProfilesModal) hideModal(searchProfilesModal);
     });
 
     // Handle create group form submission
@@ -330,6 +345,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle search profiles form submission
+    searchProfilesForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(searchProfilesForm);
+        const filters = {
+            searchQuery: formData.get('profileSearchQuery'),
+            major: formData.get('profileSearchMajor'),
+            year: formData.get('profileSearchYear'),
+            skills: formData.get('profileSearchSkills')
+        };
+
+        try {
+            const response = await innovateAPI.searchProfiles(filters);
+            displayProfileSearchResults(response.profiles);
+        } catch (error) {
+            console.warn('API not available, using localStorage fallback for profile search:', error);
+            
+            // Fallback to localStorage when API is not available
+            const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+            const currentUserId = localStorage.getItem('uaInnovateUserId');
+            
+            // Filter profiles (exclude current user)
+            let filteredProfiles = allProfiles.filter(profile => {
+                if (profile.userId === currentUserId) return false;
+                
+                // Text search
+                if (filters.searchQuery) {
+                    const searchText = (profile.major + ' ' + profile.technicalSkills + ' ' + profile.interests).toLowerCase();
+                    if (!searchText.includes(filters.searchQuery.toLowerCase())) return false;
+                }
+                
+                // Major filter
+                if (filters.major && !profile.major.toLowerCase().includes(filters.major.toLowerCase())) return false;
+                
+                // Year filter
+                if (filters.year && profile.year !== filters.year) return false;
+                
+                // Skills filter
+                if (filters.skills) {
+                    const profileSkills = profile.technicalSkills.toLowerCase();
+                    const searchSkills = filters.skills.toLowerCase();
+                    if (!profileSkills.includes(searchSkills)) return false;
+                }
+                
+                return true;
+            });
+            
+            displayProfileSearchResults(filteredProfiles);
+        }
+    });
+
     // Display search results
     function displaySearchResults(groups) {
         const searchResults = document.getElementById('searchResults');
@@ -366,6 +433,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         searchResults.style.display = 'block';
+    }
+
+    // Display profile search results
+    function displayProfileSearchResults(profiles) {
+        const profileSearchResults = document.getElementById('profileSearchResults');
+        const profilesList = document.getElementById('profilesList');
+
+        if (profiles.length === 0) {
+            profilesList.innerHTML = '<p class="no-groups">No profiles found matching your criteria.</p>';
+        } else {
+            let resultsHTML = '';
+            profiles.forEach(profile => {
+                const isMIS = profile.major.toLowerCase().includes('mis') || 
+                             profile.major.toLowerCase().includes('management information systems') ||
+                             profile.major.toLowerCase().includes('information systems');
+                
+                resultsHTML += `
+                    <div class="group-item profile-item">
+                        <h5>${profile.major} Student</h5>
+                        <div class="profile-meta">
+                            <span>${profile.year.charAt(0).toUpperCase() + profile.year.slice(1)}</span>
+                            ${isMIS && profile.misSemester ? `<span>MIS Semester ${profile.misSemester}</span>` : ''}
+                        </div>
+                        <div class="profile-skills">
+                            <strong>Skills:</strong> ${formatTechnicalSkills(profile.technicalSkills)}
+                        </div>
+                        ${profile.interests.trim() ? `
+                            <div class="profile-interests">
+                                <strong>Interests:</strong> ${profile.interests}
+                            </div>
+                        ` : ''}
+                        <div class="group-actions">
+                            <button class="btn-small btn-view" onclick="viewProfile('${profile.userId}')">View Profile</button>
+                            <button class="btn-small btn-join" onclick="connectWithProfile('${profile.userId}')">Connect</button>
+                        </div>
+                    </div>
+                `;
+            });
+            profilesList.innerHTML = resultsHTML;
+        }
+
+        profileSearchResults.style.display = 'block';
     }
 
     // Show message
@@ -488,6 +597,81 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('Failed to load group details. Please try again.', 'error');
         }
     };
+
+    window.viewProfile = async function(userId) {
+        try {
+            const response = await innovateAPI.getUser(userId);
+            const profile = response.user;
+            
+            const isMIS = profile.major.toLowerCase().includes('mis') || 
+                         profile.major.toLowerCase().includes('management information systems') ||
+                         profile.major.toLowerCase().includes('information systems');
+            
+            let details = `
+                Major: ${profile.major}
+                Academic Year: ${profile.year.charAt(0).toUpperCase() + profile.year.slice(1)}
+                Technical Skills: ${formatTechnicalSkills(profile.technicalSkills)}
+            `;
+            
+            if (isMIS && profile.misSemester) {
+                details += `\nMIS Semester: ${profile.misSemester}`;
+            }
+            
+            if (profile.interests.trim()) {
+                details += `\nInnovation Interests: ${profile.interests}`;
+            }
+            
+            alert(details);
+        } catch (error) {
+            console.error('Error viewing profile:', error);
+            showMessage('Failed to load profile details. Please try again.', 'error');
+        }
+    };
+
+    window.connectWithProfile = async function(userId) {
+        const currentUserId = localStorage.getItem('uaInnovateUserId');
+        if (!currentUserId) {
+            showMessage('Please log in to connect with profiles.', 'error');
+            return;
+        }
+
+        try {
+            await innovateAPI.connectWithUser(userId, currentUserId);
+            showMessage('Connection request sent successfully!', 'success');
+        } catch (error) {
+            console.warn('API not available, using localStorage fallback for connection:', error);
+            
+            // Fallback to localStorage when API is not available
+            const connections = JSON.parse(localStorage.getItem('profileConnections') || '[]');
+            const connectionExists = connections.find(conn => 
+                (conn.fromUserId === currentUserId && conn.toUserId === userId) ||
+                (conn.fromUserId === userId && conn.toUserId === currentUserId)
+            );
+            
+            if (connectionExists) {
+                showMessage('You are already connected with this user.', 'info');
+                return;
+            }
+            
+            const newConnection = {
+                id: 'conn_' + Date.now(),
+                fromUserId: currentUserId,
+                toUserId: userId,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            
+            connections.push(newConnection);
+            localStorage.setItem('profileConnections', JSON.stringify(connections));
+            
+            showMessage('Connection request sent successfully!', 'success');
+        }
+    };
+
+    // Home button
+    homeBtn.addEventListener('click', function() {
+        window.location.href = '../../Resources/dashboard.html';
+    });
 
     // Edit profile button
     editProfileBtn.addEventListener('click', function() {

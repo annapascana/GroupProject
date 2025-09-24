@@ -86,6 +86,8 @@ const workoutBuddies = [
 let currentUser = null;
 let searchResults = [];
 let currentFilters = {};
+let connections = []; // Track user connections
+let connectionRequests = []; // Track pending connection requests
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -95,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     setupEventListeners();
     loadUserProfile();
+    loadConnections();
     setupFormValidation();
 }
 
@@ -350,9 +353,7 @@ function createBuddyCard(buddy) {
                     </small>
                 </div>
                 <div class="buddy-actions">
-                    <button class="btn btn-crimson btn-sm flex-fill" onclick="connectWithBuddy(${buddy.id})">
-                        <i class="bi bi-heart me-1"></i>Connect
-                    </button>
+                    ${getConnectionButton(buddy.id)}
                     <button class="btn btn-outline-secondary btn-sm" onclick="viewBuddyProfile(${buddy.id})">
                         <i class="bi bi-eye me-1"></i>View Profile
                     </button>
@@ -369,17 +370,55 @@ function connectWithBuddy(buddyId) {
     const buddy = workoutBuddies.find(b => b.id === buddyId);
     if (!buddy) return;
 
-    // Show confirmation modal or notification
-    showNotification(`Connection request sent to ${buddy.name}! They'll be notified via email.`, 'success');
+    // Check if already connected or request pending
+    const existingConnection = connections.find(c => c.buddyId === buddyId);
+    const existingRequest = connectionRequests.find(r => r.buddyId === buddyId);
     
-    // In a real app, this would send a request to the backend
-    console.log(`Connecting with ${buddy.name} (${buddy.email})`);
+    if (existingConnection) {
+        showNotification(`You're already connected with ${buddy.name}!`, 'info');
+        return;
+    }
+    
+    if (existingRequest) {
+        showNotification(`Connection request already sent to ${buddy.name}!`, 'info');
+        return;
+    }
+
+    // Add to connection requests
+    const request = {
+        id: Date.now(),
+        buddyId: buddyId,
+        buddyName: buddy.name,
+        buddyEmail: buddy.email,
+        status: 'pending',
+        sentAt: new Date().toISOString()
+    };
+    
+    connectionRequests.push(request);
+    saveConnections();
+    
+    // Show success notification with more details
+    showConnectionNotification(buddy.name, buddy.email);
+    
+    // Update the button state
+    updateConnectionButton(buddyId, 'pending');
+    
+    console.log(`Connection request sent to ${buddy.name} (${buddy.email})`);
 }
 
 // View buddy profile
 function viewBuddyProfile(buddyId) {
     const buddy = workoutBuddies.find(b => b.id === buddyId);
     if (!buddy) return;
+
+    const connectionStatus = getConnectionStatus(buddyId);
+    const locationMap = {
+        'student-recreation-center': 'Student Recreation Center',
+        'foster-auditorium': 'Foster Auditorium',
+        'coleman-coliseum': 'Coleman Coliseum',
+        'outdoor-facilities': 'Outdoor Facilities',
+        'off-campus-gyms': 'Off-Campus Gyms'
+    };
 
     // Create and show profile modal
     const modalHtml = `
@@ -395,41 +434,57 @@ function viewBuddyProfile(buddyId) {
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <div class="buddy-avatar mb-3" style="width: 120px; height: 120px; margin: 0 auto;">
-                                    <i class="bi bi-person-circle" style="font-size: 4rem;"></i>
+                                <div class="buddy-avatar mb-3" style="width: 120px; height: 120px; margin: 0 auto; background: var(--crimson-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-person-circle" style="font-size: 4rem; color: white;"></i>
                                 </div>
                                 <h5>${buddy.name}</h5>
                                 <p class="text-muted">${buddy.year.charAt(0).toUpperCase() + buddy.year.slice(1)} • ${buddy.experienceLevel.charAt(0).toUpperCase() + buddy.experienceLevel.slice(1)}</p>
+                                <div class="connection-status-badge mb-3">
+                                    ${getConnectionStatusBadge(connectionStatus)}
+                                </div>
                             </div>
                             <div class="col-md-8">
-                                <h6>Workout Goals:</h6>
-                                <div class="buddy-goals mb-3">
-                                    ${buddy.goals.map(goal => 
-                                        `<span class="goal-badge">${goal.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
-                                    ).join('')}
+                                <div class="profile-details">
+                                    <div class="detail-section mb-3">
+                                        <h6><i class="bi bi-bullseye me-2"></i>Workout Goals:</h6>
+                                        <div class="buddy-goals">
+                                            ${buddy.goals.map(goal => 
+                                                `<span class="goal-badge">${goal.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
+                                            ).join('')}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section mb-3">
+                                        <h6><i class="bi bi-clock me-2"></i>Available Times:</h6>
+                                        <div class="availability-display">
+                                            ${buddy.availableTimes.map(time => {
+                                                const timeMap = {
+                                                    'morning': 'Morning (6-10 AM)',
+                                                    'afternoon': 'Afternoon (12-4 PM)',
+                                                    'evening': 'Evening (5-9 PM)',
+                                                    'night': 'Night (9-11 PM)'
+                                                };
+                                                return `<span class="availability-badge">${timeMap[time] || time}</span>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section mb-3">
+                                        <h6><i class="bi bi-geo-alt me-2"></i>Preferred Location:</h6>
+                                        <p class="mb-0">${locationMap[buddy.preferredLocation] || buddy.preferredLocation}</p>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-chat-text me-2"></i>About ${buddy.name.split(' ')[0]}:</h6>
+                                        <p class="bio-text">${buddy.bio}</p>
+                                    </div>
                                 </div>
-                                <h6>Available Times:</h6>
-                                <p class="mb-3">${buddy.availableTimes.map(time => {
-                                    const timeMap = {
-                                        'morning': 'Morning (6-10 AM)',
-                                        'afternoon': 'Afternoon (12-4 PM)',
-                                        'evening': 'Evening (5-9 PM)',
-                                        'night': 'Night (9-11 PM)'
-                                    };
-                                    return timeMap[time] || time;
-                                }).join(', ')}</p>
-                                <h6>Preferred Location:</h6>
-                                <p class="mb-3">${locationMap[buddy.preferredLocation] || buddy.preferredLocation}</p>
-                                <h6>Bio:</h6>
-                                <p>${buddy.bio}</p>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-crimson" onclick="connectWithBuddy(${buddy.id}); bootstrap.Modal.getInstance(document.getElementById('buddyProfileModal')).hide();">
-                            <i class="bi bi-heart me-2"></i>Connect
-                        </button>
+                        ${getConnectionButtonForModal(buddyId, connectionStatus)}
                     </div>
                 </div>
             </div>
@@ -450,11 +505,50 @@ function viewBuddyProfile(buddyId) {
     modal.show();
 }
 
+function getConnectionStatusBadge(status) {
+    switch (status) {
+        case 'connected':
+            return '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Connected</span>';
+        case 'pending':
+            return '<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>Request Sent</span>';
+        default:
+            return '<span class="badge bg-secondary"><i class="bi bi-person-plus me-1"></i>Not Connected</span>';
+    }
+}
+
+function getConnectionButtonForModal(buddyId, status) {
+    switch (status) {
+        case 'connected':
+            return `<button type="button" class="btn btn-success" disabled>
+                        <i class="bi bi-check-circle me-2"></i>Already Connected
+                    </button>`;
+        case 'pending':
+            return `<button type="button" class="btn btn-secondary" disabled>
+                        <i class="bi bi-clock me-2"></i>Request Sent
+                    </button>`;
+        default:
+            return `<button type="button" class="btn btn-crimson" onclick="connectWithBuddy(${buddyId}); bootstrap.Modal.getInstance(document.getElementById('buddyProfileModal')).hide();">
+                        <i class="bi bi-heart me-2"></i>Connect
+                    </button>`;
+    }
+}
+
 // Profile creation
 function showCreateProfile() {
     // Update modal title and button
     document.getElementById('modalTitle').innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Your Workout Profile';
     document.querySelector('#createProfileModal .btn-crimson').innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+    
+    // Auto-generate email if user has an account
+    const userEmail = getCurrentUserEmail();
+    if (userEmail) {
+        document.getElementById('profileEmail').value = userEmail;
+        document.getElementById('profileEmail').readOnly = true;
+        document.getElementById('profileEmail').classList.add('bg-light');
+    } else {
+        document.getElementById('profileEmail').readOnly = false;
+        document.getElementById('profileEmail').classList.remove('bg-light');
+    }
     
     const modal = new bootstrap.Modal(document.getElementById('createProfileModal'));
     modal.show();
@@ -474,6 +568,7 @@ function createProfile() {
 
     // Create user profile with all fields
     currentUser = {
+        id: isUpdate ? currentUser.id : Date.now(), // Generate unique ID for new profiles
         name: formData.get('profileName'),
         email: formData.get('profileEmail'),
         gender: formData.get('profileGender'),
@@ -489,20 +584,38 @@ function createProfile() {
     };
 
     // Save to localStorage (in a real app, this would go to a database)
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    try {
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        // Also save to a profiles list for potential future features
+        const profiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+        const existingIndex = profiles.findIndex(p => p.id === currentUser.id);
+        
+        if (existingIndex >= 0) {
+            profiles[existingIndex] = currentUser;
+        } else {
+            profiles.push(currentUser);
+        }
+        
+        localStorage.setItem('userProfiles', JSON.stringify(profiles));
+        
+        // Show success message
+        showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
 
-    // Show success message
-    showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createProfileModal'));
+        modal.hide();
 
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('createProfileModal'));
-    modal.hide();
+        // Clear form
+        form.reset();
 
-    // Clear form
-    form.reset();
-
-    // Display the profile
-    displayUserProfile();
+        // Display the profile
+        displayUserProfile();
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        showNotification('Error saving profile. Please try again.', 'danger');
+    }
 }
 
 function validateProfileForm() {
@@ -526,10 +639,17 @@ function validateProfileForm() {
 
 // Load user profile from localStorage
 function loadUserProfile() {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        displayUserProfile();
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            displayUserProfile();
+        }
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Clear corrupted data
+        localStorage.removeItem('currentUser');
+        showNotification('Profile data was corrupted and has been reset.', 'warning');
     }
 }
 
@@ -606,6 +726,10 @@ function editProfile() {
     document.getElementById('profileLocation').value = currentUser.location || '';
     document.getElementById('profileGoals').value = currentUser.goals && currentUser.goals[0] ? currentUser.goals[0] : '';
     document.getElementById('profileBio').value = currentUser.bio || '';
+
+    // Make email field read-only when editing
+    document.getElementById('profileEmail').readOnly = true;
+    document.getElementById('profileEmail').classList.add('bg-light');
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('createProfileModal'));
@@ -692,6 +816,297 @@ function setupFormValidation() {
     }
 }
 
+// Connection management functions
+function loadConnections() {
+    const savedConnections = localStorage.getItem('connections');
+    const savedRequests = localStorage.getItem('connectionRequests');
+    
+    if (savedConnections) {
+        connections = JSON.parse(savedConnections);
+    }
+    
+    if (savedRequests) {
+        connectionRequests = JSON.parse(savedRequests);
+    }
+}
+
+function saveConnections() {
+    localStorage.setItem('connections', JSON.stringify(connections));
+    localStorage.setItem('connectionRequests', JSON.stringify(connectionRequests));
+}
+
+function showConnectionNotification(buddyName, buddyEmail) {
+    const notification = document.createElement('div');
+    notification.className = 'connection-notification alert alert-success alert-dismissible fade show';
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 350px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid var(--warning);
+    `;
+
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.2rem;"></i>
+            <div>
+                <h6 class="mb-1">Connection Request Sent!</h6>
+                <p class="mb-1">Your request has been sent to <strong>${buddyName}</strong></p>
+                <small class="text-muted">They'll be notified at ${buddyEmail}</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 7 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 7000);
+}
+
+function updateConnectionButton(buddyId, status) {
+    const buttons = document.querySelectorAll(`[onclick*="connectWithBuddy(${buddyId})"]`);
+    buttons.forEach(button => {
+        if (status === 'pending') {
+            button.innerHTML = '<i class="bi bi-clock me-1"></i>Request Sent';
+            button.classList.remove('btn-crimson');
+            button.classList.add('btn-secondary');
+            button.disabled = true;
+        } else if (status === 'connected') {
+            button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Connected';
+            button.classList.remove('btn-crimson');
+            button.classList.add('btn-success');
+            button.disabled = true;
+        }
+    });
+}
+
+function getConnectionStatus(buddyId) {
+    const connection = connections.find(c => c.buddyId === buddyId);
+    const request = connectionRequests.find(r => r.buddyId === buddyId);
+    
+    if (connection) return 'connected';
+    if (request) return 'pending';
+    return 'none';
+}
+
+function getConnectionButton(buddyId) {
+    const status = getConnectionStatus(buddyId);
+    
+    switch (status) {
+        case 'connected':
+            return `<button class="btn btn-success btn-sm flex-fill" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Connected
+                    </button>`;
+        case 'pending':
+            return `<button class="btn btn-secondary btn-sm flex-fill" disabled>
+                        <i class="bi bi-clock me-1"></i>Request Sent
+                    </button>`;
+        default:
+            return `<button class="btn btn-crimson btn-sm flex-fill" onclick="connectWithBuddy(${buddyId})">
+                        <i class="bi bi-heart me-1"></i>Connect
+                    </button>`;
+    }
+}
+
+function getCurrentUserEmail() {
+    // Try to get email from localStorage (simulating logged-in user)
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        const user = JSON.parse(savedUser);
+        return user.email;
+    }
+    
+    // In a real app, this would come from authentication system
+    // For demo purposes, we'll simulate a logged-in user
+    const demoEmail = 'student@ua.edu';
+    return demoEmail;
+}
+
+// Matches functionality
+function showMatches() {
+    // Hide other sections
+    document.getElementById('profileSection').style.display = 'none';
+    document.getElementById('searchSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    // Show matches section
+    const matchesSection = document.getElementById('matchesSection');
+    matchesSection.style.display = 'block';
+    matchesSection.scrollIntoView({ behavior: 'smooth' });
+    
+    // Load and display matches
+    loadMatches();
+}
+
+function loadMatches() {
+    // Update counts
+    document.getElementById('connectionsCount').textContent = connections.length;
+    document.getElementById('requestsCount').textContent = connectionRequests.length;
+    
+    // Display connections
+    displayConnections();
+    
+    // Display pending requests
+    displayPendingRequests();
+}
+
+function displayConnections() {
+    const connectionsGrid = document.getElementById('connectionsGrid');
+    connectionsGrid.innerHTML = '';
+    
+    if (connections.length === 0) {
+        connectionsGrid.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-heart display-1 text-muted mb-3"></i>
+                <h3 class="text-muted">No connections yet</h3>
+                <p class="text-muted">Start connecting with workout buddies to see them here!</p>
+                <button class="btn btn-crimson" onclick="scrollToSearch()">
+                    <i class="bi bi-search me-2"></i>Find Buddies
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    connections.forEach(connection => {
+        const buddy = workoutBuddies.find(b => b.id === connection.buddyId);
+        if (buddy) {
+            const connectionCard = createConnectionCard(buddy, connection);
+            connectionsGrid.appendChild(connectionCard);
+        }
+    });
+}
+
+function displayPendingRequests() {
+    const requestsGrid = document.getElementById('requestsGrid');
+    requestsGrid.innerHTML = '';
+    
+    if (connectionRequests.length === 0) {
+        requestsGrid.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-clock display-1 text-muted mb-3"></i>
+                <h3 class="text-muted">No pending requests</h3>
+                <p class="text-muted">Your connection requests will appear here.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    connectionRequests.forEach(request => {
+        const buddy = workoutBuddies.find(b => b.id === request.buddyId);
+        if (buddy) {
+            const requestCard = createRequestCard(buddy, request);
+            requestsGrid.appendChild(requestCard);
+        }
+    });
+}
+
+function createConnectionCard(buddy, connection) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-4 col-md-6';
+    
+    col.innerHTML = `
+        <div class="connection-card">
+            <div class="connection-header">
+                <div class="connection-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="connection-info">
+                    <h5>${buddy.name}</h5>
+                    <p class="text-muted">Connected since ${new Date(connection.connectedAt).toLocaleDateString()}</p>
+                </div>
+                <div class="connection-status">
+                    <span class="badge bg-success">Connected</span>
+                </div>
+            </div>
+            <div class="connection-body">
+                <div class="connection-goals">
+                    ${buddy.goals.map(goal => 
+                        `<span class="goal-badge">${goal.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
+                    ).join('')}
+                </div>
+                <p class="connection-bio">${buddy.bio}</p>
+                <div class="connection-actions">
+                    <button class="btn btn-outline-crimson btn-sm" onclick="viewBuddyProfile(${buddy.id})">
+                        <i class="bi bi-eye me-1"></i>View Profile
+                    </button>
+                    <button class="btn btn-crimson btn-sm" onclick="messageBuddy(${buddy.id})">
+                        <i class="bi bi-chat me-1"></i>Message
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function createRequestCard(buddy, request) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-4 col-md-6';
+    
+    col.innerHTML = `
+        <div class="request-card">
+            <div class="request-header">
+                <div class="request-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="request-info">
+                    <h5>${buddy.name}</h5>
+                    <p class="text-muted">Request sent ${new Date(request.sentAt).toLocaleDateString()}</p>
+                </div>
+                <div class="request-status">
+                    <span class="badge bg-warning">Pending</span>
+                </div>
+            </div>
+            <div class="request-body">
+                <div class="request-goals">
+                    ${buddy.goals.map(goal => 
+                        `<span class="goal-badge">${goal.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
+                    ).join('')}
+                </div>
+                <p class="request-bio">${buddy.bio}</p>
+                <div class="request-actions">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="viewBuddyProfile(${buddy.id})">
+                        <i class="bi bi-eye me-1"></i>View Profile
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="cancelRequest(${request.id})">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function messageBuddy(buddyId) {
+    const buddy = workoutBuddies.find(b => b.id === buddyId);
+    if (!buddy) return;
+    
+    showNotification(`Messaging feature coming soon! You can contact ${buddy.name} at ${buddy.email}`, 'info');
+}
+
+function cancelRequest(requestId) {
+    const requestIndex = connectionRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) return;
+    
+    const request = connectionRequests[requestIndex];
+    connectionRequests.splice(requestIndex, 1);
+    saveConnections();
+    
+    showNotification(`Connection request to ${request.buddyName} cancelled`, 'info');
+    loadMatches();
+}
+
 // Export functions for global access
 window.connectWithBuddy = connectWithBuddy;
 window.viewBuddyProfile = viewBuddyProfile;
@@ -700,3 +1115,6 @@ window.createProfile = createProfile;
 window.editProfile = editProfile;
 window.scrollToSearch = scrollToSearch;
 window.clearFilters = clearFilters;
+window.showMatches = showMatches;
+window.messageBuddy = messageBuddy;
+window.cancelRequest = cancelRequest;

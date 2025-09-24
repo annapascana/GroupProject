@@ -116,11 +116,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let summaryHTML = `
             <div class="profile-detail-item">
-                <span class="profile-detail-label">Academic Year:</span>
-                <span class="profile-detail-value">${profileData.year}</span>
+                <span class="profile-detail-label">Academic Year</span>
+                <span class="profile-detail-value">${profileData.year.charAt(0).toUpperCase() + profileData.year.slice(1)}</span>
             </div>
             <div class="profile-detail-item">
-                <span class="profile-detail-label">Major:</span>
+                <span class="profile-detail-label">Major</span>
                 <span class="profile-detail-value">${profileData.major}</span>
             </div>
         `;
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isMIS && profileData.misSemester) {
             summaryHTML += `
                 <div class="profile-detail-item">
-                    <span class="profile-detail-label">MIS Semester:</span>
+                    <span class="profile-detail-label">MIS Program Semester</span>
                     <span class="profile-detail-value">Semester ${profileData.misSemester}</span>
                 </div>
             `;
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         summaryHTML += `
             <div class="profile-detail-item">
-                <span class="profile-detail-label">Technical Skills:</span>
+                <span class="profile-detail-label">Technical Skills</span>
                 <span class="profile-detail-value">${formatTechnicalSkills(profileData.technicalSkills)}</span>
             </div>
         `;
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileData.interests.trim()) {
             summaryHTML += `
                 <div class="profile-detail-item">
-                    <span class="profile-detail-label">Innovation Interests:</span>
+                    <span class="profile-detail-label">Innovation Interests</span>
                     <span class="profile-detail-value">${profileData.interests}</span>
                 </div>
             `;
@@ -182,6 +182,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Store user ID in localStorage for session management
                 localStorage.setItem('uaInnovateUserId', userId);
                 localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
+                
+                // Add to allProfiles for search functionality
+                const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+                const userProfile = { ...profileData, userId: userId };
+                allProfiles.push(userProfile);
+                localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
             } catch (apiError) {
                 console.warn('API not available, using localStorage fallback:', apiError);
                 
@@ -189,6 +195,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userId = 'user_' + Date.now();
                 localStorage.setItem('uaInnovateUserId', userId);
                 localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
+                
+                // Add to allProfiles for search functionality
+                const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+                const userProfile = { ...profileData, userId: userId };
+                allProfiles.push(userProfile);
+                localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
             }
 
             // Create and display profile summary
