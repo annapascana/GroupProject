@@ -82,14 +82,16 @@ body {
 
 /* Main content */
 .main-content {
-    background: white;
+    background: transparent;
     border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     overflow: hidden;
 }
 
 .profile-form-container {
     padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .profile-form-container h2 {
@@ -322,13 +324,13 @@ body {
 }
 
 [data-theme="dark"] .main-content {
-    background: var(--bg-secondary);
+    background: transparent;
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
 }
 
 [data-theme="dark"] .profile-form-container {
     background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
 }
 
 [data-theme="dark"] .profile-form-container h2 {

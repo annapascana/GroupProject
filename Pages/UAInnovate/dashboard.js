@@ -64,47 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const isMIS = profile.major.toLowerCase().includes('mis') || 
-                     profile.major.toLowerCase().includes('management information systems') ||
-                     profile.major.toLowerCase().includes('information systems');
-
-        let summaryHTML = `
-            <div class="profile-detail-item">
-                <span class="profile-detail-label">Academic Year:</span>
-                <span class="profile-detail-value">${profile.year}</span>
-            </div>
-            <div class="profile-detail-item">
-                <span class="profile-detail-label">Major:</span>
-                <span class="profile-detail-value">${profile.major}</span>
-            </div>
-        `;
-
-        if (isMIS && profile.misSemester) {
-            summaryHTML += `
-                <div class="profile-detail-item">
-                    <span class="profile-detail-label">MIS Semester:</span>
-                    <span class="profile-detail-value">Semester ${profile.misSemester}</span>
-                </div>
-            `;
-        }
-
-        summaryHTML += `
-            <div class="profile-detail-item">
-                <span class="profile-detail-label">Technical Skills:</span>
-                <span class="profile-detail-value">${formatTechnicalSkills(profile.technicalSkills)}</span>
-            </div>
-        `;
-
-        if (profile.interests.trim()) {
-            summaryHTML += `
-                <div class="profile-detail-item">
-                    <span class="profile-detail-label">Innovation Interests:</span>
-                    <span class="profile-detail-value">${profile.interests}</span>
-                </div>
-            `;
-        }
-
-        profileSummary.innerHTML = summaryHTML;
+        // Show minimal profile information - just a simple message
+        profileSummary.innerHTML = '<div class="profile-placeholder">Profile created successfully. Click "Edit Profile" to modify your information.</div>';
         profileSummary.classList.add('show');
     }
 

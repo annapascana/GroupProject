@@ -203,23 +203,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
             }
 
-            // Create and display profile summary
-            profileDetails.innerHTML = createProfileSummary(profileData);
-
-            // Hide form and show summary
-            document.querySelector('.profile-form-container').style.display = 'none';
-            profileSummary.style.display = 'block';
-
             // Remove loading state
             profileForm.classList.remove('loading');
 
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // Redirect to innovate dashboard after 3 seconds
-            setTimeout(() => {
-                window.location.href = './dashboard.html';
-            }, 3000);
+            // Redirect to innovate dashboard immediately
+            window.location.href = './dashboard.html';
         } catch (error) {
             console.error('Error creating profile:', error);
             showError('Failed to create profile. Please try again.');
@@ -273,10 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     toggleMISSemester();
                 }
                 
-                // Show profile summary instead of form
-                profileDetails.innerHTML = createProfileSummary(profileData);
-                document.querySelector('.profile-form-container').style.display = 'none';
-                profileSummary.style.display = 'block';
+                // Redirect to dashboard if profile already exists
+                window.location.href = './dashboard.html';
                 
             } catch (error) {
                 console.error('Error loading saved profile:', error);
