@@ -1,4 +1,43 @@
 (() => {
+  // Dark Mode Functionality
+  function toggleDarkMode() {
+    const body = document.body;
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    body.classList.toggle('dark-mode');
+    
+    if (body.classList.contains('dark-mode')) {
+      darkModeIcon.className = 'bi bi-sun-fill';
+      darkModeText.textContent = 'Light Mode';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      darkModeIcon.className = 'bi bi-moon-fill';
+      darkModeText.textContent = 'Dark Mode';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+
+  // Initialize dark mode on page load
+  function initializeDarkMode() {
+    const darkMode = localStorage.getItem('darkMode');
+    const body = document.body;
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    if (darkMode === 'enabled') {
+      body.classList.add('dark-mode');
+      darkModeIcon.className = 'bi bi-sun-fill';
+      darkModeText.textContent = 'Light Mode';
+    }
+  }
+
+  // Make toggleDarkMode globally available
+  window.toggleDarkMode = toggleDarkMode;
+
+  // Initialize dark mode when DOM is loaded
+  document.addEventListener('DOMContentLoaded', initializeDarkMode);
+
   // Default groups data
   const defaultGroups = [
     { id: 1, name: 'MIS321 Exam Prep', course: 'MIS321', size: '4-6', time: 'evening', location: 'library', focus: 'exam-prep', desc: 'Review sessions and practice exams.', specific: 'Library 3A', members: 4, max: 6, joined: false },

@@ -52,6 +52,74 @@ class Database {
                 UNIQUE(group_id, user_id)
             )
         `);
+
+        // Create group_messages table for group messaging
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS group_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id TEXT UNIQUE NOT NULL,
+                group_id TEXT NOT NULL,
+                user_id TEXT,
+                message TEXT NOT NULL,
+                message_type TEXT DEFAULT 'user',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (group_id) REFERENCES groups (group_id),
+                FOREIGN KEY (user_id) REFERENCES users (user_id)
+            )
+        `);
+
+        // Create group_invites table for group invitations
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS group_invites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                invite_id TEXT UNIQUE NOT NULL,
+                group_id TEXT NOT NULL,
+                inviter_id TEXT NOT NULL,
+                invitee_email TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME,
+                FOREIGN KEY (group_id) REFERENCES groups (group_id),
+                FOREIGN KEY (inviter_id) REFERENCES users (user_id)
+            )
+        `);
+
+        // Create trips table for travel page
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS trips (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                trip_id TEXT UNIQUE NOT NULL,
+                destination TEXT NOT NULL,
+                departure_date TEXT NOT NULL,
+                departure_time TEXT NOT NULL,
+                return_date TEXT,
+                return_time TEXT,
+                total_seats INTEGER NOT NULL,
+                available_seats INTEGER NOT NULL,
+                cost_per_person REAL NOT NULL,
+                trip_type TEXT NOT NULL,
+                description TEXT,
+                created_by TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME,
+                FOREIGN KEY (created_by) REFERENCES users (user_id)
+            )
+        `);
+
+        // Create trip_messages table for trip messaging
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS trip_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id TEXT UNIQUE NOT NULL,
+                trip_id TEXT NOT NULL,
+                user_id TEXT,
+                message TEXT NOT NULL,
+                message_type TEXT DEFAULT 'user',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (trip_id) REFERENCES trips (trip_id),
+                FOREIGN KEY (user_id) REFERENCES users (user_id)
+            )
+        `);
     }
 
     // User operations
@@ -78,6 +146,21 @@ class Database {
                 (err, row) => {
                     if (err) reject(err);
                     else resolve(row);
+                }
+            );
+        });
+    }
+
+    updateUser(userId, userData) {
+        return new Promise((resolve, reject) => {
+            const { year, major, misSemester, technicalSkills, interests } = userData;
+            this.db.run(
+                `UPDATE users SET year = ?, major = ?, mis_semester = ?, technical_skills = ?, interests = ?
+                 WHERE user_id = ?`,
+                [year, major, misSemester, technicalSkills, interests, userId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ userId, changes: this.changes });
                 }
             );
         });
@@ -231,6 +314,236 @@ class Database {
                 (err, row) => {
                     if (err) reject(err);
                     else resolve(!!row);
+                }
+            );
+        });
+    }
+
+    // Group Messaging Methods
+    createGroupMessage(groupId, userId, message, messageType = 'user') {
+        return new Promise((resolve, reject) => {
+            const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            this.db.run(
+                `INSERT INTO group_messages (message_id, group_id, user_id, message, message_type, created_at)
+                 VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+                [messageId, groupId, userId, message, messageType],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ messageId: this.lastID });
+                }
+            );
+        });
+    }
+
+    getGroupMessages(groupId, limit = 50, offset = 0) {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                `SELECT gm.*, u.username, u.email
+                 FROM group_messages gm
+                 LEFT JOIN users u ON gm.user_id = u.user_id
+                 WHERE gm.group_id = ?
+                 ORDER BY gm.created_at DESC
+                 LIMIT ? OFFSET ?`,
+                [groupId, limit, offset],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows.reverse()); // Reverse to show oldest first
+                }
+            );
+        });
+    }
+
+    createGroupInvite(groupId, inviterId, inviteeEmail, status = 'pending') {
+        return new Promise((resolve, reject) => {
+            const inviteId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            this.db.run(
+                `INSERT INTO group_invites (invite_id, group_id, inviter_id, invitee_email, status, created_at)
+                 VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+                [inviteId, groupId, inviterId, inviteeEmail, status],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ inviteId: this.lastID });
+                }
+            );
+        });
+    }
+
+    getGroupInvites(groupId) {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                `SELECT gi.*, u.username as inviter_name
+                 FROM group_invites gi
+                 LEFT JOIN users u ON gi.inviter_id = u.user_id
+                 WHERE gi.group_id = ?
+                 ORDER BY gi.created_at DESC`,
+                [groupId],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                }
+            );
+        });
+    }
+
+    updateInviteStatus(inviteId, status) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `UPDATE group_invites SET status = ?, updated_at = datetime('now')
+                 WHERE invite_id = ?`,
+                [status, inviteId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ changes: this.changes });
+                }
+            );
+        });
+    }
+
+    getUserInvites(userEmail) {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                `SELECT gi.*, g.name as group_name, g.description, u.username as inviter_name
+                 FROM group_invites gi
+                 JOIN groups g ON gi.group_id = g.group_id
+                 LEFT JOIN users u ON gi.inviter_id = u.user_id
+                 WHERE gi.invitee_email = ? AND gi.status = 'pending'
+                 ORDER BY gi.created_at DESC`,
+                [userEmail],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                }
+            );
+        });
+    }
+
+    // Trip Management Methods
+    createTrip(tripData) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `INSERT INTO trips (trip_id, destination, departure_date, departure_time, 
+                 return_date, return_time, total_seats, available_seats, cost_per_person, 
+                 trip_type, description, created_by, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+                [
+                    tripData.trip_id,
+                    tripData.destination,
+                    tripData.departure_date,
+                    tripData.departure_time,
+                    tripData.return_date,
+                    tripData.return_time,
+                    tripData.total_seats,
+                    tripData.available_seats,
+                    tripData.cost_per_person,
+                    tripData.trip_type,
+                    tripData.description,
+                    tripData.created_by
+                ],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ tripId: tripData.trip_id });
+                }
+            );
+        });
+    }
+
+    getAllTrips() {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                `SELECT * FROM trips ORDER BY created_at DESC`,
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                }
+            );
+        });
+    }
+
+    getTrip(tripId) {
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                `SELECT * FROM trips WHERE trip_id = ?`,
+                [tripId],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                }
+            );
+        });
+    }
+
+    updateTrip(tripId, updateData) {
+        return new Promise((resolve, reject) => {
+            const fields = [];
+            const values = [];
+            
+            Object.keys(updateData).forEach(key => {
+                if (key !== 'trip_id') {
+                    fields.push(`${key} = ?`);
+                    values.push(updateData[key]);
+                }
+            });
+            
+            if (fields.length === 0) {
+                resolve({ changes: 0 });
+                return;
+            }
+            
+            values.push(tripId);
+            
+            this.db.run(
+                `UPDATE trips SET ${fields.join(', ')}, updated_at = datetime('now') WHERE trip_id = ?`,
+                values,
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ changes: this.changes });
+                }
+            );
+        });
+    }
+
+    deleteTrip(tripId) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                `DELETE FROM trips WHERE trip_id = ?`,
+                [tripId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ changes: this.changes });
+                }
+            );
+        });
+    }
+
+    // Trip Message Methods
+    createTripMessage(tripId, userId, message, messageType = 'user') {
+        return new Promise((resolve, reject) => {
+            const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            this.db.run(
+                `INSERT INTO trip_messages (message_id, trip_id, user_id, message, message_type, created_at)
+                 VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+                [messageId, tripId, userId, message, messageType],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve({ messageId: this.lastID });
+                }
+            );
+        });
+    }
+
+    getTripMessages(tripId, limit = 50, offset = 0) {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                `SELECT tm.*, u.username, u.email
+                 FROM trip_messages tm
+                 LEFT JOIN users u ON tm.user_id = u.user_id
+                 WHERE tm.trip_id = ?
+                 ORDER BY tm.created_at DESC
+                 LIMIT ? OFFSET ?`,
+                [tripId, limit, offset],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows.reverse()); // Reverse to show oldest first
                 }
             );
         });

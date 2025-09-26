@@ -9,15 +9,39 @@
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+    <!-- Tech circuit board nodes -->
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    <div class="tech-node"></div>
+    
     <div class="container">
         <header class="header">
             <div class="header-content">
-                <button id="homeBtn" class="header-btn-circular" title="Go to main dashboard">
+                <button id="homeBtn" class="header-btn" title="Return to main dashboard">
                     <i class="bi bi-house-fill"></i>
+                    <span>Dashboard</span>
                 </button>
                 <div class="header-text">
-                    <h1>UA Innovate Dashboard</h1>
-                    <p>Welcome to your innovation hub</p>
+                    <h1>UA Innovate</h1>
                 </div>
                 <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
                     <i class="bi bi-moon-fill" id="themeIcon"></i>
@@ -101,6 +125,31 @@
                             <textarea id="groupSkills" name="groupSkills" 
                                     placeholder="List any specific skills or experience required" 
                                     rows="3"></textarea>
+                        </div>
+
+                        <!-- Group Messaging Section -->
+                        <div class="messaging-section" id="groupMessagingSection" style="display: none;">
+                            <h4>Group Communication</h4>
+                            <p>Invite members and start collaborating!</p>
+                            
+                            <div class="messaging-interface">
+                                <div class="message-input-container">
+                                    <input type="text" id="groupMessageInput" placeholder="Type a message to invite members or discuss the group..." maxlength="500">
+                                    <button type="button" id="sendGroupMessage" class="btn-primary btn-small">Send</button>
+                                </div>
+                                
+                                <div class="message-list" id="groupMessageList">
+                                    <!-- Messages will be displayed here -->
+                                </div>
+                                
+                                <div class="invite-section">
+                                    <h5>Invite Members</h5>
+                                    <div class="invite-input-container">
+                                        <input type="email" id="inviteEmail" placeholder="Enter email address to invite">
+                                        <button type="button" id="sendInvite" class="btn-secondary btn-small">Invite</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-actions">
@@ -216,6 +265,66 @@
                 </div>
             </div>
 
+            <!-- Edit Profile Modal -->
+            <div id="editProfileModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Edit Profile</h3>
+                        <span class="close" id="closeEditProfileModal">&times;</span>
+                    </div>
+                    <form id="editProfileForm" class="profile-form">
+                        <div class="form-group">
+                            <label for="editYear">Academic Year *</label>
+                            <select id="editYear" name="editYear" required>
+                                <option value="">Select your year</option>
+                                <option value="freshman">Freshman</option>
+                                <option value="sophomore">Sophomore</option>
+                                <option value="junior">Junior</option>
+                                <option value="senior">Senior</option>
+                                <option value="graduate">Graduate</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editMajor">Major *</label>
+                            <input type="text" id="editMajor" name="editMajor" placeholder="Enter your major" required>
+                        </div>
+
+                        <div class="form-group" id="editMisSemesterGroup" style="display: none;">
+                            <label for="editMisSemester">MIS Program Semester</label>
+                            <select id="editMisSemester" name="editMisSemester">
+                                <option value="">Select semester in MIS program</option>
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                                <option value="3">Semester 3</option>
+                                <option value="4">Semester 4</option>
+                                <option value="5">Semester 5</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editTechnicalSkills">Technical Skills</label>
+                            <textarea id="editTechnicalSkills" name="editTechnicalSkills" 
+                                    placeholder="List your technical skills (e.g., Python, JavaScript, SQL, etc.)" 
+                                    rows="4"></textarea>
+                            <small class="help-text">Separate skills with commas or list them on separate lines</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editInterests">Innovation Interests</label>
+                            <textarea id="editInterests" name="editInterests" 
+                                    placeholder="What areas of innovation interest you? (e.g., AI/ML, Web Development, Data Science, etc.)" 
+                                    rows="3"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Update Profile</button>
+                            <button type="button" class="btn-secondary" id="cancelEditProfile">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- My Groups Section -->
             <div class="my-groups-section">
                 <h3>My Groups</h3>
@@ -227,6 +336,10 @@
     </div>
 
     <script src="api.js"></script>
+    <!-- Shared Data Service -->
+    <script src="shared-data-service.js"></script>
+    <!-- Cross-User Data Test (remove in production) -->
+    <script src="test-cross-user-data.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

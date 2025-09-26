@@ -1,8 +1,42 @@
 // UA Friend Match - Simplified JavaScript
 
+// Dark Mode Functionality
+function toggleDarkMode() {
+    const body = document.body;
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    body.classList.toggle('dark-mode');
+    
+    if (body.classList.contains('dark-mode')) {
+        darkModeIcon.className = 'bi bi-sun-fill';
+        darkModeText.textContent = 'Light Mode';
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        darkModeIcon.className = 'bi bi-moon-fill';
+        darkModeText.textContent = 'Dark Mode';
+        localStorage.setItem('darkMode', 'disabled');
+    }
+}
+
+// Initialize dark mode on page load
+function initializeDarkMode() {
+    const darkMode = localStorage.getItem('darkMode');
+    const body = document.body;
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const darkModeText = document.getElementById('darkModeText');
+    
+    if (darkMode === 'enabled') {
+        body.classList.add('dark-mode');
+        darkModeIcon.className = 'bi bi-sun-fill';
+        darkModeText.textContent = 'Light Mode';
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('UA Friend Match initialized');
+    initializeDarkMode();
     checkProfileStatus();
 });
 

@@ -375,6 +375,28 @@ body {
   font-size: 1.2rem;
 }
 
+.social-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.social-btn.loading i {
+  animation: spin 1s linear infinite;
+}
+
+.social-btn.success {
+  border-color: var(--success-color);
+  color: var(--success-color);
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.social-btn.error {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  background: rgba(220, 53, 69, 0.1);
+}
+
 /* Links */
 .forgot-password-link,
 .terms-link {
@@ -567,5 +589,302 @@ body {
   }
   to {
     transform: translateX(0);
+  }
+}
+
+/* OTP Verification Modal Styles */
+#otpVerificationModal .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+#otpVerificationModal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px 15px 0 0;
+}
+
+#otpVerificationModal .modal-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#otpCode {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5rem;
+  text-align: center;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+#otpCode:focus {
+  border-color: var(--crimson-primary);
+  box-shadow: 0 0 0 0.2rem rgba(158, 27, 50, 0.25);
+  transform: scale(1.02);
+}
+
+#otpTimer {
+  font-weight: 600;
+  color: var(--crimson-primary);
+}
+
+#otpTimer.text-warning {
+  color: var(--warning-color);
+}
+
+#otpTimer.text-danger {
+  color: var(--danger-color);
+}
+
+/* Password Reset Modal Styles */
+#passwordResetModal .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+#passwordResetModal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px 15px 0 0;
+}
+
+#passwordResetModal .modal-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Password Input Group */
+.password-input-group {
+  position: relative;
+}
+
+.password-input-group .form-control {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: var(--crimson-primary);
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--crimson-primary);
+  outline-offset: 2px;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+  margin-top: 0.5rem;
+}
+
+.strength-bar {
+  height: 4px;
+  background-color: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background-color: var(--danger-color);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background-color: var(--warning-color);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background-color: #17a2b8;
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background-color: var(--success-color);
+}
+
+.strength-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.strength-text.weak {
+  color: var(--danger-color);
+}
+
+.strength-text.fair {
+  color: var(--warning-color);
+}
+
+.strength-text.good {
+  color: #17a2b8;
+}
+
+.strength-text.strong {
+  color: var(--success-color);
+}
+
+/* Modal Button Styles */
+#otpVerificationModal .btn,
+#passwordResetModal .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+#otpVerificationModal .btn-primary,
+#passwordResetModal .btn-success {
+  background: var(--crimson-gradient);
+  border: none;
+}
+
+#otpVerificationModal .btn-primary:hover,
+#passwordResetModal .btn-success:hover {
+  background: var(--crimson-gradient-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(158, 27, 50, 0.3);
+}
+
+#otpVerificationModal .btn-outline-secondary {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+#otpVerificationModal .btn-outline-secondary:hover {
+  background-color: var(--border-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Error Alert Styles */
+#otpError,
+#passwordResetError {
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+  border-left: 4px solid var(--danger-color);
+}
+
+/* Success Alert Styles */
+.alert-success {
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border-left: 4px solid var(--success-color);
+}
+
+/* Loading States */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  #otpVerificationModal .modal-dialog,
+  #passwordResetModal .modal-dialog {
+    margin: 1rem;
+  }
+  
+  #otpCode {
+    font-size: 1.25rem;
+    letter-spacing: 0.25rem;
+  }
+  
+  #otpVerificationModal .btn,
+  #passwordResetModal .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  #otpVerificationModal .modal-content,
+  #passwordResetModal .modal-content {
+    background-color: var(--dark-bg);
+    color: white;
+  }
+  
+  #otpVerificationModal .modal-header,
+  #passwordResetModal .modal-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-bottom-color: #495057;
+  }
+  
+  #otpVerificationModal .modal-title,
+  #passwordResetModal .modal-title {
+    color: white;
+  }
+  
+  #otpCode {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: white;
+  }
+  
+  #otpCode:focus {
+    background-color: #495057;
+    border-color: var(--crimson-primary);
+    color: white;
+  }
+  
+  .form-control {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: white;
+  }
+  
+  .form-control:focus {
+    background-color: #495057;
+    border-color: var(--crimson-primary);
+    color: white;
+  }
+  
+  .form-control::placeholder {
+    color: #adb5bd;
+  }
+  
+  .form-label {
+    color: white;
+  }
+  
+  .form-text {
+    color: #adb5bd;
   }
 }

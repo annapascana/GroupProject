@@ -52,6 +52,11 @@
             <!-- Right Side: User Profile and Controls -->
             <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
                 <div class="nav-right">
+                    <!-- Create Trip Button -->
+                    <button class="btn btn-primary btn-sm me-3" data-bs-toggle="modal" data-bs-target="#createTripModal">
+                        <i class="bi bi-plus-circle"></i> Create Trip
+                    </button>
+                    
                     <!-- User Profile Dropdown Container -->
                     <div class="user-profile me-3" id="userProfile" data-bs-toggle="dropdown" aria-expanded="false">
                         <!-- Profile Avatar with Emergency Warning Indicator -->
@@ -73,9 +78,6 @@
                         <li><a class="dropdown-item" href="#" onclick="openEmergencyContactsModal()">
                             <i class="bi bi-shield-check"></i> Emergency Contacts
                             <span class="badge bg-warning ms-2" id="emergencyBadge" style="display: none;">Required</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" onclick="openProfileSettings()">
-                            <i class="bi bi-gear"></i> Settings
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="logout()">
@@ -100,91 +102,103 @@
     <!-- Header -->
     <header class="travel-header mb-4">
         <div class="row align-items-center">
-            <div class="col-md-8">
+            <div class="col-md-12">
                 <div class="header-content">
                     <p class="lead">Find safe travel buddies, split costs, and plan trips with UA classmates!</p>
-                    <div class="header-stats">
-                        <div class="stat-item">
-                            <i class="bi bi-people-fill"></i>
-                            <span id="resultsCount">0 trips found</span>
+                    
+                    <!-- Stats and Analytics Row -->
+                    <div class="stats-analytics-row d-flex justify-content-between align-items-center">
+                        <!-- Stats Section (left side) -->
+                        <div class="stats-section">
+                            <div class="header-stats">
+                                <div class="stat-item">
+                                    <i class="bi bi-people-fill"></i>
+                                    <span id="resultsCount">0 trips found</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-calendar-check"></i>
+                                    <span id="activeTripsCount">0 active</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-person-check"></i>
+                                    <span id="myTripsCount">0 my trips</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-currency-dollar"></i>
+                                    <span id="avgCost">$0 avg cost</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-graph-up"></i>
+                                    <span id="totalSavings">$0 saved</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <i class="bi bi-calendar-check"></i>
-                            <span id="activeTripsCount">0 active</span>
+                        
+                        <!-- Analytics Dropdown (right side) -->
+                        <div class="analytics-dropdown">
+                            <button class="btn btn-outline-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#analyticsContent" aria-expanded="false" aria-controls="analyticsContent">
+                                <i class="bi bi-trophy"></i> Popular Trips & Analytics
+                                <i class="bi bi-chevron-down" id="analyticsChevron"></i>
+                            </button>
                         </div>
-                        <div class="stat-item">
-                            <i class="bi bi-person-check"></i>
-                            <span id="myTripsCount">0 my trips</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="bi bi-currency-dollar"></i>
-                            <span id="avgCost">$0 avg cost</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="bi bi-graph-up"></i>
-                            <span id="totalSavings">$0 saved</span>
+                    </div>
+                    
+                    <!-- Collapsible Analytics Content -->
+                    <div class="collapse" id="analyticsContent">
+                        <div class="analytics-cards mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-icon">
+                                            <i class="bi bi-trophy"></i>
+                                        </div>
+                                        <div class="analytics-content">
+                                            <h6>Popular Destination</h6>
+                                            <p id="popularDestination">Atlanta Airport</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-icon">
+                                            <i class="bi bi-clock"></i>
+                                        </div>
+                                        <div class="analytics-content">
+                                            <h6>Peak Travel Time</h6>
+                                            <p id="peakTravelTime">Friday 3-5 PM</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-icon">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                        <div class="analytics-content">
+                                            <h6>Active Travelers</h6>
+                                            <p id="activeTravelers">127 students</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-icon">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                        <div class="analytics-content">
+                                            <h6>Average Rating</h6>
+                                            <p id="averageRating">4.8/5.0</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
-                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createTripModal">
-                    <i class="bi bi-plus-circle"></i> Create Trip
-                </button>
             </div>
         </div>
     </header>
 
-
-    <!-- Analytics Dashboard -->
-    <div class="analytics-dashboard mb-4">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="analytics-card">
-                    <div class="analytics-icon">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <div class="analytics-content">
-                        <h6>Popular Destination</h6>
-                        <p id="popularDestination">Atlanta Airport</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="analytics-card">
-                    <div class="analytics-icon">
-                        <i class="bi bi-clock"></i>
-                    </div>
-                    <div class="analytics-content">
-                        <h6>Peak Travel Time</h6>
-                        <p id="peakTravelTime">Friday 3-5 PM</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="analytics-card">
-                    <div class="analytics-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <div class="analytics-content">
-                        <h6>Active Travelers</h6>
-                        <p id="activeTravelers">127 students</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="analytics-card">
-                    <div class="analytics-icon">
-                        <i class="bi bi-star-fill"></i>
-                    </div>
-                    <div class="analytics-content">
-                        <h6>Average Rating</h6>
-                        <p id="averageRating">4.8/5.0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Search & Filter -->
     <div class="search-section mb-4">
@@ -198,7 +212,7 @@
                     </button>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                  <select id="tripTypeFilter" class="form-select">
                      <option value="all">All Trip Types</option>
                      <option value="airport">✈️ Airport Trips</option>
@@ -208,13 +222,21 @@
                      <option value="other">📍 Other</option>
                  </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select id="sortFilter" class="form-select">
                     <option value="date">Sort by Date</option>
                     <option value="cost">Sort by Cost</option>
                     <option value="seats">Sort by Available Seats</option>
                     <option value="destination">Sort by Destination</option>
                 </select>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showFullTrips" onchange="toggleFullTrips()">
+                    <label class="form-check-label" for="showFullTrips">
+                        Show Full Trips
+                    </label>
+                </div>
             </div>
         </div>
         <div class="row mt-3">
@@ -247,12 +269,6 @@
                  <span class="badge bg-secondary ms-2" id="pastTripsBadge">0</span>
              </button>
          </li>
-         <li class="nav-item" role="presentation">
-             <button class="nav-link" id="full-trips-tab" data-bs-toggle="tab" data-bs-target="#full-trips" type="button" role="tab">
-                 <i class="bi bi-people-fill"></i> Full Trips
-                 <span class="badge bg-warning ms-2" id="fullTripsBadge">0</span>
-             </button>
-         </li>
      </ul>
 
      <!-- ========================================
@@ -280,16 +296,24 @@
                  </div>
              </div>
          </div>
-         <div class="tab-pane fade" id="my-trips" role="tabpanel">
-             <div class="trips-grid" id="myTripsGrid"></div>
-             <div class="empty-state" id="myTripsEmpty" style="display: none;">
-                 <div class="text-center py-5">
-                     <i class="bi bi-person-x" style="font-size: 4rem; color: #6c757d;"></i>
-                     <h4 class="mt-3 text-muted">No trips yet</h4>
-                     <p class="text-muted">Join a trip or create your own to get started!</p>
-                 </div>
-             </div>
-         </div>
+        <div class="tab-pane fade" id="my-trips" role="tabpanel">
+            <div class="loading-state" id="myTripsLoading" style="display: none;">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading your trips...</p>
+                </div>
+            </div>
+            <div class="trips-grid" id="myTripsGrid"></div>
+            <div class="empty-state" id="myTripsEmpty" style="display: none;">
+                <div class="text-center py-5">
+                    <i class="bi bi-person-x" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h4 class="mt-3 text-muted">No trips yet</h4>
+                    <p class="text-muted">Join a trip or create your own to get started!</p>
+                </div>
+            </div>
+        </div>
          <div class="tab-pane fade" id="past-trips" role="tabpanel">
              <div class="trips-grid" id="pastTripsGrid"></div>
              <div class="empty-state" id="pastTripsEmpty" style="display: none;">
@@ -297,16 +321,6 @@
                      <i class="bi bi-clock-history" style="font-size: 4rem; color: #6c757d;"></i>
                      <h4 class="mt-3 text-muted">No past trips</h4>
                      <p class="text-muted">Expired trips will appear here automatically.</p>
-                 </div>
-             </div>
-         </div>
-         <div class="tab-pane fade" id="full-trips" role="tabpanel">
-             <div class="trips-grid" id="fullTripsGrid"></div>
-             <div class="empty-state" id="fullTripsEmpty" style="display: none;">
-                 <div class="text-center py-5">
-                     <i class="bi bi-people-x" style="font-size: 4rem; color: #6c757d;"></i>
-                     <h4 class="mt-3 text-muted">No full trips</h4>
-                     <p class="text-muted">Trips that reach capacity will appear here.</p>
                  </div>
              </div>
          </div>
@@ -697,6 +711,7 @@
         </div>
     </div>
 
+
     <!-- ========================================
          FLOATING ACTION BUTTON
          ======================================== -->
@@ -728,6 +743,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- User Manager -->
     <script src="../../Resources/Scripts/userManager.js"></script>
+    <!-- Shared Data Service -->
+    <script src="../../Resources/Scripts/shared-data-service.js"></script>
+    <!-- Event Sync Helper -->
+    <script src="../../Resources/Scripts/event-sync-helper.js"></script>
+    <!-- Travel Calendar Sync -->
+    <script src="travel-calendar-sync.js"></script>
+    <!-- Cross-User Data Test (remove in production) -->
+    <script src="test-cross-user-data.js"></script>
     <script src="travel.js"></script>
 </body>
 </html>

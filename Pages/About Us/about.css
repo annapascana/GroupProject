@@ -1,0 +1,425 @@
+/* about.css - About Us Page Styles */
+
+:root {
+    --crimson-primary: #9E1B32;
+    --crimson-secondary: #C8102E;
+    --text-dark: #343a40;
+    --text-light: #f8f9fa;
+    --bg-light: #ffffff;
+    --bg-dark: #212529;
+    --card-bg-light: #f8f9fa;
+    --card-bg-dark: #343a40;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.dark-mode {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+}
+
+.dark-mode .navbar {
+    background-color: var(--card-bg-dark) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .navbar-brand {
+    color: var(--crimson-secondary) !important;
+}
+
+.dark-mode .nav-link {
+    color: var(--text-light) !important;
+}
+
+.dark-mode .nav-link:hover {
+    color: var(--crimson-secondary) !important;
+}
+
+.dark-mode .footer {
+    background-color: var(--card-bg-dark);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .card {
+    background-color: var(--card-bg-dark);
+    color: var(--text-light);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .card-title, 
+.dark-mode .card-text {
+    color: var(--text-light);
+}
+
+.dark-mode .btn-outline-primary {
+    color: var(--crimson-primary);
+    border-color: var(--crimson-primary);
+}
+
+.dark-mode .btn-outline-primary:hover {
+    background-color: var(--crimson-primary);
+    color: var(--text-light);
+}
+
+.dark-mode .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark-mode .section-title {
+    color: var(--crimson-secondary);
+}
+
+.dark-mode .stats-section .stat-item {
+    background-color: var(--card-bg-dark);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .values-section .value-item {
+    background-color: var(--card-bg-dark);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .team-member h5 {
+    color: var(--crimson-secondary);
+}
+
+.dark-mode .values-section .value-item h6 {
+    color: var(--crimson-secondary);
+}
+
+.dark-mode .navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-mode .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.dark-mode .btn-light {
+    background-color: var(--text-light);
+    color: var(--crimson-primary);
+    border-color: var(--text-light);
+}
+
+.dark-mode .btn-light:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--crimson-primary);
+}
+
+.dark-mode .btn-outline-light {
+    color: var(--text-light);
+    border-color: var(--text-light);
+}
+
+.dark-mode .btn-outline-light:hover {
+    background-color: var(--text-light);
+    color: var(--crimson-primary);
+}
+
+/* Navbar Styles */
+.navbar {
+    background-color: var(--bg-light);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--crimson-primary) !important;
+}
+
+.navbar-brand .bi {
+    color: var(--crimson-secondary);
+}
+
+.nav-link {
+    color: var(--text-dark) !important;
+}
+
+.nav-link:hover {
+    color: var(--crimson-primary) !important;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(45deg, var(--crimson-primary), var(--crimson-secondary));
+    color: white;
+    padding: 80px 0;
+    text-align: center;
+    border-bottom-left-radius: 50% 20%;
+    border-bottom-right-radius: 50% 20%;
+    margin-bottom: 40px;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    max-width: 800px;
+    margin: 0 auto 30px auto;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--crimson-primary);
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--card-bg-light);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: var(--crimson-secondary);
+    margin-bottom: 15px;
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--crimson-primary);
+}
+
+/* Statistics Section */
+.stats-section .stat-item {
+    background-color: var(--card-bg-light);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.stats-section .stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stats-section .stat-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--crimson-primary);
+    line-height: 1;
+}
+
+.stats-section .stat-label {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.dark-mode .stats-section .stat-label {
+    color: var(--text-light);
+}
+
+/* Team Section */
+.team-member {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.team-member img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid var(--crimson-primary);
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.team-member-initials {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: var(--crimson-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0 auto 15px auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border: 5px solid var(--crimson-primary);
+}
+
+.team-member h5 {
+    font-weight: 600;
+    color: var(--crimson-primary);
+}
+
+.team-member p {
+    color: var(--text-dark);
+}
+
+.dark-mode .team-member p {
+    color: var(--text-light);
+}
+
+/* Values Section */
+.values-section .value-item {
+    text-align: center;
+    padding: 20px;
+    border-radius: 15px;
+    background-color: var(--card-bg-light);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: background-color 0.3s ease;
+}
+
+.dark-mode .values-section .value-item {
+    background-color: var(--card-bg-dark);
+}
+
+.values-section .value-item .bi {
+    font-size: 2.5rem;
+    color: var(--crimson-secondary);
+    margin-bottom: 10px;
+}
+
+.values-section .value-item h6 {
+    font-weight: 600;
+    color: var(--crimson-primary);
+}
+
+/* Call to Action Section */
+.cta-section {
+    background: linear-gradient(90deg, var(--crimson-secondary), var(--crimson-primary));
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+    border-radius: 15px;
+    margin-top: 60px;
+}
+
+.cta-section h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.cta-section p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.cta-section .btn {
+    font-size: 1.1rem;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 600;
+    margin: 0 10px;
+}
+
+.cta-section .btn-light {
+    color: var(--crimson-primary);
+}
+
+.cta-section .btn-outline-light {
+    border-color: white;
+    color: white;
+}
+
+.cta-section .btn-outline-light:hover {
+    background-color: white;
+    color: var(--crimson-primary);
+}
+
+/* Footer */
+.footer {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    padding: 40px 0;
+    margin-top: 60px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark-mode .footer {
+    background-color: var(--card-bg-dark);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.footer .footer-link {
+    color: var(--text-dark);
+    text-decoration: none;
+    margin-right: 15px;
+    transition: color 0.3s ease;
+}
+
+.dark-mode .footer .footer-link {
+    color: var(--text-light);
+}
+
+.footer .footer-link:hover {
+    color: var(--crimson-primary);
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-section p {
+        font-size: 1.1rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .cta-section h2 {
+        font-size: 2.2rem;
+    }
+    
+    .team-member img {
+        width: 120px;
+        height: 120px;
+    }
+    
+    /* Stack team members in 2x2 grid on tablets */
+    .team-member {
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 60px 0;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .cta-section .btn {
+        display: block;
+        margin: 10px auto;
+        width: 200px;
+    }
+    
+    /* Stack team members in single column on mobile */
+    .team-member {
+        margin-bottom: 30px;
+    }
+}

@@ -11,18 +11,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const createGroupModal = document.getElementById('createGroupModal');
     const searchGroupsModal = document.getElementById('searchGroupsModal');
     const searchProfilesModal = document.getElementById('searchProfilesModal');
+    const editProfileModal = document.getElementById('editProfileModal');
     const createGroupForm = document.getElementById('createGroupForm');
     const searchGroupsForm = document.getElementById('searchGroupsForm');
     const searchProfilesForm = document.getElementById('searchProfilesForm');
+    const editProfileForm = document.getElementById('editProfileForm');
     const myGroupsList = document.getElementById('myGroupsList');
 
     // Modal close buttons
     const closeCreateModal = document.getElementById('closeCreateModal');
     const closeSearchModal = document.getElementById('closeSearchModal');
     const closeSearchProfilesModal = document.getElementById('closeSearchProfilesModal');
+    const closeEditProfileModal = document.getElementById('closeEditProfileModal');
     const cancelCreateGroup = document.getElementById('cancelCreateGroup');
     const cancelSearch = document.getElementById('cancelSearch');
     const cancelSearchProfiles = document.getElementById('cancelSearchProfiles');
+    const cancelEditProfile = document.getElementById('cancelEditProfile');
 
     // Load user profile and initialize dashboard
     async function initializeDashboard() {
@@ -64,8 +68,48 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Show minimal profile information - just a simple message
-        profileSummary.innerHTML = '<div class="profile-placeholder">Profile created successfully. Click "Edit Profile" to modify your information.</div>';
+        // Display detailed profile information similar to home page
+        const isMIS = profile.major.toLowerCase().includes('mis') || 
+                     profile.major.toLowerCase().includes('management information systems') ||
+                     profile.major.toLowerCase().includes('information systems');
+
+        let profileHTML = `
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">Academic Year</span>
+                <span class="profile-detail-value">${profile.year.charAt(0).toUpperCase() + profile.year.slice(1)}</span>
+            </div>
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">Major</span>
+                <span class="profile-detail-value">${profile.major}</span>
+            </div>
+        `;
+
+        if (isMIS && profile.misSemester) {
+            profileHTML += `
+                <div class="profile-detail-item">
+                    <span class="profile-detail-label">MIS Program Semester</span>
+                    <span class="profile-detail-value">Semester ${profile.misSemester}</span>
+                </div>
+            `;
+        }
+
+        profileHTML += `
+            <div class="profile-detail-item">
+                <span class="profile-detail-label">Technical Skills</span>
+                <span class="profile-detail-value">${formatTechnicalSkills(profile.technicalSkills)}</span>
+            </div>
+        `;
+
+        if (profile.interests && profile.interests.trim()) {
+            profileHTML += `
+                <div class="profile-detail-item">
+                    <span class="profile-detail-label">Innovation Interests</span>
+                    <span class="profile-detail-value">${profile.interests}</span>
+                </div>
+            `;
+        }
+
+        profileSummary.innerHTML = profileHTML;
         profileSummary.classList.add('show');
     }
 
@@ -93,6 +137,67 @@ document.addEventListener('DOMContentLoaded', function() {
         return focusAreas[focus] || 'General';
     }
 
+    // Enhanced group membership tracking
+    function trackGroupMembership(groupId, userId, action = 'join') {
+        const membershipKey = `groupMemberships_${userId}`;
+        const memberships = JSON.parse(localStorage.getItem(membershipKey) || '[]');
+        
+        if (action === 'join') {
+            // Add membership if not already exists
+            if (!memberships.includes(groupId)) {
+                memberships.push(groupId);
+                localStorage.setItem(membershipKey, JSON.stringify(memberships));
+            }
+        } else if (action === 'leave') {
+            // Remove membership
+            const updatedMemberships = memberships.filter(id => id !== groupId);
+            localStorage.setItem(membershipKey, JSON.stringify(updatedMemberships));
+        }
+        
+        return memberships;
+    }
+
+    // Enhanced group data persistence
+    function persistGroupData(groupId, groupData) {
+        const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+        const existingGroupIndex = allGroups.findIndex(g => g.group_id === groupId);
+        
+        if (existingGroupIndex !== -1) {
+            // Update existing group
+            allGroups[existingGroupIndex] = { ...allGroups[existingGroupIndex], ...groupData };
+        } else {
+            // Add new group
+            allGroups.push(groupData);
+        }
+        
+        localStorage.setItem('allGroups', JSON.stringify(allGroups));
+        return allGroups;
+    }
+
+    // Enhanced user groups tracking
+    function updateUserGroups(userId, groupId, action = 'add') {
+        const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
+        const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+        
+        if (action === 'add') {
+            // Add group to user's groups if not already present
+            const groupExists = myGroups.some(g => g.group_id === groupId);
+            if (!groupExists) {
+                const group = allGroups.find(g => g.group_id === groupId);
+                if (group) {
+                    myGroups.push(group);
+                    localStorage.setItem('myGroups', JSON.stringify(myGroups));
+                }
+            }
+        } else if (action === 'remove') {
+            // Remove group from user's groups
+            const updatedMyGroups = myGroups.filter(g => g.group_id !== groupId);
+            localStorage.setItem('myGroups', JSON.stringify(updatedMyGroups));
+        }
+        
+        return myGroups;
+    }
+
     // Load user's groups
     async function loadMyGroups() {
         const userId = localStorage.getItem('uaInnovateUserId');
@@ -102,37 +207,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await innovateAPI.getUserGroups(userId);
             const myGroups = response.groups;
             
-            if (myGroups.length === 0) {
-                myGroupsList.innerHTML = '<p class="no-groups">You haven\'t joined any groups yet. Create or search for groups to get started!</p>';
-                return;
-            }
-
-            let groupsHTML = '';
+            // Persist groups data for offline access
             myGroups.forEach(group => {
-                groupsHTML += `
-                    <div class="group-item">
-                        <h5>${group.name}</h5>
-                        <p>${group.description}</p>
-                        <div class="group-meta">
-                            <span>${getFocusAreaName(group.focus)}</span>
-                            <span>${group.size_preference || 'Any size'}</span>
-                            <span>${group.current_members}/4 members</span>
-                        </div>
-                        <div class="group-actions">
-                            <button class="btn-small btn-view" onclick="viewGroup('${group.group_id}')">View Details</button>
-                            <button class="btn-small btn-join" onclick="leaveGroup('${group.group_id}')">Leave Group</button>
-                        </div>
-                    </div>
-                `;
+                persistGroupData(group.group_id, group);
             });
-
-            myGroupsList.innerHTML = groupsHTML;
+            
+            // Track memberships
+            const membershipKey = `groupMemberships_${userId}`;
+            const memberships = myGroups.map(g => g.group_id);
+            localStorage.setItem(membershipKey, JSON.stringify(memberships));
+            
+            // Update user's groups
+            localStorage.setItem('myGroups', JSON.stringify(myGroups));
+            
+            displayMyGroups(myGroups);
         } catch (error) {
             console.warn('API not available, using localStorage fallback for groups:', error);
             
             // Fallback to localStorage when API is not available
             const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
+            displayMyGroups(myGroups);
+        }
+    }
             
+    // Display user's groups
+    function displayMyGroups(myGroups) {
             if (myGroups.length === 0) {
                 myGroupsList.innerHTML = '<p class="no-groups">You haven\'t joined any groups yet. Create or search for groups to get started!</p>';
                 return;
@@ -158,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             myGroupsList.innerHTML = groupsHTML;
-        }
     }
 
     // Show modal
@@ -181,15 +279,18 @@ document.addEventListener('DOMContentLoaded', function() {
     closeCreateModal.addEventListener('click', () => hideModal(createGroupModal));
     closeSearchModal.addEventListener('click', () => hideModal(searchGroupsModal));
     closeSearchProfilesModal.addEventListener('click', () => hideModal(searchProfilesModal));
+    closeEditProfileModal.addEventListener('click', () => hideModal(editProfileModal));
     cancelCreateGroup.addEventListener('click', () => hideModal(createGroupModal));
     cancelSearch.addEventListener('click', () => hideModal(searchGroupsModal));
     cancelSearchProfiles.addEventListener('click', () => hideModal(searchProfilesModal));
+    cancelEditProfile.addEventListener('click', () => hideModal(editProfileModal));
 
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === createGroupModal) hideModal(createGroupModal);
         if (e.target === searchGroupsModal) hideModal(searchGroupsModal);
         if (e.target === searchProfilesModal) hideModal(searchProfilesModal);
+        if (e.target === editProfileModal) hideModal(editProfileModal);
     });
 
     // Handle create group form submission
@@ -223,6 +324,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await innovateAPI.createGroup(groupData);
             showMessage('Group created successfully!', 'success');
 
+            // Store group ID for messaging
+            if (response.groupId) {
+                storeCurrentGroupId(response.groupId);
+                // Load any existing messages
+                loadGroupMessages(response.groupId);
+            }
+
+            // Also save to shared data service
+            try {
+                if (window.sharedDataService) {
+                    await window.sharedDataService.saveGroup({
+                        id: response.groupId,
+                        name: groupData.name,
+                        description: groupData.description,
+                        focus: groupData.focus,
+                        size_preference: groupData.sizePreference,
+                        required_skills: groupData.requiredSkills,
+                        created_by: userId
+                    });
+                }
+            } catch (sharedError) {
+                console.warn('Failed to save group to shared service:', sharedError);
+            }
+
             // Reset form and close modal
             createGroupForm.reset();
             hideModal(createGroupModal);
@@ -245,14 +370,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 created_at: new Date().toISOString()
             };
 
-            // Save to localStorage
-            const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
-            allGroups.push(newGroup);
-            localStorage.setItem('allGroups', JSON.stringify(allGroups));
+            // Persist group data
+            persistGroupData(groupId, newGroup);
+            
+            // Track membership for creator
+            trackGroupMembership(groupId, userId, 'join');
+            
+            // Update user's groups
+            updateUserGroups(userId, groupId, 'add');
 
-            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
-            myGroups.push(newGroup);
-            localStorage.setItem('myGroups', JSON.stringify(myGroups));
+            // Store group ID for messaging
+            storeCurrentGroupId(groupId);
 
             showMessage('Group created successfully!', 'success');
 
@@ -282,13 +410,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Fallback to localStorage when API is not available
             const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
-            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
-            const myGroupIds = myGroups.map(group => group.group_id);
+            const userId = localStorage.getItem('uaInnovateUserId');
+            const membershipKey = `groupMemberships_${userId}`;
+            const userMemberships = JSON.parse(localStorage.getItem(membershipKey) || '[]');
             
             // Filter groups
             let filteredGroups = allGroups.filter(group => {
                 // Don't show groups user is already in
-                if (myGroupIds.includes(group.group_id)) return false;
+                if (userMemberships.includes(group.group_id)) return false;
                 
                 // Text search
                 if (filters.searchQuery) {
@@ -467,8 +596,23 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Check if user is already in this group
+        const membershipKey = `groupMemberships_${userId}`;
+        const currentMemberships = JSON.parse(localStorage.getItem(membershipKey) || '[]');
+        if (currentMemberships.includes(groupId)) {
+            showMessage('You are already a member of this group.', 'info');
+            return;
+        }
+
         try {
             await innovateAPI.joinGroup(groupId, userId);
+            
+            // Track membership
+            trackGroupMembership(groupId, userId, 'join');
+            
+            // Update user's groups
+            updateUserGroups(userId, groupId, 'add');
+            
             showMessage('Successfully joined the group!', 'success');
             await loadMyGroups();
         } catch (error) {
@@ -488,15 +632,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Add to user's groups
-            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
-            myGroups.push(group);
-            localStorage.setItem('myGroups', JSON.stringify(myGroups));
+            // Track membership
+            trackGroupMembership(groupId, userId, 'join');
             
-            // Update group member count
-            group.current_members = (group.current_members || 1) + 1;
-            const updatedGroups = allGroups.map(g => g.group_id === groupId ? group : g);
-            localStorage.setItem('allGroups', JSON.stringify(updatedGroups));
+            // Update user's groups
+            updateUserGroups(userId, groupId, 'add');
+            
+            // Update group member count and persist data
+            const updatedGroup = { ...group, current_members: (group.current_members || 1) + 1 };
+            persistGroupData(groupId, updatedGroup);
             
             showMessage('Successfully joined the group!', 'success');
             await loadMyGroups();
@@ -513,23 +657,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 await innovateAPI.leaveGroup(groupId, userId);
+                
+                // Track membership removal
+                trackGroupMembership(groupId, userId, 'leave');
+                
+                // Update user's groups
+                updateUserGroups(userId, groupId, 'remove');
+                
                 showMessage('Left the group successfully.', 'info');
                 await loadMyGroups();
             } catch (error) {
                 console.warn('API not available, using localStorage fallback for leave:', error);
                 
                 // Fallback to localStorage when API is not available
-                const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
-                const updatedMyGroups = myGroups.filter(group => group.group_id !== groupId);
-                localStorage.setItem('myGroups', JSON.stringify(updatedMyGroups));
+                const membershipKey = `groupMemberships_${userId}`;
+                const currentMemberships = JSON.parse(localStorage.getItem(membershipKey) || '[]');
                 
-                // Update group member count
+                if (!currentMemberships.includes(groupId)) {
+                    showMessage('You are not a member of this group.', 'error');
+                    return;
+                }
+                
+                // Track membership removal
+                trackGroupMembership(groupId, userId, 'leave');
+                
+                // Update user's groups
+                updateUserGroups(userId, groupId, 'remove');
+                
+                // Update group member count and persist data
                 const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
                 const group = allGroups.find(g => g.group_id === groupId);
                 if (group) {
-                    group.current_members = Math.max(1, (group.current_members || 1) - 1);
-                    const updatedGroups = allGroups.map(g => g.group_id === groupId ? group : g);
-                    localStorage.setItem('allGroups', JSON.stringify(updatedGroups));
+                    const updatedGroup = { ...group, current_members: Math.max(1, (group.current_members || 1) - 1) };
+                    persistGroupData(groupId, updatedGroup);
                 }
                 
                 showMessage('Left the group successfully.', 'info');
@@ -629,14 +789,131 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Populate edit form with current profile data
+    function populateEditForm(profile) {
+        document.getElementById('editYear').value = profile.year || '';
+        document.getElementById('editMajor').value = profile.major || '';
+        document.getElementById('editTechnicalSkills').value = profile.technicalSkills || '';
+        document.getElementById('editInterests').value = profile.interests || '';
+        
+        // Handle MIS semester
+        const editMisSemesterGroup = document.getElementById('editMisSemesterGroup');
+        const editMisSemesterSelect = document.getElementById('editMisSemester');
+        
+        if (profile.misSemester) {
+            editMisSemesterSelect.value = profile.misSemester;
+            editMisSemesterGroup.style.display = 'block';
+            editMisSemesterSelect.required = true;
+        } else {
+            editMisSemesterGroup.style.display = 'none';
+            editMisSemesterSelect.required = false;
+            editMisSemesterSelect.value = '';
+        }
+        
+        // Add event listener for major input to toggle MIS semester
+        const editMajorInput = document.getElementById('editMajor');
+        editMajorInput.addEventListener('input', function() {
+            const majorValue = this.value.toLowerCase().trim();
+            const isMIS = majorValue.includes('mis') || 
+                         majorValue.includes('management information systems') ||
+                         majorValue.includes('information systems');
+            
+            if (isMIS) {
+                editMisSemesterGroup.style.display = 'block';
+                editMisSemesterSelect.required = true;
+            } else {
+                editMisSemesterGroup.style.display = 'none';
+                editMisSemesterSelect.required = false;
+                editMisSemesterSelect.value = '';
+            }
+        });
+    }
+
+    // Handle edit profile form submission
+    editProfileForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(editProfileForm);
+        
+        // Validate required fields
+        if (!formData.get('editYear')) {
+            showMessage('Please select your academic year.', 'error');
+            return;
+        }
+
+        if (!formData.get('editMajor')) {
+            showMessage('Please enter your major.', 'error');
+            return;
+        }
+
+        const majorValue = formData.get('editMajor').toLowerCase().trim();
+        const isMIS = majorValue.includes('mis') || 
+                     majorValue.includes('management information systems') ||
+                     majorValue.includes('information systems');
+
+        if (isMIS && !formData.get('editMisSemester')) {
+            showMessage('Please select your semester in the MIS program.', 'error');
+            return;
+        }
+
+        const userId = localStorage.getItem('uaInnovateUserId');
+        if (!userId) {
+            showMessage('Please log in to update your profile.', 'error');
+            return;
+        }
+
+        const updatedProfileData = {
+            year: formData.get('editYear'),
+            major: formData.get('editMajor').trim(),
+            misSemester: formData.get('editMisSemester'),
+            technicalSkills: formData.get('editTechnicalSkills').trim(),
+            interests: formData.get('editInterests').trim()
+        };
+
+        try {
+            // Try to update via API first
+            await innovateAPI.updateUser(userId, updatedProfileData);
+            showMessage('Profile updated successfully!', 'success');
+        } catch (error) {
+            console.warn('API not available, using localStorage fallback for profile update:', error);
+            
+            // Fallback to localStorage when API is not available
+            localStorage.setItem('uaInnovateProfile', JSON.stringify(updatedProfileData));
+            
+            // Update in allProfiles array
+            const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+            const profileIndex = allProfiles.findIndex(p => p.userId === userId);
+            if (profileIndex !== -1) {
+                allProfiles[profileIndex] = { ...allProfiles[profileIndex], ...updatedProfileData };
+                localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
+            }
+            
+            showMessage('Profile updated successfully!', 'success');
+        }
+
+        // Reset form and close modal
+        editProfileForm.reset();
+        hideModal(editProfileModal);
+        
+        // Refresh profile display
+        const profile = await loadUserProfile();
+        displayProfileSummary(profile);
+    });
+
     // Home button
     homeBtn.addEventListener('click', function() {
         window.location.href = '../../Resources/dashboard.html';
     });
 
     // Edit profile button
-    editProfileBtn.addEventListener('click', function() {
-        window.location.href = 'innovate.html';
+    editProfileBtn.addEventListener('click', async function() {
+        const profile = await loadUserProfile();
+        if (profile) {
+            populateEditForm(profile);
+            showModal(editProfileModal);
+        } else {
+            showMessage('No profile found. Please create a profile first.', 'error');
+        }
     });
 
     // Initialize dashboard
@@ -666,4 +943,211 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('uaInnovateTheme', 'dark');
         }
     });
+
+    // Initialize Group Messaging Functionality
+    initializeGroupMessaging();
 });
+
+// Group Messaging Functions
+function initializeGroupMessaging() {
+    const groupNameInput = document.getElementById('groupName');
+    const messagingSection = document.getElementById('groupMessagingSection');
+    const messageInput = document.getElementById('groupMessageInput');
+    const sendMessageBtn = document.getElementById('sendGroupMessage');
+    const messageList = document.getElementById('groupMessageList');
+    const inviteEmailInput = document.getElementById('inviteEmail');
+    const sendInviteBtn = document.getElementById('sendInvite');
+
+    // Show messaging section when user starts typing group name
+    if (groupNameInput && messagingSection) {
+        groupNameInput.addEventListener('input', function() {
+            if (this.value.trim().length > 0) {
+                messagingSection.style.display = 'block';
+                addSystemMessage('Group creation started! You can now invite members and discuss the group.');
+            } else {
+                messagingSection.style.display = 'none';
+                if (messageList) messageList.innerHTML = '';
+            }
+        });
+    }
+
+    // Send message functionality
+    if (sendMessageBtn && messageInput) {
+        sendMessageBtn.addEventListener('click', function() {
+            sendGroupMessage();
+        });
+
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendGroupMessage();
+            }
+        });
+    }
+
+    // Send invite functionality
+    if (sendInviteBtn && inviteEmailInput) {
+        sendInviteBtn.addEventListener('click', function() {
+            sendGroupInvite();
+        });
+
+        inviteEmailInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendGroupInvite();
+            }
+        });
+    }
+}
+
+function sendGroupMessage() {
+    const messageInput = document.getElementById('groupMessageInput');
+    const message = messageInput.value.trim();
+
+    if (message) {
+        const currentUser = localStorage.getItem('uaInnovateUserId') || 'demo_user';
+        const currentGroupId = localStorage.getItem('currentGroupId');
+        
+        if (!currentGroupId) {
+            showMessage('Please create a group first', 'error');
+            return;
+        }
+
+        // Send message via API
+        innovateAPI.sendGroupMessage(currentGroupId, currentUser, message, 'user')
+            .then(response => {
+                if (response.success) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    addMessage(message, 'You', timestamp, 'user');
+                    messageInput.value = '';
+                    
+                    // Load recent messages to show any responses
+                    loadGroupMessages(currentGroupId);
+                } else {
+                    showMessage('Failed to send message', 'error');
+                }
+            })
+            .catch(error => {
+                console.warn('API not available, using demo mode:', error);
+                // Fallback to demo mode
+                const timestamp = new Date().toLocaleTimeString();
+                addMessage(message, 'You', timestamp, 'user');
+                messageInput.value = '';
+                
+                // Simulate other users responding (for demo purposes)
+                setTimeout(() => {
+                    const responses = [
+                        "This sounds interesting! I'd love to join.",
+                        "What technologies are you planning to use?",
+                        "I have experience in that area. Count me in!",
+                        "When do you plan to start this project?"
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    const randomUser = ['Alice', 'Bob', 'Charlie', 'Diana'][Math.floor(Math.random() * 4)];
+                    addMessage(randomResponse, randomUser, new Date().toLocaleTimeString(), 'other');
+                }, 2000);
+            });
+    }
+}
+
+function sendGroupInvite() {
+    const inviteEmailInput = document.getElementById('inviteEmail');
+    const email = inviteEmailInput.value.trim();
+
+    if (email && isValidEmail(email)) {
+        const currentUser = localStorage.getItem('uaInnovateUserId') || 'demo_user';
+        const currentGroupId = localStorage.getItem('currentGroupId');
+        
+        if (!currentGroupId) {
+            showMessage('Please create a group first', 'error');
+            return;
+        }
+
+        // Send invite via API
+        innovateAPI.sendGroupInvite(currentGroupId, currentUser, email)
+            .then(response => {
+                if (response.success) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    addMessage(`Invited ${email} to join the group`, 'You', timestamp, 'invite');
+                    inviteEmailInput.value = '';
+                    showMessage(`Invitation sent to ${email}!`, 'success');
+                } else {
+                    showMessage(response.error || 'Failed to send invitation', 'error');
+                }
+            })
+            .catch(error => {
+                console.warn('API not available, using demo mode:', error);
+                // Fallback to demo mode
+                const timestamp = new Date().toLocaleTimeString();
+                addMessage(`Invited ${email} to join the group`, 'You', timestamp, 'invite');
+                inviteEmailInput.value = '';
+                showMessage(`Invitation sent to ${email}!`, 'success');
+            });
+    } else {
+        showMessage('Please enter a valid email address', 'error');
+    }
+}
+
+function addMessage(content, sender, timestamp, type = 'user') {
+    const messageList = document.getElementById('groupMessageList');
+    if (!messageList) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-item ${type}`;
+    
+    messageDiv.innerHTML = `
+        <div>${content}</div>
+        <div class="message-meta">${sender} • ${timestamp}</div>
+    `;
+    
+    messageList.appendChild(messageDiv);
+    messageList.scrollTop = messageList.scrollHeight;
+}
+
+function addSystemMessage(content) {
+    const messageList = document.getElementById('groupMessageList');
+    if (!messageList) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-item system';
+    
+    messageDiv.innerHTML = `
+        <div>${content}</div>
+        <div class="message-meta">System • ${new Date().toLocaleTimeString()}</div>
+    `;
+    
+    messageList.appendChild(messageDiv);
+    messageList.scrollTop = messageList.scrollHeight;
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function loadGroupMessages(groupId) {
+    if (!groupId) return;
+    
+    innovateAPI.getGroupMessages(groupId, 20, 0)
+        .then(response => {
+            if (response.success && response.messages) {
+                const messageList = document.getElementById('groupMessageList');
+                if (messageList) {
+                    // Clear existing messages
+                    messageList.innerHTML = '';
+                    
+                    // Add messages from API
+                    response.messages.forEach(msg => {
+                        const sender = msg.username || 'Unknown User';
+                        const timestamp = new Date(msg.created_at).toLocaleTimeString();
+                        addMessage(msg.message, sender, timestamp, msg.message_type);
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            console.warn('Failed to load group messages:', error);
+        });
+}
+
+function storeCurrentGroupId(groupId) {
+    localStorage.setItem('currentGroupId', groupId);
+}

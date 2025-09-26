@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - CrimsonCollab</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Google Fonts - Inter Font Family -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="about.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../../Resources/dashboard.html">
+                <i class="bi bi-people-fill me-2"></i>CrimsonCollab
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../../Resources/dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../../Resources/profile.html">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../../Resources/login.html">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="toggleDarkMode()">
+                            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                            <span id="darkModeText">Dark Mode</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1>About CrimsonCollab</h1>
+            <p class="lead">Connecting University of Alabama students for academic success, personal growth, and lasting friendships.</p>
+            <a href="../../Resources/login.html" class="btn btn-light btn-lg">Join Now</a>
+            <a href="../../Resources/dashboard.html" class="btn btn-outline-light btn-lg">Explore</a>
+        </div>
+    </section>
+
+    <!-- Mission Statement -->
+    <section class="container my-5">
+        <h2 class="section-title">Our Mission</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <p class="fs-5 text-muted">
+                    CrimsonCollab is dedicated to fostering a vibrant and supportive community at the University of Alabama.
+                    We empower students to connect, collaborate, and thrive by providing a platform that simplifies finding
+                    study partners, travel buddies, workout accountability, and project collaborators. Our goal is to enhance
+                    the student experience, promote safety, and build a stronger, more connected campus.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container my-5">
+        <h2 class="section-title">What We Offer</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-book card-icon"></i>
+                        <h5 class="card-title">Study Groups</h5>
+                        <p class="card-text text-muted">Find peers for academic collaboration and exam preparation.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-heart card-icon"></i>
+                        <h5 class="card-title">Friend Matching</h5>
+                        <p class="card-text text-muted">Connect with like-minded individuals for social activities.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-airplane card-icon"></i>
+                        <h5 class="card-title">Travel Buddy</h5>
+                        <p class="card-text text-muted">Share rides and plan trips safely with fellow students.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lightning-charge card-icon"></i>
+                        <h5 class="card-title">Workout Partners</h5>
+                        <p class="card-text text-muted">Find motivation and accountability for your fitness goals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lightbulb card-icon"></i>
+                        <h5 class="card-title">Innovation Hub</h5>
+                        <p class="card-text text-muted">Collaborate on projects and bring your ideas to life.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-event card-icon"></i>
+                        <h5 class="card-title">Event Planning</h5>
+                        <p class="card-text text-muted">Organize and join campus events with ease.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="container my-5 stats-section">
+        <h2 class="section-title">Our Impact</h2>
+        <div class="row text-center g-4">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-value">500+</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-value">1,200+</div>
+                    <div class="stat-label">Successful Matches</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-value">50+</div>
+                    <div class="stat-label">Study Groups</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-value">100+</div>
+                    <div class="stat-label">Events Hosted</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="container my-5">
+        <h2 class="section-title">Meet the Team</h2>
+        <div class="row justify-content-center g-4">
+            <div class="col-md-3">
+                <div class="team-member">
+                    <div class="team-member-initials">EG</div>
+                    <h5>Emily Garcia</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="team-member">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjOUUxQjMyIi8+Cjx0ZXh0IHg9Ijc1IiB5PSI4NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkFTPC90ZXh0Pgo8L3N2Zz4K" alt="Anna Smith">
+                    <h5>Anna Smith</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="team-member">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjOUUxQjMyIi8+Cjx0ZXh0IHg9Ijc1IiB5PSI4NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkpKPC90ZXh0Pgo8L3N2Zz4K" alt="Jaxon Johnson">
+                    <h5>Jaxon Johnson</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="team-member">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjOUUxQjMyIi8+Cjx0ZXh0IHg9Ijc1IiB5PSI4NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlNCPC90ZXh0Pgo8L3N2Zz4K" alt="Sofia Balsamo">
+                    <h5>Sofia Balsamo</h5>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="container my-5 values-section">
+        <h2 class="section-title">Our Values</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="value-item">
+                    <i class="bi bi-shield-fill-check"></i>
+                    <h6>Safety First</h6>
+                    <p class="text-muted">Ensuring a secure and trustworthy environment for all users.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="value-item">
+                    <i class="bi bi-people-fill"></i>
+                    <h6>Inclusivity</h6>
+                    <p class="text-muted">Building a welcoming community for students from all backgrounds.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="value-item">
+                    <i class="bi bi-lightbulb-fill"></i>
+                    <h6>Innovation</h6>
+                    <p class="text-muted">Continuously improving and adding new features to enhance collaboration.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="value-item">
+                    <i class="bi bi-heart-fill"></i>
+                    <h6>Community</h6>
+                    <p class="text-muted">Fostering strong connections and lasting relationships among students.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Connect?</h2>
+            <p>Join thousands of University of Alabama students who are already collaborating and thriving with CrimsonCollab.</p>
+            <a href="../../Resources/login.html" class="btn btn-light btn-lg">Sign Up Now</a>
+            <a href="../../Resources/dashboard.html" class="btn btn-outline-light btn-lg">Explore Dashboard</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; 2025 CrimsonCollab. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link">Terms of Service</a>
+                    <a href="#" class="footer-link">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="about.js"></script>
+</body>
+</html>

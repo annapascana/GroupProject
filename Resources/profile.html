@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CrimsonCollab - Profile</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./Styles/profile.css" />
+  </head>
+  <body>
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-crimson">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="./dashboard.html">
+          <i class="bi bi-people-fill me-2"></i>
+          <span>CrimsonCollab</span>
+        </a>
+        
+        <div class="navbar-nav ms-auto">
+          <a class="nav-link" href="./dashboard.html">
+            <i class="bi bi-house me-1"></i>Dashboard
+          </a>
+          <a class="nav-link" href="#" onclick="handleSignOut()">
+            <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4">
+          <div class="profile-sidebar">
+            <!-- Profile Card -->
+            <div class="profile-card">
+              <div class="profile-avatar-container">
+                <img id="profileAvatar" src="" alt="Profile Avatar" class="profile-avatar">
+              </div>
+              
+              <div class="profile-info">
+                <h3 id="profileName" class="profile-name">Loading...</h3>
+                <p id="profileEmail" class="profile-email">Loading...</p>
+                <p id="profileRole" class="profile-role">Loading...</p>
+              </div>
+              
+              <div class="profile-stats">
+                <div class="stat-item">
+                  <span class="stat-number" id="collaborationsCount">0</span>
+                  <span class="stat-label">Collaborations</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number" id="favoritesCount">0</span>
+                  <span class="stat-label">Favorites</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number" id="messagesCount">0</span>
+                  <span class="stat-label">Messages</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+              <h5>Quick Actions</h5>
+              <div class="action-buttons">
+                <button class="btn btn-outline-primary btn-sm" onclick="scrollToSection('personal-info')">
+                  <i class="bi bi-person me-1"></i>Personal Info
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="scrollToSection('contact-info')">
+                  <i class="bi bi-telephone me-1"></i>Contact Info
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="scrollToSection('social-accounts')">
+                  <i class="bi bi-link-45deg me-1"></i>Social Accounts
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="scrollToSection('preferences')">
+                  <i class="bi bi-gear me-1"></i>Preferences
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Profile Content -->
+        <div class="col-lg-9 col-md-8">
+          <div class="profile-content">
+            <!-- Page Header -->
+            <div class="profile-header">
+              <h1 class="page-title">
+                <i class="bi bi-person-circle me-2"></i>Profile Settings
+              </h1>
+              <p class="page-subtitle">Manage your personal information and preferences</p>
+            </div>
+
+            <!-- Profile Form -->
+            <form id="profileForm" class="profile-form">
+              <!-- Personal Information Section -->
+              <div class="profile-section" id="personal-info">
+                <div class="section-header">
+                  <h3><i class="bi bi-person me-2"></i>Personal Information</h3>
+                  <p>Update your basic personal details</p>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="firstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstName" required>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="lastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" required>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" required>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                    <input type="date" class="form-control" id="dateOfBirth">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="bio" class="form-label">Bio</label>
+                  <textarea class="form-control" id="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                  <div class="form-text">Brief description about yourself (max 500 characters)</div>
+                </div>
+              </div>
+
+              <!-- Contact Information Section -->
+              <div class="profile-section" id="contact-info">
+                <div class="section-header">
+                  <h3><i class="bi bi-telephone me-2"></i>Contact Information</h3>
+                  <p>Manage your contact details</p>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phoneNumber" placeholder="(555) 123-4567">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="alternateEmail" class="form-label">Alternate Email</label>
+                    <input type="email" class="form-control" id="alternateEmail" placeholder="alternate@example.com">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" class="form-control" id="address" placeholder="123 Main St, City, State">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="city" placeholder="Tuscaloosa">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="state" class="form-label">State</label>
+                    <select class="form-select" id="state">
+                      <option value="">Select State</option>
+                      <option value="AL">Alabama</option>
+                      <option value="AK">Alaska</option>
+                      <option value="AZ">Arizona</option>
+                      <option value="AR">Arkansas</option>
+                      <option value="CA">California</option>
+                      <option value="CO">Colorado</option>
+                      <option value="CT">Connecticut</option>
+                      <option value="DE">Delaware</option>
+                      <option value="FL">Florida</option>
+                      <option value="GA">Georgia</option>
+                      <option value="HI">Hawaii</option>
+                      <option value="ID">Idaho</option>
+                      <option value="IL">Illinois</option>
+                      <option value="IN">Indiana</option>
+                      <option value="IA">Iowa</option>
+                      <option value="KS">Kansas</option>
+                      <option value="KY">Kentucky</option>
+                      <option value="LA">Louisiana</option>
+                      <option value="ME">Maine</option>
+                      <option value="MD">Maryland</option>
+                      <option value="MA">Massachusetts</option>
+                      <option value="MI">Michigan</option>
+                      <option value="MN">Minnesota</option>
+                      <option value="MS">Mississippi</option>
+                      <option value="MO">Missouri</option>
+                      <option value="MT">Montana</option>
+                      <option value="NE">Nebraska</option>
+                      <option value="NV">Nevada</option>
+                      <option value="NH">New Hampshire</option>
+                      <option value="NJ">New Jersey</option>
+                      <option value="NM">New Mexico</option>
+                      <option value="NY">New York</option>
+                      <option value="NC">North Carolina</option>
+                      <option value="ND">North Dakota</option>
+                      <option value="OH">Ohio</option>
+                      <option value="OK">Oklahoma</option>
+                      <option value="OR">Oregon</option>
+                      <option value="PA">Pennsylvania</option>
+                      <option value="RI">Rhode Island</option>
+                      <option value="SC">South Carolina</option>
+                      <option value="SD">South Dakota</option>
+                      <option value="TN">Tennessee</option>
+                      <option value="TX">Texas</option>
+                      <option value="UT">Utah</option>
+                      <option value="VT">Vermont</option>
+                      <option value="VA">Virginia</option>
+                      <option value="WA">Washington</option>
+                      <option value="WV">West Virginia</option>
+                      <option value="WI">Wisconsin</option>
+                      <option value="WY">Wyoming</option>
+                    </select>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="zipCode" class="form-label">ZIP Code</label>
+                    <input type="text" class="form-control" id="zipCode" placeholder="35401">
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Social Accounts Section -->
+              <div class="profile-section" id="social-accounts">
+                <div class="section-header">
+                  <h3><i class="bi bi-link-45deg me-2"></i>Social Accounts</h3>
+                  <p>Connect your social media accounts</p>
+                </div>
+                
+                <div class="social-accounts">
+                  <div class="social-account-item">
+                    <div class="social-info">
+                      <i class="bi bi-google social-icon google"></i>
+                      <div class="social-details">
+                        <span class="social-name">Google</span>
+                        <span class="social-status" id="googleStatus">Not connected</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="googleConnectBtn">
+                      Connect
+                    </button>
+                  </div>
+                  
+                  <div class="social-account-item">
+                    <div class="social-info">
+                      <i class="bi bi-github social-icon github"></i>
+                      <div class="social-details">
+                        <span class="social-name">GitHub</span>
+                        <span class="social-status" id="githubStatus">Not connected</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="githubConnectBtn">
+                      Connect
+                    </button>
+                  </div>
+                  
+                  <div class="social-account-item">
+                    <div class="social-info">
+                      <i class="bi bi-microsoft social-icon microsoft"></i>
+                      <div class="social-details">
+                        <span class="social-name">Microsoft</span>
+                        <span class="social-status" id="microsoftStatus">Not connected</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="microsoftConnectBtn">
+                      Connect
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interests and Skills Section -->
+              <div class="profile-section" id="interests-skills">
+                <div class="section-header">
+                  <h3><i class="bi bi-heart me-2"></i>Interests & Skills</h3>
+                  <p>Tell us about your interests and skills</p>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="interests" class="form-label">Interests</label>
+                  <div class="interests-container">
+                    <input type="text" class="form-control" id="interestsInput" placeholder="Add an interest...">
+                    <button type="button" class="btn btn-outline-secondary" onclick="addInterest()">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                  <div class="interests-tags" id="interestsTags"></div>
+                  <div class="form-text">Add tags for your interests (e.g., programming, music, sports)</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="skills" class="form-label">Skills</label>
+                  <div class="skills-container">
+                    <input type="text" class="form-control" id="skillsInput" placeholder="Add a skill...">
+                    <button type="button" class="btn btn-outline-secondary" onclick="addSkill()">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                  <div class="skills-tags" id="skillsTags"></div>
+                  <div class="form-text">Add your technical and soft skills</div>
+                </div>
+              </div>
+
+              <!-- Preferences Section -->
+              <div class="profile-section" id="preferences">
+                <div class="section-header">
+                  <h3><i class="bi bi-gear me-2"></i>Preferences</h3>
+                  <p>Customize your experience</p>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="timezone" class="form-label">Timezone</label>
+                    <select class="form-select" id="timezone">
+                      <option value="America/Chicago">Central Time (CT)</option>
+                      <option value="America/New_York">Eastern Time (ET)</option>
+                      <option value="America/Denver">Mountain Time (MT)</option>
+                      <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                      <option value="America/Anchorage">Alaska Time (AKT)</option>
+                      <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="language" class="form-label">Language</label>
+                    <select class="form-select" id="language">
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="it">Italian</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="zh">Chinese</option>
+                      <option value="ja">Japanese</option>
+                      <option value="ko">Korean</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="preferences-checkboxes">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications">
+                    <label class="form-check-label" for="emailNotifications">
+                      Email notifications
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="smsNotifications">
+                    <label class="form-check-label" for="smsNotifications">
+                      SMS notifications
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="profilePublic">
+                    <label class="form-check-label" for="profilePublic">
+                      Make profile public
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="showOnlineStatus">
+                    <label class="form-check-label" for="showOnlineStatus">
+                      Show online status
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Form Actions -->
+              <div class="form-actions">
+                <button type="button" class="btn btn-outline-secondary me-2" onclick="resetForm()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <span class="btn-text">
+                    <i class="bi bi-check-lg me-1"></i>Save Changes
+                  </span>
+                  <span class="btn-loading d-none">
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Saving...
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS bundle -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- User Manager -->
+    <script src="./Scripts/userManager.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="./Scripts/profile.js"></script>
+  </body>
+</html>

@@ -1,4 +1,128 @@
 // ========================================
+// ENHANCED SEARCH & FILTERING
+// ========================================
+// Modern search with instant filtering and suggestions
+
+function setupEnhancedSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+    
+    // Add search suggestions dropdown
+    const searchContainer = searchInput.closest('.search-container') || searchInput.parentElement;
+    const suggestionsDropdown = document.createElement('div');
+    suggestionsDropdown.className = 'search-suggestions dropdown-menu';
+    suggestionsDropdown.id = 'searchSuggestions';
+    searchContainer.appendChild(suggestionsDropdown);
+    
+    // Debounced search function
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performInstantSearch(this.value);
+            updateSearchSuggestions(this.value);
+        }, 150);
+    });
+    
+    // Handle search suggestions clicks
+    suggestionsDropdown.addEventListener('click', function(e) {
+        if (e.target.classList.contains('suggestion-item')) {
+            searchInput.value = e.target.textContent;
+            performInstantSearch(searchInput.value);
+            suggestionsDropdown.classList.remove('show');
+        }
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchContainer.contains(e.target)) {
+            suggestionsDropdown.classList.remove('show');
+        }
+    });
+}
+
+function performInstantSearch(query) {
+    const trips = getAllTrips();
+    const filteredTrips = trips.filter(trip => {
+        const searchText = query.toLowerCase();
+        return trip.destination.toLowerCase().includes(searchText) ||
+               trip.departureLocation.toLowerCase().includes(searchText) ||
+               trip.description.toLowerCase().includes(searchText) ||
+               trip.driverName.toLowerCase().includes(searchText);
+    });
+    
+    // Update trip grids with filtered results
+    updateTripGrids(filteredTrips);
+    
+    // Update results count
+    updateElement('resultsCount', filteredTrips.length);
+}
+
+function updateSearchSuggestions(query) {
+    const suggestionsDropdown = document.getElementById('searchSuggestions');
+    if (!suggestionsDropdown) return;
+    
+    if (query.length < 2) {
+        suggestionsDropdown.classList.remove('show');
+        return;
+    }
+    
+    const trips = getAllTrips();
+    const suggestions = new Set();
+    
+    trips.forEach(trip => {
+        if (trip.destination.toLowerCase().includes(query.toLowerCase())) {
+            suggestions.add(trip.destination);
+        }
+        if (trip.departureLocation.toLowerCase().includes(query.toLowerCase())) {
+            suggestions.add(trip.departureLocation);
+        }
+    });
+    
+    const suggestionsArray = Array.from(suggestions).slice(0, 5);
+    
+    if (suggestionsArray.length > 0) {
+        suggestionsDropdown.innerHTML = suggestionsArray.map(suggestion => 
+            `<div class="suggestion-item dropdown-item">${suggestion}</div>`
+        ).join('');
+        suggestionsDropdown.classList.add('show');
+    } else {
+        suggestionsDropdown.classList.remove('show');
+    }
+}
+
+function updateTripGrids(trips) {
+    const activeGrid = document.getElementById('activeTripsGrid');
+    const pastGrid = document.getElementById('pastTripsGrid');
+    const myTripsGrid = document.getElementById('myTripsGrid');
+    
+    if (!activeGrid || !pastGrid || !myTripsGrid) return;
+    
+    // Clear existing content
+    activeGrid.innerHTML = '';
+    pastGrid.innerHTML = '';
+    myTripsGrid.innerHTML = '';
+    
+    // Re-populate grids with filtered trips
+    trips.forEach(trip => {
+        const tripCard = createTripCard(trip);
+        if (tripCard) {
+            // Determine which grid to add to based on trip status
+            const tripDate = new Date(trip.date);
+            const today = new Date();
+            
+            if (trip.isJoined) {
+                myTripsGrid.appendChild(tripCard);
+            } else if (tripDate < today) {
+                pastGrid.appendChild(tripCard);
+            } else {
+                activeGrid.appendChild(tripCard);
+            }
+        }
+    });
+}
+
+// ========================================
 // ANALYTICS SYSTEM
 // ========================================
 // Handles real-time analytics calculations and display updates
@@ -194,16 +318,17 @@ function clearAllNotifications() {
 }
 
 function checkForNewNotifications() {
-    // Simulate new notifications
+    // Only create notifications for new trips (not join notifications)
     if (Math.random() < 0.1) { // 10% chance
         const messages = [
             'New trip to Atlanta Airport available!',
-            'Your trip to Birmingham is tomorrow',
-            'Gas prices dropped 5% for your route',
-            'Someone joined your trip to Nashville'
+            'New trip to Nashville available!',
+            'New trip to Birmingham available!',
+            'New trip to Memphis available!',
+            'New trip to Mobile available!'
         ];
         const message = messages[Math.floor(Math.random() * messages.length)];
-        addNotification('Trip Update', message, 'info');
+        addNotification('New Trip Available', message, 'info');
     }
 }
 
@@ -1295,8 +1420,7 @@ function checkForFreshStart(currentUser) {
         showToast('Welcome! Starting fresh for your travel experience.', 'info');
     } else {
         console.log('Same user logging in, preserving user data');
-        // Same user logging in again - preserve their data
-        showToast('Welcome back! Your data has been restored.', 'success');
+        // Same user logging in again - preserve their data (no notification)
     }
     
     // Clear any pending fresh start request
@@ -1385,7 +1509,7 @@ function checkPendingFreshStart() {
             showToast('Welcome! Starting fresh for your travel experience.', 'info');
         } else {
             console.log('Same user detected in pending fresh start, preserving data');
-            showToast('Welcome back! Your data has been restored.', 'success');
+            // Same user detected, no notification needed
         }
         localStorage.removeItem('travel_pending_fresh_start');
     }
@@ -1767,6 +1891,17 @@ function setupAutoUpdates() {
         });
     });
     
+    // Specific handling for My Trips tab to show loading state
+    const myTripsTab = document.getElementById('my-trips-tab');
+    if (myTripsTab) {
+        myTripsTab.addEventListener('shown.bs.tab', () => {
+            const myTripsGrid = document.getElementById('myTripsGrid');
+            if (myTripsGrid) {
+                loadMyTrips(myTripsGrid);
+            }
+        });
+    }
+    
     // Update counts when trips are modified (using MutationObserver)
     const observer = new MutationObserver((mutations) => {
         let shouldUpdate = false;
@@ -1832,6 +1967,7 @@ function initializeApp() {
     }, 2000);
     
     setupAnalytics();
+    setupEnhancedSearch(); // Initialize enhanced search functionality
     setupNotifications(); // This will call checkEmergencyContactsRequirement()
     setupThemeToggle();
     setupFloatingActionButton();
@@ -1850,6 +1986,9 @@ function initializeApp() {
     loadTrips();
     clearDuplicates(); // Clear duplicates again after loading
     updateEmptyStates();
+    
+    // Initialize new features
+    initializeNewFeatures();
 }
 
 
@@ -2016,7 +2155,7 @@ function validateForm() {
 // ========================================
 // Handles trip creation, joining, leaving, and deletion
 
-function createTrip(data) {
+async function createTrip(data) {
     // Check if user has emergency contacts using user-specific storage
     const userSpecificKey = getUserSpecificKey('user_emergency_contacts');
     const contacts = JSON.parse(localStorage.getItem(userSpecificKey) || '[]');
@@ -2033,6 +2172,30 @@ function createTrip(data) {
     if (!validateTripDate(data)) {
         showErrorToast('Cannot create a trip for a date that has already passed!');
         return;
+    }
+    
+    // Create trip data for shared service
+    const tripData = {
+        destination: data.destination,
+        departure_date: data.date,
+        departure_time: data.time,
+        return_date: data.returnDate || null,
+        return_time: data.returnTime || null,
+        total_seats: data.totalSeats,
+        available_seats: data.totalSeats - 1, // Creator takes one seat
+        cost_per_person: parseFloat((data.gasCost / data.totalSeats).toFixed(2)),
+        trip_type: data.type,
+        description: data.notes || '',
+        created_by: window.sharedDataService.getCurrentUserId()
+    };
+    
+    try {
+        // Save trip using shared data service
+        const savedTrip = await window.sharedDataService.saveTrip(tripData);
+        console.log('Trip saved successfully:', savedTrip);
+    } catch (error) {
+        console.warn('Failed to save trip to shared service:', error);
+        // Continue with local creation as fallback
     }
     
     const card = document.createElement('div');
@@ -2104,6 +2267,46 @@ function createTrip(data) {
     document.getElementById('createTripForm').reset();
     updateResultsCount();
     saveTrips();
+}
+
+// Helper function to create trip card from shared data
+function createTripCardFromData(tripData) {
+    const card = document.createElement('div');
+    card.className = 'trip-card';
+    card.dataset.type = tripData.trip_type;
+    card.dataset.destination = tripData.destination;
+    card.dataset.tripId = tripData.id;
+
+    const costPerPerson = tripData.cost_per_person.toFixed(2);
+    card.innerHTML = `
+        <div class="trip-header">
+            <h5><i class="bi ${getIcon(tripData.trip_type)}"></i> ${getLabel(tripData.trip_type)}</h5>
+            <span class="badge bg-primary">Open</span>
+        </div>
+        <div class="trip-details">
+            <p><strong>Destination:</strong> ${tripData.destination}</p>
+            <p><strong>Date:</strong> ${formatDate(tripData.departure_date)}</p>
+            <p><strong>Time:</strong> ${formatTime(tripData.departure_time)}</p>
+            <p><strong>Seats Available:</strong> ${tripData.available_seats}/${tripData.total_seats}</p>
+            <p class="cost-highlight"><strong>Gas Cost per Person:</strong> $${costPerPerson}</p>
+            ${tripData.description ? `<p><strong>Notes:</strong> ${tripData.description}</p>` : ''}
+        </div>
+        <div class="trip-footer">
+            <button class="btn btn-success btn-sm join-trip-btn">Join Trip</button>
+            <button class="btn btn-info btn-sm chat-trip-btn" data-destination="${tripData.destination}" data-creator="Other User" style="display: none;">
+                <i class="bi bi-chat-dots"></i> Chat
+            </button>
+            <span class="trip-creator">Created by: Other User</span>
+        </div>
+        <div class="trip-participants" style="display: none;">
+            <h6><i class="bi bi-people-fill"></i> Participants:</h6>
+            <ul class="participants-list">
+                <li><i class="bi bi-person-fill"></i> Creator</li>
+            </ul>
+        </div>
+    `;
+    
+    return card;
 }
 
 function getIcon(type) {
@@ -2756,18 +2959,26 @@ function hideLoadingState() {
 
 function updateEmptyStates() {
     const grids = {
-        'tripsGrid': 'activeTripsEmpty',
-        'myTripsGrid': 'myTripsEmpty', 
-        'pastTripsGrid': 'pastTripsEmpty',
-        'fullTripsGrid': 'fullTripsEmpty'
+        'tripsGrid': { empty: 'activeTripsEmpty', loading: 'activeTripsLoading' },
+        'myTripsGrid': { empty: 'myTripsEmpty', loading: 'myTripsLoading' }, 
+        'pastTripsGrid': { empty: 'pastTripsEmpty', loading: null },
+        'fullTripsGrid': { empty: 'fullTripsEmpty', loading: null }
     };
     
-    Object.entries(grids).forEach(([gridId, emptyId]) => {
+    Object.entries(grids).forEach(([gridId, states]) => {
         const grid = document.getElementById(gridId);
-        const empty = document.getElementById(emptyId);
+        const empty = document.getElementById(states.empty);
+        const loading = states.loading ? document.getElementById(states.loading) : null;
         
         if (grid && empty) {
             const visibleCards = [...grid.querySelectorAll('.trip-card')].filter(c => c.style.display !== 'none');
+            
+            // Hide loading state if it exists
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            
+            // Show/hide empty state based on whether there are visible cards
             empty.style.display = visibleCards.length === 0 ? 'block' : 'none';
         }
     });
@@ -2776,7 +2987,7 @@ function updateEmptyStates() {
 function formatDate(d){return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
 function formatTime(t){let [h,m]=t.split(':').map(Number);let ap=h>=12?'PM':'AM';h=h%12||12;return `${h}:${m.toString().padStart(2,'0')} ${ap}`;}
 
-function saveTrips(){
+async function saveTrips(){
     // Only save user-created trips, not example trips
     const cards=[...document.querySelectorAll('.trip-card')];
     const userCreatedTrips = cards.filter(card => {
@@ -2788,8 +2999,19 @@ function saveTrips(){
                !creator.textContent.includes('Jessica Martinez') &&
                !creator.textContent.includes('David Wilson');
     });
+    
+    // Save to localStorage as backup
     const data=userCreatedTrips.map(c=>c.outerHTML);
     localStorage.setItem('ua_trips',JSON.stringify(data));
+    
+    // Also sync with shared data service
+    try {
+        if (window.sharedDataService) {
+            await window.sharedDataService.processSyncQueue();
+        }
+    } catch (error) {
+        console.warn('Failed to sync trips with shared service:', error);
+    }
 }
 
 function loadTrips(){
@@ -2845,6 +3067,29 @@ function loadTrips(){
                 console.error('Error loading user trip:', error);
             }
         });
+        
+        // Load trips from shared data service
+        try {
+            if (window.sharedDataService) {
+                const sharedTrips = window.sharedDataService.getTripsFromLocalStorage();
+                sharedTrips.forEach(trip => {
+                    // Only show trips not created by current user (to avoid duplicates)
+                    if (trip.created_by !== window.sharedDataService.getCurrentUserId()) {
+                        const tripCard = createTripCardFromData(trip);
+                        if (tripCard) {
+                            // Check if trip is expired
+                            if (isTripExpired(tripCard)) {
+                                pastTripsGrid.appendChild(tripCard);
+                            } else {
+                                activeGrid.appendChild(tripCard);
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Failed to load shared trips:', error);
+        }
         
         // Restore joined trips first (this will move them to appropriate grids)
         restoreJoinedTrips();
@@ -3244,7 +3489,7 @@ function loadExampleTrips(activeGrid, fullGrid, pastTripsGrid) {
     
     // Save example trips to localStorage for future loads
     const exampleTripsHTML = [];
-    const allExampleCards = [...activeGrid.querySelectorAll('.trip-card'), ...fullGrid.querySelectorAll('.trip-card')];
+    const allExampleCards = activeGrid.querySelectorAll('.trip-card');
     allExampleCards.forEach(card => {
         // Save all example trips (not user-created ones)
         const creator = card.querySelector('.trip-creator');
@@ -3255,7 +3500,7 @@ function loadExampleTrips(activeGrid, fullGrid, pastTripsGrid) {
     localStorage.setItem('example_trips', JSON.stringify(exampleTripsHTML));
 }
 
-function loadExampleTripsFromStorage(activeGrid, fullGrid) {
+function loadExampleTripsFromStorage(activeGrid) {
     const exampleTripsHTML = JSON.parse(localStorage.getItem('example_trips') || '[]');
     exampleTripsHTML.forEach(html => {
         const div = document.createElement('div');
@@ -3267,39 +3512,49 @@ function loadExampleTripsFromStorage(activeGrid, fullGrid) {
             return; // Skip expired trips
         }
         
-        // Check if trip is full
-        const seatsInfo = tripCard.querySelector('.trip-details p:nth-child(4)');
-        if (seatsInfo) {
-            const availableSeats = parseInt(seatsInfo.textContent.match(/(\d+)\/\d+/)[1]);
-            if (availableSeats === 0) {
-                fullGrid.appendChild(tripCard);
-            } else {
-                activeGrid.appendChild(tripCard);
-            }
-        } else {
-            activeGrid.appendChild(tripCard);
-        }
+        // Add all trips to active grid (full trips will be filtered by toggle)
+        activeGrid.appendChild(tripCard);
     });
 }
 
 function loadMyTrips(myTripsGrid) {
+    // Show loading state
+    const loadingState = document.getElementById('myTripsLoading');
+    const emptyState = document.getElementById('myTripsEmpty');
+    
+    if (loadingState) {
+        loadingState.style.display = 'block';
+    }
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
     // Check if there are already trips in the My Trips grid
     const existingTrips = myTripsGrid.querySelectorAll('.trip-card');
     
-    if (existingTrips.length === 0) {
-        // No trips in My Trips grid, but don't clear the grid - let updateEmptyStates handle the empty state
-        console.log('No trips found in My Trips grid');
-    } else {
-        // There are trips in My Trips grid, remove any empty state message
-        const emptyState = myTripsGrid.querySelector('.text-center');
-        if (emptyState) {
-            emptyState.remove();
+    // Hide loading state after a brief delay to show loading animation
+    setTimeout(() => {
+        if (loadingState) {
+            loadingState.style.display = 'none';
         }
-        console.log('Found', existingTrips.length, 'trips in My Trips grid');
-    }
-    
-    // Update the badge count
-    updateTabBadges();
+        
+        if (existingTrips.length === 0) {
+            // No trips in My Trips grid, show empty state
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
+            console.log('No trips found in My Trips grid');
+        } else {
+            // There are trips in My Trips grid, hide empty state
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            console.log('Found', existingTrips.length, 'trips in My Trips grid');
+        }
+        
+        // Update the badge count
+        updateTabBadges();
+    }, 300); // Brief delay to show loading animation
 }
 
 function createExampleTripCard(tripData) {
@@ -3883,4 +4138,227 @@ function validateTripDate(tripData) {
     console.log('Validating trip date:', tripData.destination, tripData.date, 'tripDate:', tripDate, 'today:', today, 'isValid:', isValid);
     
     return isValid;
+}
+
+// ========================================
+// NEW FEATURES IMPLEMENTATION
+// ========================================
+
+// Toggle full trips filter
+function toggleFullTrips() {
+    const showFullTrips = document.getElementById('showFullTrips').checked;
+    const tripsGrid = document.getElementById('tripsGrid');
+    
+    if (tripsGrid) {
+        const tripCards = tripsGrid.querySelectorAll('.trip-card');
+        tripCards.forEach(card => {
+            const availableSeats = parseInt(card.querySelector('.available-seats').textContent);
+            if (availableSeats === 0 && !showFullTrips) {
+                card.style.display = 'none';
+            } else {
+                card.style.display = 'block';
+            }
+        });
+    }
+    
+    // Update filter tags
+    updateFilterTags();
+}
+
+// Update analytics chevron rotation
+function updateAnalyticsChevron() {
+    const chevron = document.getElementById('analyticsChevron');
+    const analyticsContent = document.getElementById('analyticsContent');
+    
+    if (chevron && analyticsContent) {
+        analyticsContent.addEventListener('show.bs.collapse', () => {
+            chevron.style.transform = 'rotate(180deg)';
+        });
+        
+        analyticsContent.addEventListener('hide.bs.collapse', () => {
+            chevron.style.transform = 'rotate(0deg)';
+        });
+    }
+}
+
+// Check if user has joined trip before allowing chat
+function checkTripMembership(tripId) {
+    const userId = getCurrentUserId();
+    const trip = getTripById(tripId);
+    
+    if (!trip) return false;
+    
+    // Check if user is in the trip's members list
+    return trip.members && trip.members.includes(userId);
+}
+
+// Enhanced chat with AI responses
+function sendMessageWithAI(message, tripId) {
+    const userId = getCurrentUserId();
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Add user message
+    addMessageToChat(message, userId, true);
+    
+    // Generate AI response after a delay
+    setTimeout(() => {
+        const aiResponse = generateAIResponse(message, tripId);
+        const fakeUserId = generateFakeUserId();
+        addMessageToChat(aiResponse, fakeUserId, false);
+    }, 1500 + Math.random() * 2000); // Random delay between 1.5-3.5 seconds
+}
+
+// Generate AI responses for fake users
+function generateAIResponse(userMessage, tripId) {
+    const responses = [
+        "That sounds great! I'm excited for this trip.",
+        "What time should we meet up?",
+        "I can help with gas money, no problem!",
+        "This is going to be so much fun!",
+        "I've been to that destination before, it's amazing.",
+        "Count me in! I'll bring snacks for the ride.",
+        "Perfect! I was looking for someone to travel with.",
+        "I can drive if needed, I have a reliable car.",
+        "Let's make sure we have everything planned out.",
+        "I'm so glad I found this trip!",
+        "This is exactly what I was looking for.",
+        "I'll make sure to be on time.",
+        "Should we create a group chat for coordination?",
+        "I'm bringing my camera for photos!",
+        "This is going to be an adventure!"
+    ];
+    
+    // Context-aware responses based on message content
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('time') || message.includes('when')) {
+        return "What time works best for everyone? I'm flexible!";
+    }
+    
+    if (message.includes('cost') || message.includes('money') || message.includes('gas')) {
+        return "I can help split the gas costs, that's totally fair!";
+    }
+    
+    if (message.includes('meet') || message.includes('location')) {
+        return "Where should we meet up? I'm familiar with campus.";
+    }
+    
+    if (message.includes('excited') || message.includes('fun')) {
+        return "Me too! This is going to be awesome!";
+    }
+    
+    // Return random response if no context match
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
+// Generate fake user ID for AI responses
+function generateFakeUserId() {
+    const fakeUsers = [
+        'Alex Johnson', 'Sarah Chen', 'Mike Rodriguez', 'Emma Davis',
+        'Jordan Smith', 'Taylor Brown', 'Casey Wilson', 'Riley Martinez',
+        'Morgan Taylor', 'Avery Johnson', 'Quinn Anderson', 'Blake Thompson'
+    ];
+    
+    return fakeUsers[Math.floor(Math.random() * fakeUsers.length)];
+}
+
+// Enhanced join trip function with consistent formatting
+function joinTripEnhanced(tripId) {
+    const userId = getCurrentUserId();
+    const trip = getTripById(tripId);
+    
+    if (!trip) {
+        showToast('Trip not found', 'error');
+        return;
+    }
+    
+    if (trip.members && trip.members.includes(userId)) {
+        showToast('You are already part of this trip!', 'info');
+        return;
+    }
+    
+    if (trip.availableSeats <= 0) {
+        showToast('This trip is full!', 'warning');
+        return;
+    }
+    
+    // Join the trip
+    trip.members = trip.members || [];
+    trip.members.push(userId);
+    trip.availableSeats--;
+    
+    // Update localStorage
+    updateTripInStorage(trip);
+    
+    // Add trip to calendar via shared data service
+    addTripToCalendar(trip);
+    
+    // Update UI
+    updateTripCard(tripId);
+    updateResultsCount();
+    
+    // Show success message
+    showToast(`Successfully joined trip to ${trip.destination}! Added to your calendar.`, 'success');
+    
+    // Refresh the trips display
+    loadTrips();
+}
+
+// Add trip to calendar via shared data service
+function addTripToCalendar(trip) {
+    // Check if shared data service is available
+    if (typeof sharedDataService === 'undefined') {
+        console.log('Shared data service not available, cannot add trip to calendar');
+        return;
+    }
+    
+    // Create calendar event data
+    const eventData = {
+        title: `Travel to ${trip.destination}`,
+        date: trip.date,
+        time: trip.time,
+        type: 'travel',
+        description: `Travel trip to ${trip.destination}. Cost: $${trip.totalCost}, Seats: ${trip.availableSeats}/${trip.totalSeats}`,
+        source: 'travel',
+        collaborationCode: trip.destination
+    };
+    
+    // Add to shared data service
+    const calendarEvent = sharedDataService.addCalendarEvent(eventData);
+    
+    // Add activity for joining trip
+    sharedDataService.addUserActivity({
+        type: 'travel',
+        title: 'Joined Travel Trip',
+        description: `You joined a trip to ${trip.destination}`,
+        icon: 'bi-airplane',
+        collaborationCode: trip.destination,
+        source: 'travel'
+    });
+    
+    console.log('Trip added to calendar:', calendarEvent);
+}
+
+// Remove join notifications
+function removeJoinNotifications() {
+    const notifications = JSON.parse(localStorage.getItem('travel_notifications') || '[]');
+    const filteredNotifications = notifications.filter(notification => 
+        !notification.message.includes('joined your trip') && 
+        !notification.message.includes('joined the trip')
+    );
+    
+    localStorage.setItem('travel_notifications', JSON.stringify(filteredNotifications));
+    loadNotifications();
+}
+
+// Initialize new features
+function initializeNewFeatures() {
+    updateAnalyticsChevron();
+    removeJoinNotifications();
+    
+    // Add event listeners for new features
+    const showFullTripsToggle = document.getElementById('showFullTrips');
+    if (showFullTripsToggle) {
+        showFullTripsToggle.addEventListener('change', toggleFullTrips);
+    }
 }

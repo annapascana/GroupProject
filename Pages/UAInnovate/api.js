@@ -91,6 +91,40 @@ class InnovateAPI {
         });
     }
 
+    // Group Messaging Methods
+    async sendGroupMessage(groupId, userId, message, messageType = 'user') {
+        return this.request(`/groups/${groupId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ userId, message, messageType })
+        });
+    }
+
+    async getGroupMessages(groupId, limit = 50, offset = 0) {
+        return this.request(`/groups/${groupId}/messages?limit=${limit}&offset=${offset}`);
+    }
+
+    async sendGroupInvite(groupId, inviterId, inviteeEmail) {
+        return this.request(`/groups/${groupId}/invites`, {
+            method: 'POST',
+            body: JSON.stringify({ inviterId, inviteeEmail })
+        });
+    }
+
+    async getGroupInvites(groupId) {
+        return this.request(`/groups/${groupId}/invites`);
+    }
+
+    async updateInviteStatus(inviteId, status) {
+        return this.request(`/invites/${inviteId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+    }
+
+    async getUserInvites(userEmail) {
+        return this.request(`/users/${userEmail}/invites`);
+    }
+
     // Health check
     async healthCheck() {
         return this.request('/health');

@@ -232,6 +232,83 @@ class UserManager {
         }
     }
 
+    // Create social login session
+    createSocialSession(socialUserData) {
+        try {
+            // Check if user already exists by email
+            let user = this.findUserByEmail(socialUserData.email);
+            
+            if (!user) {
+                // Create new user from social data
+                const newUser = {
+                    id: socialUserData.id,
+                    firstName: socialUserData.firstName,
+                    lastName: socialUserData.lastName,
+                    email: socialUserData.email.toLowerCase(),
+                    password: null, // No password for social users
+                    role: 'user',
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null,
+                    isActive: true,
+                    socialProvider: socialUserData.provider,
+                    avatar: socialUserData.picture || socialUserData.avatar,
+                    verified: socialUserData.verified || false,
+                    profile: {
+                        bio: '',
+                        interests: [],
+                        avatar: socialUserData.picture || socialUserData.avatar,
+                        phone: '',
+                        major: '',
+                        year: '',
+                        skills: []
+                    }
+                };
+                
+                // Save new user
+                if (!this.saveUser(newUser)) {
+                    return null;
+                }
+                
+                user = newUser;
+            } else {
+                // Update existing user with social provider info
+                user.socialProvider = socialUserData.provider;
+                user.avatar = socialUserData.avatar;
+                if (user.profile) {
+                    user.profile.avatar = socialUserData.avatar;
+                }
+                this.saveUser(user);
+            }
+            
+            // Create session
+            const session = {
+                userId: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                socialProvider: socialUserData.provider,
+                avatar: socialUserData.picture || socialUserData.avatar,
+                loginTime: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+            };
+
+            localStorage.setItem(this.sessionKey, JSON.stringify(session));
+            
+            // Update user's last login
+            user.lastLogin = new Date().toISOString();
+            this.saveUser(user);
+            
+            // Trigger fresh start check for entire website
+            this.triggerWebsiteFreshStart(user);
+            
+            return session;
+        } catch (error) {
+            console.error('Error creating social session:', error);
+            return null;
+        }
+    }
+
     // Trigger fresh start for entire website when new user logs in
     triggerWebsiteFreshStart(user) {
         try {
