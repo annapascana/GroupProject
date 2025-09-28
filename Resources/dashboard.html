@@ -61,12 +61,6 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="#" class="nav-link" data-tab="calendar">
-                <i class="bi bi-calendar"></i>
-                <span>Calendar</span>
-              </a>
-            </li>
-            <li class="nav-item">
               <a href="#" class="nav-link" data-tab="messages">
                 <i class="bi bi-envelope"></i>
                 <span>Messages</span>
@@ -308,23 +302,6 @@
           </div>
         </div>
 
-        <!-- Calendar Tab -->
-        <div id="calendarTab" class="tab-content">
-          <div class="tab-header">
-            <h2>Calendar</h2>
-            <button class="btn btn-primary" id="addEventBtn">
-              <i class="bi bi-plus"></i> Add Event
-            </button>
-          </div>
-          <div class="calendar-container">
-            <div id="calendar" class="calendar">
-              <div class="loading-calendar">
-                <i class="bi bi-calendar3"></i>
-                <p>Loading calendar...</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Messages Tab -->
         <div id="messagesTab" class="tab-content">
@@ -480,110 +457,6 @@
         </div>
     </div>
 
-    <!-- Add Event Modal -->
-    <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addEventModalLabel">
-                        <i class="bi bi-calendar-plus"></i> Add Event
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addEventForm">
-                        <div class="form-group mb-3">
-                            <label for="eventTitle">Event Title</label>
-                            <input type="text" class="form-control" id="eventTitle" name="title" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="eventDate">Date</label>
-                            <input type="date" class="form-control" id="eventDate" name="date" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="eventTime">Time</label>
-                            <input type="time" class="form-control" id="eventTime" name="time" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="eventType">Type</label>
-                            <select class="form-control" id="eventType" name="type" required>
-                                <option value="">Select Type</option>
-                                <option value="personal">Personal</option>
-                                <option value="workout">Workout</option>
-                                <option value="study">Study</option>
-                                <option value="travel">Travel</option>
-                                <option value="innovate">UA Innovate</option>
-                                <option value="friend">Friend Meetup</option>
-                                <option value="about">About Us</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="eventDescription">Description</label>
-                            <textarea class="form-control" id="eventDescription" name="description" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveEventBtn">Add Event</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Event Modal -->
-    <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editEventModalLabel">
-                        <i class="bi bi-calendar-check"></i> Edit Event
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editEventForm">
-                        <div class="form-group mb-3">
-                            <label for="editEventTitle">Event Title</label>
-                            <input type="text" class="form-control" id="editEventTitle" name="title" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="editEventDate">Date</label>
-                            <input type="date" class="form-control" id="editEventDate" name="date" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="editEventTime">Time</label>
-                            <input type="time" class="form-control" id="editEventTime" name="time" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="editEventType">Type</label>
-                            <select class="form-control" id="editEventType" name="type" required>
-                                <option value="">Select Type</option>
-                                <option value="personal">Personal</option>
-                                <option value="workout">Workout</option>
-                                <option value="study">Study</option>
-                                <option value="travel">Travel</option>
-                                <option value="innovate">UA Innovate</option>
-                                <option value="friend">Friend Meetup</option>
-                                <option value="about">About Us</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="editEventDescription">Description</label>
-                            <textarea class="form-control" id="editEventDescription" name="description" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="deleteEventBtn" onclick="deleteEvent()">
-                        <i class="bi bi-trash"></i> Delete Event
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="updateEventBtn">Update Event</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Chat Modal -->
     <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">

@@ -145,7 +145,10 @@ function setupEventListeners() {
     // Profile form submission
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', handleProfileCreation);
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            createProfile();
+        });
     }
 
     // Real-time search as user types
@@ -186,7 +189,7 @@ function handleSearch(event) {
 
 // Filter workout buddies based on search criteria
 function filterWorkoutBuddies(filters) {
-    return workoutBuddies.filter(buddy => {
+    let filteredBuddies = workoutBuddies.filter(buddy => {
         // Gender preference filter
         if (filters.genderPreference && filters.genderPreference !== 'no-preference') {
             if (filters.genderPreference !== buddy.gender) {
@@ -231,6 +234,23 @@ function filterWorkoutBuddies(filters) {
         buddy.matchPercentage = calculateMatchPercentage(buddy, filters);
         return buddy;
     }).sort((a, b) => b.matchPercentage - a.matchPercentage); // Sort by match percentage
+
+    // Ensure at least one match is returned
+    if (filteredBuddies.length === 0) {
+        // Return the best overall match from all buddies
+        const fallbackBuddies = workoutBuddies.map(buddy => {
+            buddy.matchPercentage = calculateMatchPercentage(buddy, filters);
+            return buddy;
+        }).sort((a, b) => b.matchPercentage - a.matchPercentage);
+        
+        // Return the top match with a note that it's a fallback
+        if (fallbackBuddies.length > 0) {
+            fallbackBuddies[0].isFallbackMatch = true;
+            return [fallbackBuddies[0]];
+        }
+    }
+
+    return filteredBuddies;
 }
 
 // Calculate match percentage based on criteria
@@ -291,9 +311,17 @@ function displaySearchResults(results) {
     
     if (!resultsGrid || !resultsCount) return;
 
+    // Check if we have a fallback match
+    const hasFallbackMatch = results.some(buddy => buddy.isFallbackMatch);
+
     // Update results count
-    resultsCount.textContent = `${results.length} match${results.length !== 1 ? 'es' : ''} found`;
-    resultsCount.className = `badge ${results.length > 0 ? 'bg-crimson' : 'bg-secondary'} fs-6`;
+    if (hasFallbackMatch) {
+        resultsCount.textContent = `1 suggested match found`;
+        resultsCount.className = `badge bg-warning fs-6`;
+    } else {
+        resultsCount.textContent = `${results.length} match${results.length !== 1 ? 'es' : ''} found`;
+        resultsCount.className = `badge ${results.length > 0 ? 'bg-crimson' : 'bg-secondary'} fs-6`;
+    }
 
     // Clear previous results
     resultsGrid.innerHTML = '';
@@ -310,6 +338,22 @@ function displaySearchResults(results) {
             </div>
         `;
         return;
+    }
+
+    // Add fallback match notice if applicable
+    if (hasFallbackMatch) {
+        const noticeHtml = `
+            <div class="col-12 mb-3">
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <div>
+                        <strong>No exact matches found!</strong> We've found a suggested workout buddy based on your preferences. 
+                        Consider adjusting your search criteria for more options.
+                    </div>
+                </div>
+            </div>
+        `;
+        resultsGrid.innerHTML = noticeHtml;
     }
 
     // Display results
@@ -436,7 +480,52 @@ function connectWithBuddy(buddyId) {
     // Update the button state
     updateConnectionButton(buddyId, 'pending');
     
+    // Auto-connect within 30 seconds for test users
+    setTimeout(() => {
+        autoConnectBuddy(buddyId);
+    }, 30000);
+    
     console.log(`Connection request sent to ${buddy.name} (${buddy.email})`);
+}
+
+// Auto-connect with buddy (simulates automatic acceptance)
+function autoConnectBuddy(buddyId) {
+    const buddy = workoutBuddies.find(b => b.id === buddyId);
+    if (!buddy) return;
+
+    // Check if still pending
+    const requestIndex = connectionRequests.findIndex(r => r.buddyId === buddyId);
+    if (requestIndex === -1) return; // Request was cancelled or already processed
+
+    // Remove from pending requests
+    const request = connectionRequests[requestIndex];
+    connectionRequests.splice(requestIndex, 1);
+
+    // Add to connections
+    const connection = {
+        id: Date.now(),
+        buddyId: buddyId,
+        buddyName: buddy.name,
+        buddyEmail: buddy.email,
+        connectedAt: new Date().toISOString(),
+        status: 'connected'
+    };
+    
+    connections.push(connection);
+    saveConnections();
+    
+    // Update the button state
+    updateConnectionButton(buddyId, 'connected');
+    
+    // Show success notification
+    showAutoConnectionNotification(buddy.name);
+    
+    // Refresh matches if on matches page
+    if (document.getElementById('matchesSection').style.display !== 'none') {
+        loadMatches();
+    }
+    
+    console.log(`Auto-connected with ${buddy.name} (${buddy.email})`);
 }
 
 // View buddy profile
@@ -568,31 +657,70 @@ function getConnectionButtonForModal(buddyId, status) {
 
 // Profile creation
 function showCreateProfile() {
+    console.log('showCreateProfile called'); // Debug log
+    
     // Update modal title and button
-    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Your Workout Profile';
-    document.querySelector('#createProfileModal .btn-crimson').innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+    const modalTitle = document.getElementById('modalTitle');
+    const createBtn = document.querySelector('#createProfileModal .btn-crimson');
+    
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Your Workout Profile';
+    }
+    
+    if (createBtn) {
+        createBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+    }
+    
+    // Auto-fill form with user data from shared service
+    if (window.sharedDataService) {
+        window.sharedDataService.autofillForm('profileForm');
+        window.sharedDataService.autofillProfileForm('profileForm', 'workoutProfile');
+    }
     
     // Auto-generate email if user has an account
     const userEmail = getCurrentUserEmail();
-    if (userEmail) {
-        document.getElementById('profileEmail').value = userEmail;
-        document.getElementById('profileEmail').readOnly = true;
-        document.getElementById('profileEmail').classList.add('bg-light');
-    } else {
-        document.getElementById('profileEmail').readOnly = false;
-        document.getElementById('profileEmail').classList.remove('bg-light');
+    const emailField = document.getElementById('profileEmail');
+    
+    console.log('User email from getCurrentUserEmail():', userEmail); // Debug log
+    
+    if (emailField) {
+        if (userEmail && userEmail !== 'student@ua.edu') {
+            emailField.value = userEmail;
+            emailField.readOnly = true;
+            emailField.classList.add('bg-light');
+            console.log('Email field set to:', userEmail);
+        } else {
+            emailField.readOnly = false;
+            emailField.classList.remove('bg-light');
+            emailField.value = ''; // Clear the field if no real email
+            console.log('Email field cleared - no real user email found');
+        }
     }
     
-    const modal = new bootstrap.Modal(document.getElementById('createProfileModal'));
-    modal.show();
+    // Show modal
+    const modalElement = document.getElementById('createProfileModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal element not found');
+    }
 }
 
 function createProfile() {
+    console.log('createProfile called'); // Debug log
+    
     const form = document.getElementById('profileForm');
+    if (!form) {
+        console.error('Profile form not found');
+        return;
+    }
+    
     const formData = new FormData(form);
     
     // Validate form
     if (!validateProfileForm()) {
+        console.log('Form validation failed');
         return;
     }
 
@@ -615,6 +743,27 @@ function createProfile() {
         createdAt: isUpdate ? currentUser.createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
+
+    // Save to shared data service
+    if (window.sharedDataService) {
+        // Update basic user info
+        window.sharedDataService.updateUserData({
+            name: currentUser.name,
+            email: currentUser.email,
+            year: currentUser.year,
+            age: currentUser.age,
+            gender: currentUser.gender
+        });
+
+        // Update workout profile
+        window.sharedDataService.updateProfileData('workoutProfile', {
+            goals: currentUser.goals[0],
+            experience: currentUser.experience,
+            preferredTime: currentUser.preferredTime,
+            location: currentUser.location,
+            bio: currentUser.bio
+        });
+    }
 
     // Save to localStorage (in a real app, this would go to a database)
     try {
@@ -747,6 +896,12 @@ function editProfile() {
     // Update modal title and button for editing
     document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Your Workout Profile';
     document.querySelector('#createProfileModal .btn-crimson').innerHTML = '<i class="bi bi-check-circle me-2"></i>Update Profile';
+
+    // Auto-fill form with user data from shared service
+    if (window.sharedDataService) {
+        window.sharedDataService.autofillForm('profileForm');
+        window.sharedDataService.autofillProfileForm('profileForm', 'workoutProfile');
+    }
 
     // Populate form with existing data
     document.getElementById('profileName').value = currentUser.name || '';
@@ -888,6 +1043,7 @@ function showConnectionNotification(buddyName, buddyEmail) {
                 <h6 class="mb-1">Connection Request Sent!</h6>
                 <p class="mb-1">Your request has been sent to <strong>${buddyName}</strong></p>
                 <small class="text-muted">They'll be notified at ${buddyEmail}</small>
+                <br><small class="text-muted">Connection will be established automatically in 30 seconds</small>
             </div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -901,6 +1057,41 @@ function showConnectionNotification(buddyName, buddyEmail) {
             notification.remove();
         }
     }, 7000);
+}
+
+function showAutoConnectionNotification(buddyName) {
+    const notification = document.createElement('div');
+    notification.className = 'auto-connection-notification alert alert-success alert-dismissible fade show';
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 350px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid var(--success);
+    `;
+
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <i class="bi bi-heart-fill text-success me-2" style="font-size: 1.2rem;"></i>
+            <div>
+                <h6 class="mb-1">Connection Established!</h6>
+                <p class="mb-1">You're now connected with <strong>${buddyName}</strong></p>
+                <small class="text-muted">You can now message and coordinate workouts together</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 8 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 8000);
 }
 
 function updateConnectionButton(buddyId, status) {
@@ -949,16 +1140,38 @@ function getConnectionButton(buddyId) {
 }
 
 function getCurrentUserEmail() {
+    console.log('getCurrentUserEmail called'); // Debug log
+    
+    // Try to get email from shared data service first
+    if (window.sharedDataService) {
+        const userEmail = window.sharedDataService.getUserEmail();
+        console.log('Email from shared data service:', userEmail);
+        if (userEmail) {
+            return userEmail;
+        }
+    }
+    
     // Try to get email from localStorage (simulating logged-in user)
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         const user = JSON.parse(savedUser);
+        console.log('Email from localStorage currentUser:', user.email);
         return user.email;
+    }
+    
+    // Check for user data in shared service
+    if (window.sharedDataService) {
+        const userData = window.sharedDataService.getUserData();
+        console.log('Full user data from shared service:', userData);
+        if (userData.email) {
+            return userData.email;
+        }
     }
     
     // In a real app, this would come from authentication system
     // For demo purposes, we'll simulate a logged-in user
     const demoEmail = 'student@ua.edu';
+    console.log('Using demo email:', demoEmail);
     return demoEmail;
 }
 
@@ -1151,3 +1364,9 @@ window.clearFilters = clearFilters;
 window.showMatches = showMatches;
 window.messageBuddy = messageBuddy;
 window.cancelRequest = cancelRequest;
+
+// Debug: Check if functions are properly exported
+console.log('Functions exported:', {
+    showCreateProfile: typeof window.showCreateProfile,
+    createProfile: typeof window.createProfile
+});

@@ -492,6 +492,7 @@ class SharedDataService {
             syncQueue: JSON.parse(localStorage.getItem('sync_queue') || '[]')
         };
     }
+
 }
 
 // Create global instance

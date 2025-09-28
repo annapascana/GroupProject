@@ -12,7 +12,7 @@
   --dark-gray: #343a40;
   --success: #28a745;
   --warning: #4ECDC4;
-  --info: #17a2b8;
+  --info: #9E1B32;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
   --border-radius: 12px;
@@ -406,9 +406,9 @@ body {
 }
 
 .dark-mode .alert-info {
-  background-color: rgba(23, 162, 184, 0.2);
-  color: #17a2b8;
-  border-color: rgba(23, 162, 184, 0.3);
+  background-color: rgba(158, 27, 50, 0.2);
+  color: #C22B4A;
+  border-color: rgba(158, 27, 50, 0.3);
 }
 
 /* Enhanced Notification Styles for Dark Mode */
@@ -438,9 +438,9 @@ body {
 }
 
 .dark-mode .notification.alert-info {
-  background-color: rgba(23, 162, 184, 0.2) !important;
-  color: #22d3ee !important;
-  border-color: rgba(23, 162, 184, 0.4) !important;
+  background-color: rgba(158, 27, 50, 0.2) !important;
+  color: #C22B4A !important;
+  border-color: rgba(158, 27, 50, 0.4) !important;
 }
 
 .dark-mode .connection-notification {

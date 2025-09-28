@@ -276,6 +276,14 @@ function handleLogin(e) {
             const session = userManager.createSession(validation.user);
             
             if (session) {
+                // Save user data to shared data service
+                if (window.sharedDataService) {
+                    window.sharedDataService.updateUserData({
+                        name: validation.user.firstName + ' ' + validation.user.lastName,
+                        email: validation.user.email
+                    });
+                }
+                
                 showNotification('Login successful! Redirecting...', 'success');
                 
                 // Redirect to dashboard after 2 seconds
@@ -341,6 +349,14 @@ function handleRegister(e) {
         const result = userManager.createUser(userData);
         
         if (result.success) {
+            // Save user data to shared data service
+            if (window.sharedDataService) {
+                window.sharedDataService.updateUserData({
+                    name: userData.firstName + ' ' + userData.lastName,
+                    email: userData.email
+                });
+            }
+            
             showNotification('Account created successfully! You can now sign in.', 'success');
             
             // Clear form

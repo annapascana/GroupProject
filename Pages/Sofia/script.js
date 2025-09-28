@@ -38,17 +38,54 @@
   // Initialize dark mode when DOM is loaded
   document.addEventListener('DOMContentLoaded', initializeDarkMode);
 
-  // Default groups data
+  // Default groups data - Expanded with more variety and availability
   const defaultGroups = [
-    { id: 1, name: 'MIS321 Exam Prep', course: 'MIS321', size: '4-6', time: 'evening', location: 'library', focus: 'exam-prep', desc: 'Review sessions and practice exams.', specific: 'Library 3A', members: 4, max: 6, joined: false },
-    { id: 2, name: 'CS101 Homework Help', course: 'CS101', size: '2-3', time: 'afternoon', location: 'campus', focus: 'homework-help', desc: 'Weekly problem set support.', specific: 'Comp Lab B', members: 2, max: 3, joined: false },
-    { id: 3, name: 'MATH200 Concepts', course: 'MATH200', size: '7-10', time: 'morning', location: 'campus', focus: 'concept-review', desc: 'Core concepts and proofs.', specific: 'Math 205', members: 8, max: 10, joined: false },
+    { id: 1, name: 'MIS321 Exam Prep', course: 'MIS321', size: '4-6', time: 'evening', location: 'library', focus: 'exam-prep', desc: 'Review sessions and practice exams for the final.', specific: 'Library 3A', members: 4, max: 6, joined: false },
+    { id: 2, name: 'CS101 Homework Help', course: 'CS101', size: '2-3', time: 'afternoon', location: 'campus', focus: 'homework-help', desc: 'Weekly problem set support and debugging.', specific: 'Comp Lab B', members: 2, max: 3, joined: false },
+    { id: 3, name: 'MATH200 Concepts', course: 'MATH200', size: '7-10', time: 'morning', location: 'campus', focus: 'concept-review', desc: 'Core concepts and proofs review.', specific: 'Math 205', members: 8, max: 10, joined: false },
     { id: 4, name: 'ENG101 Peer Review', course: 'ENG101', size: '4-6', time: 'afternoon', location: 'online', focus: 'homework-help', desc: 'Essay critique and writing tips.', specific: 'Zoom', members: 5, max: 6, joined: false },
-    { id: 5, name: 'CHEM101 Study Buddy', course: 'CHEM101', size: '2-3', time: 'evening', location: 'coffee-shop', focus: 'study-buddy', desc: 'Light sessions + flashcards.', specific: 'Starbucks Main', members: 1, max: 3, joined: false }
+    { id: 5, name: 'CHEM101 Study Buddy', course: 'CHEM101', size: '2-3', time: 'evening', location: 'coffee-shop', focus: 'study-buddy', desc: 'Light sessions + flashcards.', specific: 'Starbucks Main', members: 1, max: 3, joined: false },
+    { id: 6, name: 'MIS321 Project Team', course: 'MIS321', size: '4-6', time: 'weekend', location: 'study-room', focus: 'project-work', desc: 'Working on the final group project together.', specific: 'Study Room 2B', members: 3, max: 6, joined: false },
+    { id: 7, name: 'CS101 Coding Practice', course: 'CS101', size: '2-3', time: 'morning', location: 'campus', focus: 'homework-help', desc: 'Practice coding problems and algorithms.', specific: 'Comp Lab A', members: 1, max: 3, joined: false },
+    { id: 8, name: 'MATH200 Problem Solving', course: 'MATH200', size: '4-6', time: 'evening', location: 'library', focus: 'homework-help', desc: 'Tackle challenging problems together.', specific: 'Library 2C', members: 4, max: 6, joined: false },
+    { id: 9, name: 'PHYS101 Lab Prep', course: 'PHYS101', size: '2-3', time: 'afternoon', location: 'campus', focus: 'concept-review', desc: 'Prepare for upcoming lab experiments.', specific: 'Physics Lab 101', members: 2, max: 3, joined: false },
+    { id: 10, name: 'ENG101 Creative Writing', course: 'ENG101', size: '4-6', time: 'evening', location: 'coffee-shop', focus: 'study-buddy', desc: 'Share creative writing and get feedback.', specific: 'Crimson Cafe', members: 3, max: 6, joined: false },
+    { id: 11, name: 'CHEM101 Lab Reports', course: 'CHEM101', size: '2-3', time: 'morning', location: 'campus', focus: 'homework-help', desc: 'Help with lab report writing and analysis.', specific: 'Chem Lab 205', members: 1, max: 3, joined: false },
+    { id: 12, name: 'MIS321 Database Design', course: 'MIS321', size: '4-6', time: 'afternoon', location: 'online', focus: 'project-work', desc: 'Database design and implementation help.', specific: 'Microsoft Teams', members: 5, max: 6, joined: false },
+    { id: 13, name: 'CS101 Midterm Review', course: 'CS101', size: '7-10', time: 'weekend', location: 'library', focus: 'exam-prep', desc: 'Comprehensive midterm exam preparation.', specific: 'Library 4A', members: 7, max: 10, joined: false },
+    { id: 14, name: 'MATH200 Calculus Club', course: 'MATH200', size: '4-6', time: 'morning', location: 'campus', focus: 'concept-review', desc: 'Deep dive into calculus concepts.', specific: 'Math 301', members: 3, max: 6, joined: false },
+    { id: 15, name: 'PHYS101 Formula Review', course: 'PHYS101', size: '2-3', time: 'evening', location: 'study-room', focus: 'exam-prep', desc: 'Memorize and understand physics formulas.', specific: 'Study Room 1A', members: 2, max: 3, joined: false },
+    { id: 16, name: 'ENG101 Grammar Workshop', course: 'ENG101', size: '4-6', time: 'afternoon', location: 'campus', focus: 'homework-help', desc: 'Improve grammar and writing mechanics.', specific: 'English 105', members: 4, max: 6, joined: false },
+    { id: 17, name: 'CHEM101 Organic Chemistry', course: 'CHEM101', size: '2-3', time: 'morning', location: 'library', focus: 'concept-review', desc: 'Focus on organic chemistry reactions.', specific: 'Library 1B', members: 1, max: 3, joined: false },
+    { id: 18, name: 'MIS321 System Analysis', course: 'MIS321', size: '4-6', time: 'weekend', location: 'online', focus: 'project-work', desc: 'System analysis and design project.', specific: 'Discord Voice Chat', members: 4, max: 6, joined: false },
+    { id: 19, name: 'CS101 Debugging Squad', course: 'CS101', size: '2-3', time: 'evening', location: 'campus', focus: 'homework-help', desc: 'Help each other debug code issues.', specific: 'Comp Lab C', members: 2, max: 3, joined: false },
+    { id: 20, name: 'MATH200 Statistics Help', course: 'MATH200', size: '4-6', time: 'afternoon', location: 'coffee-shop', focus: 'homework-help', desc: 'Statistics and probability problem solving.', specific: 'Campus Coffee', members: 3, max: 6, joined: false },
+    { id: 21, name: 'MIS321 Final Project', course: 'MIS321', size: '4-6', time: 'morning', location: 'study-room', focus: 'project-work', desc: 'Final project collaboration and development.', specific: 'Study Room 3A', members: 2, max: 6, joined: false },
+    { id: 22, name: 'CS101 Algorithm Study', course: 'CS101', size: '2-3', time: 'afternoon', location: 'library', focus: 'concept-review', desc: 'Understanding algorithms and data structures.', specific: 'Library 1C', members: 1, max: 3, joined: false },
+    { id: 23, name: 'MATH200 Linear Algebra', course: 'MATH200', size: '4-6', time: 'evening', location: 'campus', focus: 'homework-help', desc: 'Linear algebra problem solving sessions.', specific: 'Math 207', members: 2, max: 6, joined: false },
+    { id: 24, name: 'PHYS101 Mechanics Review', course: 'PHYS101', size: '2-3', time: 'morning', location: 'coffee-shop', focus: 'exam-prep', desc: 'Classical mechanics and problem solving.', specific: 'Crimson Cafe', members: 1, max: 3, joined: false },
+    { id: 25, name: 'ENG101 Research Methods', course: 'ENG101', size: '4-6', time: 'afternoon', location: 'online', focus: 'homework-help', desc: 'Research paper writing and citation help.', specific: 'Google Meet', members: 3, max: 6, joined: false },
+    { id: 26, name: 'CHEM101 Stoichiometry', course: 'CHEM101', size: '2-3', time: 'evening', location: 'campus', focus: 'concept-review', desc: 'Master stoichiometry calculations.', specific: 'Chem Lab 203', members: 1, max: 3, joined: false },
+    { id: 27, name: 'MIS321 Web Development', course: 'MIS321', size: '4-6', time: 'weekend', location: 'campus', focus: 'project-work', desc: 'Web development project collaboration.', specific: 'Comp Lab D', members: 2, max: 6, joined: false },
+    { id: 28, name: 'CS101 Python Programming', course: 'CS101', size: '7-10', time: 'morning', location: 'library', focus: 'homework-help', desc: 'Python programming and syntax help.', specific: 'Library 2A', members: 4, max: 10, joined: false },
+    { id: 29, name: 'MATH200 Differential Equations', course: 'MATH200', size: '4-6', time: 'afternoon', location: 'study-room', focus: 'concept-review', desc: 'Differential equations and applications.', specific: 'Study Room 2C', members: 2, max: 6, joined: false },
+    { id: 30, name: 'PHYS101 Thermodynamics', course: 'PHYS101', size: '2-3', time: 'evening', location: 'campus', focus: 'homework-help', desc: 'Thermodynamics laws and problem solving.', specific: 'Physics Lab 103', members: 1, max: 3, joined: false },
+    { id: 31, name: 'ENG101 Literature Analysis', course: 'ENG101', size: '4-6', time: 'morning', location: 'coffee-shop', focus: 'study-buddy', desc: 'Analyze literature and discuss themes.', specific: 'Starbucks Campus', members: 2, max: 6, joined: false },
+    { id: 32, name: 'CHEM101 Periodic Table', course: 'CHEM101', size: '2-3', time: 'afternoon', location: 'library', focus: 'concept-review', desc: 'Periodic table trends and properties.', specific: 'Library 3B', members: 1, max: 3, joined: false },
+    { id: 33, name: 'MIS321 Data Analysis', course: 'MIS321', size: '4-6', time: 'evening', location: 'online', focus: 'project-work', desc: 'Data analysis and visualization projects.', specific: 'Teams Meeting', members: 3, max: 6, joined: false },
+    { id: 34, name: 'CS101 Java Basics', course: 'CS101', size: '2-3', time: 'morning', location: 'campus', focus: 'homework-help', desc: 'Java programming fundamentals.', specific: 'Comp Lab E', members: 1, max: 3, joined: false },
+    { id: 35, name: 'MATH200 Trigonometry', course: 'MATH200', size: '4-6', time: 'weekend', location: 'coffee-shop', focus: 'concept-review', desc: 'Trigonometric functions and identities.', specific: 'Campus Coffee', members: 2, max: 6, joined: false },
+    { id: 36, name: 'PHYS101 Electricity & Magnetism', course: 'PHYS101', size: '2-3', time: 'afternoon', location: 'campus', focus: 'homework-help', desc: 'Electric and magnetic field problems.', specific: 'Physics Lab 201', members: 1, max: 3, joined: false },
+    { id: 37, name: 'ENG101 Technical Writing', course: 'ENG101', size: '4-6', time: 'evening', location: 'study-room', focus: 'homework-help', desc: 'Technical writing and documentation.', specific: 'Study Room 1B', members: 2, max: 6, joined: false },
+    { id: 38, name: 'CHEM101 Acid-Base Chemistry', course: 'CHEM101', size: '2-3', time: 'morning', location: 'campus', focus: 'concept-review', desc: 'Acid-base reactions and pH calculations.', specific: 'Chem Lab 207', members: 1, max: 3, joined: false },
+    { id: 39, name: 'MIS321 Business Analysis', course: 'MIS321', size: '4-6', time: 'afternoon', location: 'library', focus: 'project-work', desc: 'Business process analysis and modeling.', specific: 'Library 4B', members: 2, max: 6, joined: false },
+    { id: 40, name: 'CS101 C++ Programming', course: 'CS101', size: '7-10', time: 'evening', location: 'campus', focus: 'homework-help', desc: 'C++ programming and object-oriented concepts.', specific: 'Comp Lab F', members: 3, max: 10, joined: false }
   ];
 
   // Load groups from localStorage or use default
-  let groups = JSON.parse(localStorage.getItem('studyGroups')) || defaultGroups;
+  // Clear old groups data to show new groups
+  localStorage.removeItem('studyGroups');
+  let groups = defaultGroups;
 
   const els = {
     course: document.getElementById('sg-course'),
@@ -203,6 +240,17 @@
     const max = parseInt(size.split('-')[1] || size.replace('+',''),10) || 10;
     groups.unshift({ id: Date.now(), name, course, size, time, location, focus, desc, specific, members:1, max, joined: true });
     saveGroups(); // Save to localStorage
+    
+    // Save to shared data service
+    if (window.sharedDataService) {
+      window.sharedDataService.updateProfileData('studyProfile', {
+        course: course,
+        preferredTime: time,
+        location: location,
+        studyStyle: focus
+      });
+    }
+    
     document.getElementById('sg-form').reset();
     // Hide all other fields when form resets
     [els.courseOther, els.locOther, els.focusOther].forEach(field => {

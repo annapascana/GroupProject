@@ -2,9 +2,7 @@
 
 // Global variables
 let currentTab = 'dashboard';
-let currentCalendarMonth = new Date();
 let currentConversation = null;
-let userEvents = JSON.parse(localStorage.getItem('userEvents') || '[]');
 let userActivity = JSON.parse(localStorage.getItem('userActivity') || '[]');
 let userMessages = JSON.parse(localStorage.getItem('userMessages') || '[]');
 
@@ -17,12 +15,7 @@ function restoreDateObjects() {
         }
     });
     
-    // Restore userEvents dates
-    userEvents.forEach(event => {
-        if (typeof event.date === 'string') {
-            // Keep date as string for date input compatibility
-        }
-    });
+    // Calendar events removed - no userEvents to restore
     
     // Restore userMessages dates
     userMessages.forEach(conversation => {
@@ -45,8 +38,7 @@ function initializeFreshStart() {
     console.log('Checking for fresh start initialization...');
     
     // Check if this is a new user (no data in localStorage)
-    const hasExistingData = localStorage.getItem('userEvents') || 
-                           localStorage.getItem('userActivity') || 
+    const hasExistingData = localStorage.getItem('userActivity') || 
                            localStorage.getItem('userMessages') ||
                            localStorage.getItem('dashboard_favorites');
     
@@ -60,9 +52,6 @@ function initializeFreshStart() {
 
 function setupFreshStartData() {
     console.log('Setting up fresh start data for new user...');
-    
-    // Create sample calendar events
-    createSampleEvents();
     
     // Create sample activities
     createSampleActivities();
@@ -90,27 +79,7 @@ function setupFreshStartData() {
     }, 1000);
 }
 
-// Test function for debugging calendar deletion
-window.testCalendarDeletion = function() {
-    console.log('=== TESTING CALENDAR DELETION ===');
-    console.log('Current userEvents:', userEvents);
-    console.log('Current currentEditingEventId:', currentEditingEventId);
-    
-    if (userEvents.length === 0) {
-        console.log('No events to delete. Creating sample events...');
-        createSampleEvents();
-        console.log('Sample events created:', userEvents);
-    }
-    
-    if (userEvents.length > 0) {
-        console.log('Setting currentEditingEventId to first event...');
-        currentEditingEventId = userEvents[0].id;
-        console.log('Now testing deleteEvent...');
-        deleteEvent();
-    } else {
-        console.log('Still no events available for testing');
-    }
-};
+// Calendar deletion test removed - calendar features no longer available
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -282,8 +251,6 @@ function initializeDashboard() {
     setupAccessibility();
     setupAnimations();
     setupProfileEdit();
-    setupCalendar();
-    setupEventEditing();
     setupMessages();
     setupMessageSending();
     setupHelpForm();
@@ -319,103 +286,16 @@ function syncSharedData() {
         return;
     }
     
-    // Sync pending calendar events
-    syncPendingCalendarEvents();
-    
     // Sync pending user activities
     syncPendingUserActivities();
     
     // Set up periodic sync (every 30 seconds)
     setInterval(() => {
-        syncPendingCalendarEvents();
         syncPendingUserActivities();
     }, 30000);
 }
 
-function syncPendingCalendarEvents() {
-    if (typeof sharedDataService === 'undefined') return;
-    
-    const pendingEvents = sharedDataService.getPendingCalendarEvents();
-    if (pendingEvents.length === 0) return;
-    
-    console.log(`Syncing ${pendingEvents.length} pending calendar events`);
-    
-    const processedEventIds = [];
-    
-    pendingEvents.forEach(event => {
-        // Check if event already exists in user's calendar
-        const existingEvent = userEvents.find(e => 
-            e.title === event.title && 
-            e.date === event.date && 
-            e.time === event.time &&
-            e.source === event.source
-        );
-        
-        if (!existingEvent) {
-            // Add event to user's calendar with enhanced data
-            const calendarEvent = {
-                id: event.id,
-                title: event.title,
-                date: event.date,
-                time: event.time,
-                type: event.type,
-                description: event.description,
-                source: event.source,
-                collaborationCode: event.collaborationCode,
-                location: event.location || '',
-                duration: event.duration || '',
-                participants: event.participants || [],
-                cost: event.cost || '',
-                status: event.status || 'confirmed'
-            };
-            
-            userEvents.push(calendarEvent);
-            processedEventIds.push(event.id);
-            
-            // Add activity for joining event with specific messaging based on type
-            let activityMessage = `You joined the event: ${event.title}`;
-            let activityType = 'calendar';
-            
-            switch (event.type) {
-                case 'trip':
-                    activityMessage = `You joined a trip to ${event.location}`;
-                    activityType = 'travel';
-                    break;
-                case 'group':
-                    activityMessage = `You joined the group: ${event.title}`;
-                    activityType = 'groups';
-                    break;
-                case 'collaboration':
-                    activityMessage = `You joined the collaboration: ${event.title}`;
-                    activityType = 'collaboration';
-                    break;
-            }
-            
-            addActivity(activityType, 'Joined Event', activityMessage, event.collaborationCode);
-            
-            console.log('Added calendar event:', calendarEvent);
-        } else {
-            // Event already exists, mark as processed
-            processedEventIds.push(event.id);
-        }
-    });
-    
-    // Save updated events to localStorage
-    if (processedEventIds.length > 0) {
-        localStorage.setItem('userEvents', JSON.stringify(userEvents));
-        
-        // Mark events as processed in shared data
-        sharedDataService.markCalendarEventsProcessed(processedEventIds);
-        
-        // Refresh calendar if it's currently visible
-        if (currentTab === 'calendar') {
-            renderCalendar();
-        }
-        
-        // Show notification
-        showNotification(`Added ${processedEventIds.length} new event(s) to your calendar!`, 'success');
-    }
-}
+// Calendar sync function removed - calendar features no longer available
 
 function syncPendingUserActivities() {
     if (typeof sharedDataService === 'undefined') return;
@@ -478,7 +358,6 @@ function syncPendingUserActivities() {
 function ensureUserInfoDisplayed() {
     const userNameElement = document.querySelector('.user-name');
     const userEmailElement = document.querySelector('.user-email');
-    const navUserNameElement = document.querySelector('.nav-list .nav-item:first-child .nav-link span');
     
     // Check if user info is already displayed
     if (userNameElement && userNameElement.textContent !== 'Loading...') {
@@ -506,6 +385,19 @@ function ensureUserInfoDisplayed() {
         const fallbackUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
         if (fallbackUser.firstName) {
             userInfo = fallbackUser;
+        }
+    }
+    
+    // Try shared data service
+    if (!userInfo && typeof window.sharedDataService !== 'undefined') {
+        const sharedUserData = window.sharedDataService.getUserData();
+        if (sharedUserData && sharedUserData.name) {
+            const nameParts = sharedUserData.name.split(' ');
+            userInfo = {
+                firstName: nameParts[0] || 'User',
+                lastName: nameParts.slice(1).join(' ') || '',
+                email: sharedUserData.email || 'user@example.com'
+            };
         }
     }
     
@@ -566,9 +458,6 @@ function switchTab(tabName) {
                 // Clear activity badge when user views activity tab
                 clearActivityBadge();
                 break;
-            case 'calendar':
-                loadCalendar();
-                break;
             case 'messages':
                 loadMessages();
                 // Clear messages badge when user views messages tab
@@ -576,6 +465,7 @@ function switchTab(tabName) {
                 break;
             case 'help':
                 // Help tab is static, no loading needed
+                console.log('Help tab activated');
                 break;
             case 'dashboard':
             default:
@@ -633,9 +523,6 @@ function handleNavigation(linkText) {
         case 'Messages':
             showNotification('Messages feature coming soon!', 'info');
             break;
-        case 'Calendar':
-            showNotification('Calendar feature coming soon!', 'info');
-            break;
         case 'Progress':
             showNotification('Progress tracking coming soon!', 'info');
             break;
@@ -668,20 +555,38 @@ function handleSignOut() {
 
 // Refresh user info from session
 function refreshUserInfo() {
+    console.log('Refreshing user info...');
+    
     if (typeof userManager !== 'undefined') {
         const session = userManager.getCurrentSession();
         if (session) {
+            console.log('Found session:', session);
             updateUserInfo(session);
         } else {
             // If no session, try to get current user
             const currentUser = userManager.getCurrentUser();
             if (currentUser) {
+                console.log('Found current user:', currentUser);
                 updateUserInfo({
                     firstName: currentUser.firstName,
                     lastName: currentUser.lastName,
                     email: currentUser.email
                 });
             }
+        }
+    }
+    
+    // Also try shared data service
+    if (typeof window.sharedDataService !== 'undefined') {
+        const sharedUserData = window.sharedDataService.getUserData();
+        if (sharedUserData && sharedUserData.name) {
+            console.log('Found shared user data:', sharedUserData);
+            const nameParts = sharedUserData.name.split(' ');
+            updateUserInfo({
+                firstName: nameParts[0] || 'User',
+                lastName: nameParts.slice(1).join(' ') || '',
+                email: sharedUserData.email || 'user@example.com'
+            });
         }
     }
 }
@@ -826,7 +731,6 @@ function getActivityIcon(type) {
         'leave': 'bi-person-dash-fill',
         'favorite': 'bi-star-fill',
         'message': 'bi-chat-fill',
-        'calendar': 'bi-calendar-fill',
         'update': 'bi-pencil-fill'
     };
     return icons[type] || 'bi-activity';
@@ -1057,460 +961,25 @@ function createSampleActivities() {
     console.log('Sample activities created:', userActivity);
 }
 
-// Calendar Functions
-function setupCalendar() {
-    console.log('Setting up calendar...');
-    
-    // Create sample events if none exist
-    if (userEvents.length === 0) {
-        console.log('No events found, creating sample events...');
-        createSampleEvents();
-    }
-    
-    console.log('Current userEvents:', userEvents);
-    
-    const addEventBtn = document.getElementById('addEventBtn');
-    const saveEventBtn = document.getElementById('saveEventBtn');
-    
-    if (addEventBtn) {
-        addEventBtn.addEventListener('click', function() {
-            openAddEventModal();
-        });
-    }
-    
-    if (saveEventBtn) {
-        saveEventBtn.addEventListener('click', function() {
-            saveEvent();
-        });
-    }
-}
+// Calendar functions removed - calendar features no longer available
 
-// Create sample events for testing
-function createSampleEvents() {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const sampleEvents = [
-        {
-            id: 'sample1',
-            title: 'Team Meeting',
-            date: today.toISOString().split('T')[0],
-            time: '10:00',
-            type: 'workout',
-            description: 'Weekly team standup meeting'
-        },
-        {
-            id: 'sample2',
-            title: 'Study Group',
-            date: tomorrow.toISOString().split('T')[0],
-            time: '14:00',
-            type: 'study',
-            description: 'Math study session with classmates'
-        }
-    ];
-    
-    userEvents = sampleEvents;
-    localStorage.setItem('userEvents', JSON.stringify(userEvents));
-    console.log('Sample events created:', userEvents);
-}
+// Calendar sample events removed - calendar features no longer available
 
-function loadCalendar() {
-    const calendar = document.getElementById('calendar');
-    if (!calendar) return;
-    
-    // Clear loading state
-    calendar.innerHTML = '';
-    
-    // Create calendar header
-    const header = document.createElement('div');
-    header.className = 'calendar-header';
-    header.innerHTML = `
-        <h3 id="calendarMonthYear"></h3>
-        <div class="calendar-nav">
-            <button id="prevMonth"><i class="bi bi-chevron-left"></i></button>
-            <button id="nextMonth"><i class="bi bi-chevron-right"></i></button>
-        </div>
-    `;
-    calendar.appendChild(header);
-    
-    // Create calendar grid
-    const grid = document.createElement('div');
-    grid.className = 'calendar-grid';
-    grid.id = 'calendarGrid';
-    calendar.appendChild(grid);
-    
-    // Setup navigation
-    document.getElementById('prevMonth').addEventListener('click', () => {
-        currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() - 1);
-        renderCalendar();
-    });
-    
-    document.getElementById('nextMonth').addEventListener('click', () => {
-        currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + 1);
-        renderCalendar();
-    });
-    
-    // Initial render
-    renderCalendar();
-}
+// Calendar load function removed - calendar features no longer available
 
-function renderCalendar() {
-    const monthYear = document.getElementById('calendarMonthYear');
-    const grid = document.getElementById('calendarGrid');
-    
-    if (!monthYear || !grid) return;
-    
-    // Update month/year display
-    monthYear.textContent = currentCalendarMonth.toLocaleDateString('en-US', { 
-        month: 'long', 
-        year: 'numeric' 
-    });
-    
-    // Clear grid
-    grid.innerHTML = '';
-    
-    // Get first day of month and number of days
-    const firstDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
-    const lastDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
-    // Add day headers
-    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    dayHeaders.forEach(day => {
-        const header = document.createElement('div');
-        header.className = 'calendar-day-header';
-        header.textContent = day;
-        header.style.cssText = 'background: var(--crimson-primary); color: white; padding: 10px; text-align: center; font-weight: bold;';
-        grid.appendChild(header);
-    });
-    
-    // Add empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-        const emptyDay = document.createElement('div');
-        emptyDay.className = 'calendar-day other-month';
-        emptyDay.innerHTML = `<div class="calendar-day-number">${new Date(firstDay.getFullYear(), firstDay.getMonth(), -startingDayOfWeek + i + 1).getDate()}</div>`;
-        grid.appendChild(emptyDay);
-    }
-    
-    // Add days of month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day';
-        
-        const today = new Date();
-        if (currentCalendarMonth.getFullYear() === today.getFullYear() && 
-            currentCalendarMonth.getMonth() === today.getMonth() && 
-            day === today.getDate()) {
-            dayElement.classList.add('today');
-        }
-        
-        dayElement.innerHTML = `<div class="calendar-day-number">${day}</div>`;
-        
-        // Add events for this day
-        const dayEvents = userEvents.filter(event => {
-            const eventDate = new Date(event.date);
-            return eventDate.getFullYear() === currentCalendarMonth.getFullYear() &&
-                   eventDate.getMonth() === currentCalendarMonth.getMonth() &&
-                   eventDate.getDate() === day;
-        });
-        
-        dayEvents.forEach(event => {
-            const eventElement = document.createElement('div');
-            eventElement.className = 'calendar-event';
-            eventElement.textContent = event.title;
-            eventElement.title = `${event.title} - ${event.time}`;
-            eventElement.style.cursor = 'pointer';
-            eventElement.setAttribute('data-event-id', event.id);
-            eventElement.addEventListener('click', function(e) {
-                e.stopPropagation();
-                console.log('Calendar event clicked, eventId:', event.id);
-                openEditEventModal(event.id);
-            });
-            dayElement.appendChild(eventElement);
-        });
-        
-        grid.appendChild(dayElement);
-    }
-}
+// Calendar render function removed - calendar features no longer available
 
-function openAddEventModal() {
-    // Reset form
-    document.getElementById('addEventForm').reset();
-    
-    // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('eventDate').value = today;
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('addEventModal'));
-    modal.show();
-}
+// Calendar modal functions removed - calendar features no longer available
 
-function saveEvent() {
-    const formData = {
-        title: document.getElementById('eventTitle').value,
-        date: document.getElementById('eventDate').value,
-        time: document.getElementById('eventTime').value,
-        type: document.getElementById('eventType').value,
-        description: document.getElementById('eventDescription').value
-    };
-    
-    // Validate required fields
-    if (!formData.title || !formData.date || !formData.time || !formData.type) {
-        showNotification('Please fill in all required fields.', 'warning');
-        return;
-    }
-    
-    // Add event with unique ID
-    const eventWithId = {
-        id: Date.now().toString(),
-        ...formData
-    };
-    userEvents.push(eventWithId);
-    localStorage.setItem('userEvents', JSON.stringify(userEvents));
-    
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addEventModal'));
-    modal.hide();
-    
-    // Refresh calendar if it's currently visible
-    if (currentTab === 'calendar') {
-        renderCalendar();
-    }
-    
-    showNotification('Event added successfully!', 'success');
-}
+// Calendar save function removed - calendar features no longer available
 
-// Event Editing Functions
-let currentEditingEventId = null;
+// Calendar event editing functions removed - calendar features no longer available
 
-function openEditEventModal(eventId) {
-    console.log('openEditEventModal called with eventId:', eventId);
-    console.log('userEvents:', userEvents);
-    
-    const event = userEvents.find(e => e.id === eventId);
-    console.log('Found event:', event);
-    
-    if (!event) {
-        console.log('Event not found');
-        showNotification('Event not found.', 'error');
-        return;
-    }
-    
-    currentEditingEventId = eventId;
-    console.log('Set currentEditingEventId to:', currentEditingEventId);
-    
-    // Populate form with event data
-    document.getElementById('editEventTitle').value = event.title;
-    document.getElementById('editEventDate').value = event.date;
-    document.getElementById('editEventTime').value = event.time;
-    document.getElementById('editEventType').value = event.type;
-    document.getElementById('editEventDescription').value = event.description || '';
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('editEventModal'));
-    modal.show();
-    console.log('Modal shown');
-    
-    // Re-setup event listeners after modal is shown
-    setTimeout(() => {
-        console.log('Re-setting up event listeners after modal shown');
-        setupEventEditing();
-    }, 100);
-}
+// Calendar update function removed - calendar features no longer available
 
-function updateEvent() {
-    if (!currentEditingEventId) {
-        showNotification('No event selected for editing.', 'error');
-        return;
-    }
-    
-    const formData = {
-        title: document.getElementById('editEventTitle').value,
-        date: document.getElementById('editEventDate').value,
-        time: document.getElementById('editEventTime').value,
-        type: document.getElementById('editEventType').value,
-        description: document.getElementById('editEventDescription').value
-    };
-    
-    // Validate required fields
-    if (!formData.title || !formData.date || !formData.time || !formData.type) {
-        showNotification('Please fill in all required fields.', 'warning');
-        return;
-    }
-    
-    // Find and update the event
-    const eventIndex = userEvents.findIndex(e => e.id === currentEditingEventId);
-    if (eventIndex === -1) {
-        showNotification('Event not found.', 'error');
-        return;
-    }
-    
-    // Update event data
-    userEvents[eventIndex] = {
-        ...userEvents[eventIndex],
-        ...formData
-    };
-    
-    // Save to localStorage
-    localStorage.setItem('userEvents', JSON.stringify(userEvents));
-    
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
-    modal.hide();
-    
-    // Refresh calendar if it's currently visible
-    if (currentTab === 'calendar') {
-        renderCalendar();
-    }
-    
-    // Add activity
-    addActivity('calendar', 'Updated Event', `You updated the event: ${formData.title}`, formData.title);
-    
-    showNotification('Event updated successfully!', 'success');
-    
-    // Reset editing state
-    currentEditingEventId = null;
-}
+// Calendar delete function removed - calendar features no longer available
 
-function deleteEvent() {
-    console.log('=== DELETE EVENT DEBUG START ===');
-    console.log('deleteEvent called');
-    console.log('currentEditingEventId:', currentEditingEventId);
-    console.log('userEvents:', userEvents);
-    console.log('userEvents length:', userEvents.length);
-    
-    // Check if we have a valid event ID
-    if (!currentEditingEventId) {
-        console.log('No event selected for deletion');
-        showNotification('No event selected for deletion.', 'error');
-        return;
-    }
-    
-    // Find the event first
-    const event = userEvents.find(e => e.id === currentEditingEventId);
-    if (!event) {
-        console.log('Event not found in userEvents array');
-        console.log('Looking for event with ID:', currentEditingEventId);
-        console.log('Available event IDs:', userEvents.map(e => e.id));
-        showNotification('Event not found.', 'error');
-        return;
-    }
-    
-    console.log('Found event to delete:', event);
-    
-    // Confirm deletion
-    if (!confirm(`Are you sure you want to delete "${event.title}"? This action cannot be undone.`)) {
-        console.log('User cancelled deletion');
-        return;
-    }
-    
-    // Find and remove the event
-    const eventIndex = userEvents.findIndex(e => e.id === currentEditingEventId);
-    console.log('Event index:', eventIndex);
-    
-    if (eventIndex === -1) {
-        console.log('Event not found at index');
-        showNotification('Event not found.', 'error');
-        return;
-    }
-    
-    const eventTitle = userEvents[eventIndex].title;
-    console.log('Deleting event:', eventTitle);
-    
-    // Remove event
-    userEvents.splice(eventIndex, 1);
-    console.log('Event removed, new userEvents:', userEvents);
-    console.log('New userEvents length:', userEvents.length);
-    
-    // Save to localStorage
-    localStorage.setItem('userEvents', JSON.stringify(userEvents));
-    console.log('Saved to localStorage');
-    
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
-    if (modal) {
-        modal.hide();
-        console.log('Modal closed via Bootstrap instance');
-    } else {
-        // Fallback: hide modal manually
-        const modalElement = document.getElementById('editEventModal');
-        if (modalElement) {
-            modalElement.style.display = 'none';
-            modalElement.classList.remove('show');
-            document.body.classList.remove('modal-open');
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.remove();
-            }
-            console.log('Modal closed manually');
-        }
-    }
-    
-    // Refresh calendar if it's currently visible
-    if (currentTab === 'calendar') {
-        console.log('Refreshing calendar...');
-        renderCalendar();
-        console.log('Calendar refreshed');
-    }
-    
-    // Add activity
-    addActivity('calendar', 'Deleted Event', `You deleted the event: ${eventTitle}`, eventTitle);
-    
-    showNotification('Event deleted successfully!', 'success');
-    
-    // Reset editing state
-    currentEditingEventId = null;
-    console.log('Deletion completed');
-    console.log('=== DELETE EVENT DEBUG END ===');
-}
-
-function setupEventEditing() {
-    console.log('Setting up event editing...');
-    
-    // Setup update event button
-    const updateEventBtn = document.getElementById('updateEventBtn');
-    if (updateEventBtn) {
-        console.log('Update event button found, adding listener');
-        updateEventBtn.addEventListener('click', function(e) {
-            console.log('Update event button clicked');
-            updateEvent();
-        });
-    } else {
-        console.log('Update event button not found');
-    }
-    
-    // Setup delete event button with multiple approaches
-    const deleteEventBtn = document.getElementById('deleteEventBtn');
-    if (deleteEventBtn) {
-        console.log('Delete event button found, adding listener');
-        
-        // Remove any existing listeners
-        deleteEventBtn.removeEventListener('click', deleteEvent);
-        
-        // Add new listener
-        deleteEventBtn.addEventListener('click', function(e) {
-            console.log('Delete event button clicked');
-            e.preventDefault();
-            e.stopPropagation();
-            deleteEvent();
-        });
-        
-        // Also add onclick as backup
-        deleteEventBtn.onclick = function(e) {
-            console.log('Delete event button onclick triggered');
-            e.preventDefault();
-            e.stopPropagation();
-            deleteEvent();
-        };
-        
-        console.log('Delete button setup complete');
-    } else {
-        console.log('Delete event button not found');
-    }
-}
+// Calendar event editing setup removed - calendar features no longer available
 
 // Messages Functions
 function setupMessages() {
@@ -2681,16 +2150,22 @@ function updateUserInfo(userInfo) {
     if (userNameElement) {
         const userNameLink = userNameElement.querySelector('.user-name-link');
         if (userNameLink) {
-            userNameLink.textContent = `${userInfo.firstName} ${userInfo.lastName}`;
+            userNameLink.textContent = `${userInfo.firstName} ${userInfo.lastName}`.trim();
         } else {
-            userNameElement.textContent = `${userInfo.firstName} ${userInfo.lastName}`;
+            userNameElement.textContent = `${userInfo.firstName} ${userInfo.lastName}`.trim();
         }
+        console.log('Updated user name to:', `${userInfo.firstName} ${userInfo.lastName}`.trim());
+    } else {
+        console.log('User name element not found');
     }
     
     // Update user email
     const userEmailElement = document.querySelector('.user-email');
     if (userEmailElement) {
         userEmailElement.textContent = userInfo.email;
+        console.log('Updated user email to:', userInfo.email);
+    } else {
+        console.log('User email element not found');
     }
     
     // Avatar is now a simple person icon - no need to update

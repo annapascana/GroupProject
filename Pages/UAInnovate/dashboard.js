@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const response = await innovateAPI.getUserGroups(userId);
-            const myGroups = response.groups;
+            const myGroups = response.groups || [];
             
             // Persist groups data for offline access
             myGroups.forEach(group => {
@@ -529,6 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayProfileSearchResults(profiles) {
         const profileSearchResults = document.getElementById('profileSearchResults');
         const profilesList = document.getElementById('profilesList');
+        const currentUserId = localStorage.getItem('uaInnovateUserId');
 
         if (profiles.length === 0) {
             profilesList.innerHTML = '<p class="no-groups">No profiles found matching your criteria.</p>';
@@ -538,6 +539,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isMIS = profile.major.toLowerCase().includes('mis') || 
                              profile.major.toLowerCase().includes('management information systems') ||
                              profile.major.toLowerCase().includes('information systems');
+                
+                // Check if connection already exists
+                const connections = JSON.parse(localStorage.getItem('profileConnections') || '[]');
+                const connectionExists = connections.find(conn => 
+                    (conn.fromUserId === currentUserId && conn.toUserId === profile.userId) ||
+                    (conn.fromUserId === profile.userId && conn.toUserId === currentUserId)
+                );
+                
+                const connectButtonText = connectionExists ? 'Already Connected' : 'Connect';
+                const connectButtonClass = connectionExists ? 'btn-view' : 'btn-join';
+                const connectButtonDisabled = connectionExists ? 'disabled' : '';
                 
                 resultsHTML += `
                     <div class="group-item profile-item">
@@ -556,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ` : ''}
                         <div class="group-actions">
                             <button class="btn-small btn-view" onclick="viewProfile('${profile.userId}')">View Profile</button>
-                            <button class="btn-small btn-join" onclick="connectWithProfile('${profile.userId}')">Connect</button>
+                            <button class="btn-small ${connectButtonClass}" onclick="connectWithProfile('${profile.userId}')" ${connectButtonDisabled}>${connectButtonText}</button>
                         </div>
                     </div>
                 `;
@@ -756,6 +768,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Find and update the connect button
+        const connectButton = document.querySelector(`button[onclick="connectWithProfile('${userId}')"]`);
+        if (connectButton) {
+            const originalText = connectButton.textContent;
+            connectButton.textContent = 'Connection Sent';
+            connectButton.disabled = true;
+            connectButton.classList.remove('btn-join');
+            connectButton.classList.add('btn-view');
+        }
+
         try {
             await innovateAPI.connectWithUser(userId, currentUserId);
             showMessage('Connection request sent successfully!', 'success');
@@ -771,6 +793,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (connectionExists) {
                 showMessage('You are already connected with this user.', 'info');
+                // Reset button if already connected
+                if (connectButton) {
+                    connectButton.textContent = 'Already Connected';
+                    connectButton.disabled = true;
+                }
                 return;
             }
             
@@ -918,6 +945,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize dashboard
     initializeDashboard();
+    
+    // Initialize test groups
+    initializeTestGroups();
 
     // Theme toggle functionality
     const themeToggle = document.getElementById('themeToggle');
@@ -1150,4 +1180,445 @@ function loadGroupMessages(groupId) {
 
 function storeCurrentGroupId(groupId) {
     localStorage.setItem('currentGroupId', groupId);
+}
+
+// Initialize test groups for UA Innovate
+function initializeTestGroups() {
+    // Clear existing test groups to avoid duplicates
+    localStorage.removeItem('allGroups');
+    
+    const testGroups = [
+        {
+            group_id: 'test_group_1',
+            name: 'FinTech Innovation Lab',
+            description: 'Building the next generation of financial technology solutions. Focus on blockchain, digital payments, and AI-driven financial services.',
+            focus: 'fintech',
+            size_preference: '3-4 members',
+            required_skills: 'JavaScript, Python, Blockchain, Financial APIs',
+            current_members: 2,
+            max_members: 4,
+            created_by: 'test_user_1',
+            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_2',
+            name: 'Social Impact Analytics',
+            description: 'Using data science to solve social problems. Projects include education analytics, healthcare accessibility, and environmental monitoring.',
+            focus: 'data-analytics',
+            size_preference: '4-5 members',
+            required_skills: 'Python, R, SQL, Machine Learning, Statistics',
+            current_members: 3,
+            max_members: 5,
+            created_by: 'test_user_2',
+            created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_3',
+            name: 'Cybersecurity Defense Team',
+            description: 'Developing security solutions and conducting penetration testing. Focus on web security, network protection, and threat analysis.',
+            focus: 'cybersecurity',
+            size_preference: '3-4 members',
+            required_skills: 'C++, Python, Network Security, Ethical Hacking',
+            current_members: 1,
+            max_members: 4,
+            created_by: 'test_user_3',
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_4',
+            name: 'Full Stack Web Innovators',
+            description: 'Creating modern web applications with cutting-edge technologies. Projects include e-commerce platforms, social networks, and productivity tools.',
+            focus: 'full-stack-development',
+            size_preference: '4-6 members',
+            required_skills: 'React, Node.js, MongoDB, AWS, Docker',
+            current_members: 4,
+            max_members: 6,
+            created_by: 'test_user_4',
+            created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_5',
+            name: 'Community Health App',
+            description: 'Building a mobile app to connect community health resources. Focus on accessibility, user experience, and health data privacy.',
+            focus: 'social-innovation',
+            size_preference: '3-5 members',
+            required_skills: 'React Native, Firebase, Healthcare APIs, UI/UX Design',
+            current_members: 2,
+            max_members: 5,
+            created_by: 'test_user_5',
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_6',
+            name: 'AI-Powered Learning Platform',
+            description: 'Developing an intelligent tutoring system that adapts to individual learning styles. Using machine learning and natural language processing.',
+            focus: 'prototype-innovation',
+            size_preference: '4-5 members',
+            required_skills: 'Python, TensorFlow, NLP, Educational Technology',
+            current_members: 3,
+            max_members: 5,
+            created_by: 'test_user_6',
+            created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_7',
+            name: 'Sustainable Tech Solutions',
+            description: 'Creating technology solutions for environmental sustainability. Projects include energy monitoring, waste reduction, and carbon footprint tracking.',
+            focus: 'social-innovation',
+            size_preference: '3-4 members',
+            required_skills: 'IoT, Arduino, Data Visualization, Environmental Science',
+            current_members: 1,
+            max_members: 4,
+            created_by: 'test_user_7',
+            created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_8',
+            name: 'Blockchain Supply Chain',
+            description: 'Implementing blockchain technology for supply chain transparency and traceability. Focus on logistics, authentication, and smart contracts.',
+            focus: 'fintech',
+            size_preference: '4-5 members',
+            required_skills: 'Solidity, Web3, Supply Chain Management, Smart Contracts',
+            current_members: 2,
+            max_members: 5,
+            created_by: 'test_user_8',
+            created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_9',
+            name: 'Data Visualization Studio',
+            description: 'Creating interactive dashboards and data stories. Focus on business intelligence, real-time analytics, and user-friendly data presentation.',
+            focus: 'data-analytics',
+            size_preference: '3-4 members',
+            required_skills: 'D3.js, Tableau, Python, Data Storytelling',
+            current_members: 2,
+            max_members: 4,
+            created_by: 'test_user_9',
+            created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_10',
+            name: 'Mobile Security Framework',
+            description: 'Developing security frameworks for mobile applications. Focus on encryption, secure communication, and vulnerability assessment.',
+            focus: 'cybersecurity',
+            size_preference: '3-5 members',
+            required_skills: 'Android/iOS Development, Cryptography, Security Testing',
+            current_members: 3,
+            max_members: 5,
+            created_by: 'test_user_10',
+            created_at: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_11',
+            name: 'E-Learning Platform',
+            description: 'Building a comprehensive online learning management system. Features include video streaming, quizzes, progress tracking, and collaborative tools.',
+            focus: 'full-stack-development',
+            size_preference: '5-6 members',
+            required_skills: 'Vue.js, Laravel, MySQL, Video Streaming, WebRTC',
+            current_members: 4,
+            max_members: 6,
+            created_by: 'test_user_11',
+            created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            group_id: 'test_group_12',
+            name: 'Smart City IoT Network',
+            description: 'Designing IoT solutions for smart city infrastructure. Projects include traffic management, air quality monitoring, and energy optimization.',
+            focus: 'prototype-innovation',
+            size_preference: '4-5 members',
+            required_skills: 'Arduino, Raspberry Pi, MQTT, Cloud Computing, Sensors',
+            current_members: 2,
+            max_members: 5,
+            created_by: 'test_user_12',
+            created_at: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString()
+        }
+    ];
+    
+    // Store test groups in localStorage
+    localStorage.setItem('allGroups', JSON.stringify(testGroups));
+    
+    // Create test profiles for the groups
+    const testProfiles = [
+        {
+            userId: 'test_user_1',
+            year: 'senior',
+            major: 'Management Information Systems',
+            misSemester: '6',
+            technicalSkills: 'JavaScript, Python, Blockchain, React, Node.js',
+            interests: 'Financial technology, cryptocurrency, decentralized applications'
+        },
+        {
+            userId: 'test_user_2',
+            year: 'junior',
+            major: 'Computer Science',
+            technicalSkills: 'Python, R, SQL, Machine Learning, Statistics, Tableau',
+            interests: 'Data science, social impact, healthcare analytics'
+        },
+        {
+            userId: 'test_user_3',
+            year: 'senior',
+            major: 'Cybersecurity',
+            technicalSkills: 'C++, Python, Network Security, Ethical Hacking, Linux',
+            interests: 'Penetration testing, security research, threat intelligence'
+        },
+        {
+            userId: 'test_user_4',
+            year: 'junior',
+            major: 'Management Information Systems',
+            misSemester: '4',
+            technicalSkills: 'React, Node.js, MongoDB, AWS, Docker, TypeScript',
+            interests: 'Web development, cloud computing, DevOps'
+        },
+        {
+            userId: 'test_user_5',
+            year: 'sophomore',
+            major: 'Computer Science',
+            technicalSkills: 'React Native, Firebase, UI/UX Design, Swift, Kotlin',
+            interests: 'Mobile development, healthcare technology, accessibility'
+        },
+        {
+            userId: 'test_user_6',
+            year: 'senior',
+            major: 'Management Information Systems',
+            misSemester: '8',
+            technicalSkills: 'Python, TensorFlow, NLP, Educational Technology, AI/ML',
+            interests: 'Artificial intelligence, educational technology, natural language processing'
+        },
+        {
+            userId: 'test_user_7',
+            year: 'junior',
+            major: 'Environmental Science',
+            technicalSkills: 'IoT, Arduino, Data Visualization, Python, Sensors',
+            interests: 'Environmental technology, sustainability, green energy'
+        },
+        {
+            userId: 'test_user_8',
+            year: 'senior',
+            major: 'Management Information Systems',
+            misSemester: '7',
+            technicalSkills: 'Solidity, Web3, Supply Chain Management, Smart Contracts, Ethereum',
+            interests: 'Blockchain technology, supply chain, decentralized finance'
+        },
+        {
+            userId: 'test_user_9',
+            year: 'junior',
+            major: 'Data Science',
+            technicalSkills: 'D3.js, Tableau, Python, Data Storytelling, Statistics',
+            interests: 'Data visualization, business intelligence, data journalism'
+        },
+        {
+            userId: 'test_user_10',
+            year: 'senior',
+            major: 'Cybersecurity',
+            technicalSkills: 'Android/iOS Development, Cryptography, Security Testing, Java, Swift',
+            interests: 'Mobile security, cryptography, secure communication'
+        },
+        {
+            userId: 'test_user_11',
+            year: 'junior',
+            major: 'Management Information Systems',
+            misSemester: '5',
+            technicalSkills: 'Vue.js, Laravel, MySQL, Video Streaming, WebRTC, PHP',
+            interests: 'Web development, educational technology, video streaming'
+        },
+        {
+            userId: 'test_user_12',
+            year: 'senior',
+            major: 'Computer Engineering',
+            technicalSkills: 'Arduino, Raspberry Pi, MQTT, Cloud Computing, Sensors, C++',
+            interests: 'IoT, smart cities, embedded systems, cloud computing'
+        }
+    ];
+    
+    // Store test profiles in localStorage
+    const existingProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+    const updatedProfiles = [...existingProfiles, ...testProfiles];
+    localStorage.setItem('allProfiles', JSON.stringify(updatedProfiles));
+    
+    console.log('Test groups and profiles initialized for UA Innovate');
+}
+
+// Mock API for offline development
+class MockAPI {
+    constructor() {
+        this.baseURL = 'http://localhost:3000/api';
+        this.isOnline = false; // Set to false to use mock responses
+    }
+
+    async request(endpoint, options = {}) {
+        if (this.isOnline) {
+            // Real API call
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            return response.json();
+        } else {
+            // Mock response
+            return this.getMockResponse(endpoint, options);
+        }
+    }
+
+    getMockResponse(endpoint, options) {
+        const method = options.method || 'GET';
+        
+        // Mock responses for different endpoints
+        if (endpoint === '/groups' && method === 'GET') {
+            const groups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+            return Promise.resolve({ success: true, groups });
+        }
+        
+        if (endpoint === '/groups' && method === 'POST') {
+            const groupData = JSON.parse(options.body || '{}');
+            const newGroup = {
+                group_id: 'mock_' + Date.now(),
+                ...groupData,
+                current_members: 1,
+                max_members: 4,
+                created_at: new Date().toISOString()
+            };
+            return Promise.resolve({ success: true, groupId: newGroup.group_id, message: 'Group created successfully' });
+        }
+        
+        if (endpoint.startsWith('/users/') && method === 'GET') {
+            const userId = endpoint.split('/')[2];
+            const profile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
+            return Promise.resolve({ success: true, user: { ...profile, userId } });
+        }
+        
+        if (endpoint.startsWith('/users/') && method === 'PUT') {
+            return Promise.resolve({ success: true, message: 'Profile updated successfully' });
+        }
+        
+        if (endpoint.startsWith('/users/') && endpoint.endsWith('/groups') && method === 'GET') {
+            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
+            return Promise.resolve({ success: true, groups: myGroups });
+        }
+        
+        if (endpoint.startsWith('/groups/') && endpoint.endsWith('/join') && method === 'POST') {
+            return Promise.resolve({ success: true, message: 'Successfully joined the group' });
+        }
+        
+        if (endpoint.startsWith('/groups/') && endpoint.endsWith('/leave') && method === 'DELETE') {
+            return Promise.resolve({ success: true, message: 'Successfully left the group' });
+        }
+        
+        if (endpoint.startsWith('/groups/') && endpoint.endsWith('/messages') && method === 'POST') {
+            return Promise.resolve({ success: true, messageId: 'mock_msg_' + Date.now() });
+        }
+        
+        if (endpoint.startsWith('/groups/') && endpoint.endsWith('/messages') && method === 'GET') {
+            return Promise.resolve({ success: true, messages: [] });
+        }
+        
+        // Default response
+        return Promise.resolve({ success: true, message: 'Mock response' });
+    }
+
+    // User methods
+    async createUser(userData) {
+        return this.request('/users', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    async getUser(userId) {
+        return this.request(`/users/${userId}`);
+    }
+
+    async updateUser(userId, userData) {
+        return this.request(`/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    // Group methods
+    async createGroup(groupData) {
+        return this.request('/groups', {
+            method: 'POST',
+            body: JSON.stringify(groupData)
+        });
+    }
+
+    async searchGroups(filters) {
+        const queryParams = new URLSearchParams(filters).toString();
+        return this.request(`/groups?${queryParams}`);
+    }
+
+    async getGroup(groupId) {
+        return this.request(`/groups/${groupId}`);
+    }
+
+    async getUserGroups(userId) {
+        return this.request(`/users/${userId}/groups`);
+    }
+
+    async joinGroup(groupId, userId) {
+        return this.request(`/groups/${groupId}/join`, {
+            method: 'POST',
+            body: JSON.stringify({ userId })
+        });
+    }
+
+    async leaveGroup(groupId, userId) {
+        return this.request(`/groups/${groupId}/leave`, {
+            method: 'DELETE',
+            body: JSON.stringify({ userId })
+        });
+    }
+
+    // Messaging methods
+    async sendGroupMessage(groupId, userId, message, messageType = 'user') {
+        return this.request(`/groups/${groupId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ userId, message, messageType })
+        });
+    }
+
+    async getGroupMessages(groupId, limit = 50, offset = 0) {
+        return this.request(`/groups/${groupId}/messages?limit=${limit}&offset=${offset}`);
+    }
+
+    async sendGroupInvite(groupId, inviterId, email) {
+        return this.request(`/groups/${groupId}/invites`, {
+            method: 'POST',
+            body: JSON.stringify({ inviterId, inviteeEmail: email })
+        });
+    }
+
+    // Connection methods
+    async connectWithUser(userId, currentUserId) {
+        return Promise.resolve({ success: true, message: 'Connection request sent successfully' });
+    }
+}
+
+// Initialize mock API
+window.mockAPI = new MockAPI();
+
+// Override the existing API to use mock when offline
+if (window.innovateAPI) {
+    const originalAPI = window.innovateAPI;
+    
+    // Override methods to use mock API
+    window.innovateAPI.request = window.mockAPI.request.bind(window.mockAPI);
+    window.innovateAPI.createUser = window.mockAPI.createUser.bind(window.mockAPI);
+    window.innovateAPI.getUser = window.mockAPI.getUser.bind(window.mockAPI);
+    window.innovateAPI.updateUser = window.mockAPI.updateUser.bind(window.mockAPI);
+    window.innovateAPI.createGroup = window.mockAPI.createGroup.bind(window.mockAPI);
+    window.innovateAPI.searchGroups = window.mockAPI.searchGroups.bind(window.mockAPI);
+    window.innovateAPI.getGroup = window.mockAPI.getGroup.bind(window.mockAPI);
+    window.innovateAPI.getUserGroups = window.mockAPI.getUserGroups.bind(window.mockAPI);
+    window.innovateAPI.joinGroup = window.mockAPI.joinGroup.bind(window.mockAPI);
+    window.innovateAPI.leaveGroup = window.mockAPI.leaveGroup.bind(window.mockAPI);
+    window.innovateAPI.sendGroupMessage = window.mockAPI.sendGroupMessage.bind(window.mockAPI);
+    window.innovateAPI.getGroupMessages = window.mockAPI.getGroupMessages.bind(window.mockAPI);
+    window.innovateAPI.sendGroupInvite = window.mockAPI.sendGroupInvite.bind(window.mockAPI);
+    window.innovateAPI.connectWithUser = window.mockAPI.connectWithUser.bind(window.mockAPI);
+    
+    console.log('Mock API initialized - using offline mode');
 }

@@ -7,7 +7,7 @@
 class SharedDataService {
     constructor() {
         this.baseUrl = 'http://localhost:3000/api'; // Backend API URL
-        this.isOnline = navigator.onLine;
+        this.isOnline = false; // Force offline mode to use mock API
         this.syncQueue = [];
         
         // Listen for online/offline events
@@ -86,7 +86,12 @@ class SharedDataService {
 
     async loadGroupsFromServer() {
         try {
-            if (!this.isOnline) return;
+            if (!this.isOnline) {
+                // Use localStorage fallback when offline
+                const groups = this.getGroupsFromLocalStorage();
+                console.log(`Using ${groups.length} groups from localStorage (offline mode)`);
+                return groups;
+            }
             
             const response = await fetch(`${this.baseUrl}/groups`);
             if (response.ok) {
@@ -167,7 +172,12 @@ class SharedDataService {
 
     async loadProfilesFromServer() {
         try {
-            if (!this.isOnline) return;
+            if (!this.isOnline) {
+                // Use localStorage fallback when offline
+                const profiles = this.getProfilesFromLocalStorage();
+                console.log(`Using ${profiles.length} profiles from localStorage (offline mode)`);
+                return profiles;
+            }
             
             const response = await fetch(`${this.baseUrl}/users`);
             if (response.ok) {

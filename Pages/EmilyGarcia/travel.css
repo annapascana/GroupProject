@@ -1061,6 +1061,7 @@ small,
 [data-theme="dark"] .notification-item {
     border-bottom-color: var(--border-color);
     color: var(--text-primary);
+    background: var(--card-bg);
 }
 
 [data-theme="dark"] .notification-item:hover {
@@ -1070,6 +1071,18 @@ small,
 [data-theme="dark"] .notification-item.unread {
     background: rgba(255, 107, 138, 0.1);
     border-left-color: var(--crimson-primary);
+}
+
+[data-theme="dark"] .notification-item h6 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .notification-item p {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .notification-time {
+    color: var(--text-secondary) !important;
 }
 
 [data-theme="dark"] .notification-item .btn-outline-secondary:hover {
@@ -1498,6 +1511,8 @@ small,
     padding: var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
     transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 
 .notification-item:hover {
@@ -1509,9 +1524,21 @@ small,
     border-left: 4px solid var(--crimson-primary);
 }
 
+.notification-item h6 {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.notification-item p {
+    color: var(--text-primary) !important;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
 .notification-time {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
 }
 
 /* Notification Action Buttons */

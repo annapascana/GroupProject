@@ -679,7 +679,7 @@ function updateStatistics() {
     if (collaborationsCount) {
         const userActivity = JSON.parse(localStorage.getItem('userActivity') || '[]');
         const collaborationActivities = userActivity.filter(activity => 
-            ['travel', 'study', 'workout', 'friend', 'innovate', 'calendar', 'message'].includes(activity.type)
+            ['travel', 'study', 'workout', 'friend', 'innovate', 'message'].includes(activity.type)
         );
         collaborationsCount.textContent = collaborationActivities.length;
     }

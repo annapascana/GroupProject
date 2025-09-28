@@ -551,17 +551,26 @@ function getAllTrips() {
 
 function extractTripData(card) {
     try {
-        const destination = card.querySelector('.trip-destination')?.textContent || '';
-        const date = card.querySelector('.trip-date')?.textContent || '';
-        const cost = card.querySelector('.trip-cost')?.textContent || '$0';
-        const gasCost = cost.replace('$', '').replace(' per person', '');
+        const destination = card.dataset.destination || card.querySelector('.trip-destination')?.textContent || '';
+        const dateElement = card.querySelector('.trip-details p:nth-child(2)');
+        const timeElement = card.querySelector('.trip-details p:nth-child(3)');
+        const costElement = card.querySelector('.cost-highlight');
+        
+        const date = dateElement ? dateElement.textContent.replace('Date: ', '') : '';
+        const time = timeElement ? timeElement.textContent.replace('Time: ', '') : '';
+        const costText = costElement ? costElement.textContent : '$0';
+        const gasCost = costText.replace('$', '').replace(' per person', '').replace('Gas Cost per Person: ', '');
         
         return {
             destination,
             date,
-            gasCost: parseFloat(gasCost) || 0
+            time,
+            totalCost: parseFloat(gasCost) || 0,
+            availableSeats: 1, // Default for joined trips
+            totalSeats: 4 // Default
         };
     } catch (error) {
+        console.error('Error extracting trip data:', error);
         return null;
     }
 }
@@ -2518,6 +2527,27 @@ async function joinTrip(btn) {
             // Clone the trip card for My Trips
             const clonedCard = card.cloneNode(true);
             
+            // Update the cloned card's join button state
+            const clonedJoinBtn = clonedCard.querySelector('.join-trip-btn');
+            if (clonedJoinBtn) {
+                clonedJoinBtn.textContent = 'Leave Trip';
+                clonedJoinBtn.classList.remove('btn-success');
+                clonedJoinBtn.classList.add('btn-warning');
+                clonedJoinBtn.classList.add('joined');
+            }
+            
+            // Show chat button on cloned card
+            const clonedChatBtn = clonedCard.querySelector('.chat-trip-btn');
+            if (clonedChatBtn) {
+                clonedChatBtn.style.display = 'inline-block';
+            }
+            
+            // Show participants section on cloned card
+            const clonedParticipantsSection = clonedCard.querySelector('.trip-participants');
+            if (clonedParticipantsSection) {
+                clonedParticipantsSection.style.display = 'block';
+            }
+            
             // Add to My Trips grid
             myTripsGrid.appendChild(clonedCard);
             
@@ -2538,13 +2568,14 @@ async function joinTrip(btn) {
             }
         }
         
-        // Remove from current grid
-        card.remove();
-        
         // Save joined trip state
         const creator = card.querySelector('.trip-creator').textContent.replace('Created by: ', '');
         saveJoinedTrip(card.dataset.destination, creator);
         console.log('Saved joined trip to localStorage:', card.dataset.destination, 'by', creator);
+        
+        
+        // Remove from current grid
+        card.remove();
         
         // Update counts immediately
         updateResultsCount();
@@ -3994,7 +4025,10 @@ function restoreJoinedTrips() {
                 } else {
                     // For joined trips, always move to My Trips tab
                     if (myTripsGrid && !tripCard.closest('#myTripsGrid')) {
-                        myTripsGrid.appendChild(tripCard);
+                        // Clone the card to avoid DOM issues
+                        const clonedCard = tripCard.cloneNode(true);
+                        myTripsGrid.appendChild(clonedCard);
+                        tripCard.remove();
                         console.log('Moved joined trip to My Trips:', joinedTrip.destination);
                     }
                     
@@ -4152,11 +4186,17 @@ function toggleFullTrips() {
     if (tripsGrid) {
         const tripCards = tripsGrid.querySelectorAll('.trip-card');
         tripCards.forEach(card => {
-            const availableSeats = parseInt(card.querySelector('.available-seats').textContent);
-            if (availableSeats === 0 && !showFullTrips) {
-                card.style.display = 'none';
-            } else {
-                card.style.display = 'block';
+            // Find the seats element (4th paragraph in trip-details)
+            const seatsElement = card.querySelector('.trip-details p:nth-child(4)');
+            if (seatsElement) {
+                const seatsText = seatsElement.textContent;
+                const availableSeats = parseInt(seatsText.match(/(\d+)\/\d+/)[1]);
+                
+                if (availableSeats === 0 && !showFullTrips) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.display = 'block';
+                }
             }
         });
     }
@@ -4290,54 +4330,17 @@ function joinTripEnhanced(tripId) {
     // Update localStorage
     updateTripInStorage(trip);
     
-    // Add trip to calendar via shared data service
-    addTripToCalendar(trip);
-    
     // Update UI
     updateTripCard(tripId);
     updateResultsCount();
     
     // Show success message
-    showToast(`Successfully joined trip to ${trip.destination}! Added to your calendar.`, 'success');
+    showToast(`Successfully joined trip to ${trip.destination}!`, 'success');
     
     // Refresh the trips display
     loadTrips();
 }
 
-// Add trip to calendar via shared data service
-function addTripToCalendar(trip) {
-    // Check if shared data service is available
-    if (typeof sharedDataService === 'undefined') {
-        console.log('Shared data service not available, cannot add trip to calendar');
-        return;
-    }
-    
-    // Create calendar event data
-    const eventData = {
-        title: `Travel to ${trip.destination}`,
-        date: trip.date,
-        time: trip.time,
-        type: 'travel',
-        description: `Travel trip to ${trip.destination}. Cost: $${trip.totalCost}, Seats: ${trip.availableSeats}/${trip.totalSeats}`,
-        source: 'travel',
-        collaborationCode: trip.destination
-    };
-    
-    // Add to shared data service
-    const calendarEvent = sharedDataService.addCalendarEvent(eventData);
-    
-    // Add activity for joining trip
-    sharedDataService.addUserActivity({
-        type: 'travel',
-        title: 'Joined Travel Trip',
-        description: `You joined a trip to ${trip.destination}`,
-        icon: 'bi-airplane',
-        collaborationCode: trip.destination,
-        source: 'travel'
-    });
-    
-    console.log('Trip added to calendar:', calendarEvent);
-}
 
 // Remove join notifications
 function removeJoinNotifications() {
