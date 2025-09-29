@@ -151,11 +151,11 @@ function setupEventListeners() {
         });
     }
 
-    // Real-time search as user types
-    const searchInputs = document.querySelectorAll('#searchForm input, #searchForm select');
-    searchInputs.forEach(input => {
-        input.addEventListener('change', debounce(handleSearch, 500));
-    });
+    // Remove automatic search on filter change - user must click "Find My Workout Buddy" button
+    // const searchInputs = document.querySelectorAll('#searchForm input, #searchForm select');
+    // searchInputs.forEach(input => {
+    //     input.addEventListener('change', debounce(handleSearch, 500));
+    // });
 }
 
 // Search functionality
@@ -785,7 +785,8 @@ function createProfile() {
         showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
 
         // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('createProfileModal'));
+        const modalElement = document.getElementById('createProfileModal');
+        const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         modal.hide();
 
         // Clear form
