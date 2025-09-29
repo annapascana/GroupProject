@@ -266,6 +266,9 @@
     });
     bootstrap.Modal.getInstance(document.getElementById('sg-create-modal')).hide();
     applyFilters();
+    
+    // Show success message
+    showAlert(`Successfully created study group "${name}"!`, 'success');
   }
 
   function showJoinConfirmation(id) {
