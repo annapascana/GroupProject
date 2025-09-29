@@ -237,6 +237,9 @@ function saveProfile() {
     // Update profile display
     updateProfileDisplay(profileData);
     
+    // Reset form for future use
+    resetProfileForm();
+    
     // Show main app
     setTimeout(() => {
         showMainApp();
@@ -761,7 +764,207 @@ function openConversation(conversationId) {
 }
 
 function editProfile() {
-    showNotification('Edit profile feature coming soon!', 'info');
+    console.log('Opening edit profile form...');
+    
+    // Get current profile data
+    const profileData = JSON.parse(localStorage.getItem('uaFriendMatch_profileData') || '{}');
+    
+    if (!profileData.firstName) {
+        showNotification('No profile data found. Please create a profile first.', 'danger');
+        return;
+    }
+    
+    // Show profile form section
+    document.getElementById('profileCreation').style.display = 'none';
+    document.getElementById('profileForm').style.display = 'block';
+    document.getElementById('mainAppContent').style.display = 'none';
+    document.getElementById('mainNavLinks').style.display = 'none';
+    
+    // Populate form with existing data
+    populateEditForm(profileData);
+    
+    // Change form title and button text
+    const formTitle = document.querySelector('#profileForm h2');
+    const submitButton = document.querySelector('#profileForm button[onclick="saveProfile()"]');
+    const backButton = document.querySelector('#profileForm button[onclick="goBackToPrompt()"]');
+    
+    if (formTitle) formTitle.textContent = 'Edit Your Profile';
+    if (submitButton) {
+        submitButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Update Profile';
+        submitButton.onclick = updateProfile;
+    }
+    if (backButton) {
+        backButton.innerHTML = '<i class="bi bi-arrow-left me-2"></i>Cancel';
+        backButton.onclick = cancelEditProfile;
+    }
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Populate edit form with existing data
+function populateEditForm(profileData) {
+    // Basic info
+    document.getElementById('firstName').value = profileData.firstName || '';
+    document.getElementById('lastName').value = profileData.lastName || '';
+    document.getElementById('major').value = profileData.major || '';
+    document.getElementById('year').value = profileData.year || '';
+    document.getElementById('bio').value = profileData.bio || '';
+    
+    // Clear existing interests
+    const selectedInterests = document.getElementById('selectedInterests');
+    selectedInterests.innerHTML = '';
+    
+    // Add existing interests
+    if (profileData.interests && profileData.interests.length > 0) {
+        profileData.interests.forEach(interest => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary me-2 mb-2';
+            badge.innerHTML = `${interest} <i class="bi bi-x" onclick="removeInterest('${interest}')"></i>`;
+            selectedInterests.appendChild(badge);
+        });
+    }
+    
+    // Clear existing looking for items
+    const lookingForItems = document.getElementById('lookingForItems');
+    lookingForItems.innerHTML = '';
+    
+    // Add existing looking for items
+    if (profileData.lookingFor && profileData.lookingFor.length > 0) {
+        profileData.lookingFor.forEach(item => {
+            const newItem = document.createElement('div');
+            newItem.className = 'looking-for-item';
+            newItem.innerHTML = `
+                <input type="text" class="form-control" placeholder="What are you looking for?" value="${item}">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLookingFor(this)">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            lookingForItems.appendChild(newItem);
+        });
+    } else {
+        // Add one empty item if none exist
+        addLookingFor();
+    }
+}
+
+// Update profile function
+function updateProfile() {
+    console.log('Updating profile...');
+    
+    // Get form data
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const major = document.getElementById('major').value.trim();
+    const year = document.getElementById('year').value;
+    const bio = document.getElementById('bio').value.trim();
+    
+    // Validate required fields
+    if (!firstName || !lastName || !major || !year) {
+        showNotification('Please fill in all required fields.', 'danger');
+        return;
+    }
+    
+    // Get interests
+    const interestBadges = document.querySelectorAll('.selected-interests .badge');
+    const interests = Array.from(interestBadges).map(badge => 
+        badge.textContent.replace(' ×', '').trim()
+    );
+    
+    // Get looking for items
+    const lookingForInputs = document.querySelectorAll('#lookingForItems .form-control');
+    const lookingFor = Array.from(lookingForInputs)
+        .map(input => input.value.trim())
+        .filter(value => value);
+    
+    // Create updated profile data
+    const updatedProfileData = {
+        firstName,
+        lastName,
+        major,
+        year,
+        bio,
+        interests,
+        lookingFor,
+        isNewProfile: false  // Keep as existing profile
+    };
+    
+    console.log('Profile updated for existing user');
+    
+    // Save to localStorage
+    localStorage.setItem('uaFriendMatch_profileData', JSON.stringify(updatedProfileData));
+    
+    console.log('Profile updated:', updatedProfileData);
+    
+    // Show success message
+    showNotification('Profile updated successfully!', 'success');
+    
+    // Update profile display
+    updateProfileDisplay(updatedProfileData);
+    
+    // Return to main app
+    setTimeout(() => {
+        showMainApp();
+    }, 1500);
+}
+
+// Cancel edit profile function
+function cancelEditProfile() {
+    console.log('Canceling profile edit...');
+    
+    // Reset form title and buttons
+    const formTitle = document.querySelector('#profileForm h2');
+    const submitButton = document.querySelector('#profileForm button[onclick="updateProfile()"]');
+    const backButton = document.querySelector('#profileForm button[onclick="cancelEditProfile()"]');
+    
+    if (formTitle) formTitle.textContent = 'Create Your Profile';
+    if (submitButton) {
+        submitButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+        submitButton.onclick = saveProfile;
+    }
+    if (backButton) {
+        backButton.innerHTML = 'Back';
+        backButton.onclick = goBackToPrompt;
+    }
+    
+    // Return to main app
+    showMainApp();
+}
+
+// Reset profile form to default state
+function resetProfileForm() {
+    // Clear all form fields
+    document.getElementById('firstName').value = '';
+    document.getElementById('lastName').value = '';
+    document.getElementById('major').value = '';
+    document.getElementById('year').value = '';
+    document.getElementById('bio').value = '';
+    
+    // Clear interests
+    const selectedInterests = document.getElementById('selectedInterests');
+    selectedInterests.innerHTML = '';
+    
+    // Clear looking for items
+    const lookingForItems = document.getElementById('lookingForItems');
+    lookingForItems.innerHTML = '';
+    
+    // Add one empty looking for item
+    addLookingFor();
+    
+    // Reset form title and buttons
+    const formTitle = document.querySelector('#profileForm h2');
+    const submitButton = document.querySelector('#profileForm button[onclick="updateProfile()"]');
+    const backButton = document.querySelector('#profileForm button[onclick="cancelEditProfile()"]');
+    
+    if (formTitle) formTitle.textContent = 'Create Your Profile';
+    if (submitButton) {
+        submitButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Profile';
+        submitButton.onclick = saveProfile;
+    }
+    if (backButton) {
+        backButton.innerHTML = 'Back';
+        backButton.onclick = goBackToPrompt;
+    }
 }
 
 // Notification System
