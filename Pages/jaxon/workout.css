@@ -766,6 +766,45 @@ body {
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+/* Profile Section Dark Mode Fixes */
+.dark-mode .profile-info-group {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-left-color: #9E1B32 !important;
+}
+
+.dark-mode .profile-info-group h6 {
+  color: #9E1B32 !important;
+}
+
+.dark-mode .profile-info-group p {
+  color: #ffffff !important;
+}
+
+.dark-mode .profile-bio {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-left-color: #9E1B32 !important;
+}
+
+.dark-mode .profile-bio h6 {
+  color: #9E1B32 !important;
+}
+
+.dark-mode .profile-bio p {
+  color: #ffffff !important;
+}
+
+.dark-mode .profile-card {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark-mode .profile-header h2 {
+  color: #9E1B32 !important;
+}
+
 .dark-mode .availability-badge {
   background-color: #2a2a2a !important;
   color: #ffffff !important;
