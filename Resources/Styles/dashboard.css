@@ -619,6 +619,50 @@
   color: var(--text-secondary);
 }
 
+/* FAQ text color in light mode - white text for dark background */
+.faq-item h4,
+.faq-item p {
+  color: #ffffff !important;
+}
+
+/* Send Message button - Crimson color */
+.support-form .btn-primary {
+  background-color: var(--crimson-primary) !important;
+  border-color: var(--crimson-primary) !important;
+}
+
+.support-form .btn-primary:hover {
+  background-color: var(--crimson-dark) !important;
+  border-color: var(--crimson-dark) !important;
+}
+
+/* Message input background - Light in light mode */
+.message-input {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Message content background - Light in light mode */
+.messages-content {
+  background: #f8f9fa !important;
+}
+
+/* Received message background - Light in light mode */
+.message-item.received {
+  background: #e9ecef !important;
+  color: #000000 !important;
+}
+
+/* Dark mode message chat background - Match surrounding dark gray */
+[data-theme="dark"] .messages-content {
+  background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .message-item.received {
+  background: var(--sidebar-hover) !important;
+  color: #ffffff !important;
+}
+
 /* Badge Styles */
 .badge {
   background: var(--crimson-primary);

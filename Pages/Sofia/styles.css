@@ -464,7 +464,7 @@ p, span, div, small, strong, em, i {
 
 /* Dark Mode Button Text Override */
 #darkModeText {
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
 .dark-mode #darkModeText {
@@ -496,6 +496,25 @@ p, span, div, small, strong, em, i {
 
 .dark-mode .btn-outline-secondary[id="sg-clear"] {
   color: #ffffff !important;
+}
+
+/* Badge text color - White text for availability badges */
+.badge.bg-success,
+.badge.bg-warning,
+.badge.bg-danger {
+  color: #ffffff !important;
+}
+
+/* Button icons - White in light mode */
+.btn-primary .bi-search,
+.btn-primary .bi-plus-circle,
+.btn-primary .bi-person-plus {
+  color: #ffffff !important;
+}
+
+/* Text primary color - Crimson in light mode */
+.text-primary {
+  color: #9E1B32 !important;
 }
 
 /* Enhanced Notification Styles for Dark Mode */

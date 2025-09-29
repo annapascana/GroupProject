@@ -29,6 +29,9 @@
       body.classList.add('dark-mode');
       darkModeIcon.className = 'bi bi-sun-fill';
       darkModeText.textContent = 'Light Mode';
+    } else {
+      darkModeIcon.className = 'bi bi-moon-fill';
+      darkModeText.textContent = 'Dark Mode';
     }
   }
 
@@ -83,9 +86,14 @@
   ];
 
   // Load groups from localStorage or use default
-  // Clear old groups data to show new groups
-  localStorage.removeItem('studyGroups');
-  let groups = defaultGroups;
+  let groups;
+  const savedGroups = localStorage.getItem('studyGroups');
+  if (savedGroups) {
+    groups = JSON.parse(savedGroups);
+  } else {
+    groups = defaultGroups;
+    saveGroups(); // Save default groups to localStorage
+  }
 
   const els = {
     course: document.getElementById('sg-course'),
@@ -342,7 +350,130 @@
   }
   function view(id){
     const g = groups.find(x=>x.id===id); if(!g) return;
-    alert(`Group: ${g.name}\nCourse: ${g.course}\nSize: ${g.size}\nTime: ${timeLabel(g.time)}\nLocation: ${locationLabel(g.location)}\nFocus: ${focusLabel(g.focus)}\nMembers: ${g.members}/${g.max}\nWhere: ${g.specific||'TBD'}\n\n${g.desc||''}`);
+    
+    const availClass = g.members >= g.max ? 'danger' : (g.members >= Math.floor(g.max*0.8) ? 'warning' : 'success');
+    const availText = g.members >= g.max ? 'Full' : (g.members >= Math.floor(g.max*0.8) ? 'Almost Full' : 'Open');
+    const isJoined = g.joined || false;
+    
+    const detailsHtml = `
+      <div class="row">
+        <div class="col-12">
+          <div class="text-center mb-5">
+            <h4 class="mb-3">
+              <i class="bi bi-people-fill me-2 text-primary"></i>${escapeHtml(g.name)}
+            </h4>
+            <div class="d-flex justify-content-center gap-2">
+              <span class="badge bg-${availClass} fs-6 px-3 py-2">
+                <i class="bi bi-${availClass === 'success' ? 'check-circle' : availClass === 'warning' ? 'exclamation-triangle' : 'x-circle'} me-1"></i>${availText}
+              </span>
+              ${isJoined ? '<span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-check-circle me-1"></i>You\'re a member</span>' : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="card h-100 border-0 shadow-sm" style="background: rgba(158, 27, 50, 0.05);">
+            <div class="card-body p-4">
+              <h6 class="card-title text-primary mb-4 d-flex align-items-center">
+                <i class="bi bi-book-fill me-2 fs-5"></i>Course Information
+              </h6>
+              <div class="mb-3 d-flex align-items-center">
+                <i class="bi bi-mortarboard-fill text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Course:</strong><br>
+                  <span class="text-muted">${g.course}</span>
+                </div>
+              </div>
+              <div class="mb-3 d-flex align-items-center">
+                <i class="bi bi-search text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Focus Type:</strong><br>
+                  <span class="text-muted">${focusLabel(g.focus)}</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-people-fill text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Group Size:</strong><br>
+                  <span class="text-muted">${g.size} (${g.members}/${g.max} members)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card h-100 border-0 shadow-sm" style="background: rgba(158, 27, 50, 0.05);">
+            <div class="card-body p-4">
+              <h6 class="card-title text-primary mb-4 d-flex align-items-center">
+                <i class="bi bi-calendar-event-fill me-2 fs-5"></i>Meeting Details
+              </h6>
+              <div class="mb-3 d-flex align-items-center">
+                <i class="bi bi-clock-fill text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Time:</strong><br>
+                  <span class="text-muted">${timeLabel(g.time)}</span>
+                </div>
+              </div>
+              <div class="mb-3 d-flex align-items-center">
+                <i class="bi bi-geo-alt-fill text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Location:</strong><br>
+                  <span class="text-muted">${locationLabel(g.location)}</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-pin-map-fill text-primary me-3 fs-6"></i>
+                <div>
+                  <strong>Specific Location:</strong><br>
+                  <span class="text-muted">${g.specific || 'To be determined'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      ${g.desc ? `
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: rgba(158, 27, 50, 0.05);">
+              <div class="card-body p-4">
+                <h6 class="card-title text-primary mb-4 d-flex align-items-center">
+                  <i class="bi bi-chat-text-fill me-2 fs-5"></i>Description
+                </h6>
+                <div class="d-flex align-items-start">
+                  <i class="bi bi-quote text-primary me-3 fs-4 mt-1"></i>
+                  <p class="mb-0 lh-lg">${escapeHtml(g.desc)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-info border-0 shadow-sm">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-info-circle-fill me-3 fs-5"></i>
+              <div>
+                <strong>Need more information?</strong><br>
+                <span class="small">Contact the group organizer or join the group to get started!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('group-details-content').innerHTML = detailsHtml;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('group-details-modal'));
+    modal.show();
   }
   function timeLabel(t){return({morning:'Morning (8-12)',afternoon:'Afternoon (12-5)',evening:'Evening (5-10)',weekend:'Weekend'})[t]||t}
   function locationLabel(l){return({library:'Library',campus:'Campus Building',online:'Online','coffee-shop':'Coffee Shop','study-room':'Study Room'})[l]||l}
