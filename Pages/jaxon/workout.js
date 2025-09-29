@@ -755,14 +755,12 @@ function createProfile() {
             gender: currentUser.gender
         });
 
-        // Update workout profile
-        window.sharedDataService.updateProfileData('workoutProfile', {
-            goals: currentUser.goals[0],
-            experience: currentUser.experience,
-            preferredTime: currentUser.preferredTime,
-            location: currentUser.location,
-            bio: currentUser.bio
-        });
+        // Update workout profile using setField method
+        window.sharedDataService.setField('workoutProfile.goals', currentUser.goals[0]);
+        window.sharedDataService.setField('workoutProfile.experience', currentUser.experience);
+        window.sharedDataService.setField('workoutProfile.preferredTime', currentUser.preferredTime);
+        window.sharedDataService.setField('workoutProfile.location', currentUser.location);
+        window.sharedDataService.setField('workoutProfile.bio', currentUser.bio);
     }
 
     // Save to localStorage (in a real app, this would go to a database)
@@ -781,13 +779,37 @@ function createProfile() {
         
         localStorage.setItem('userProfiles', JSON.stringify(profiles));
         
-        // Show success message
-        showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
-
-        // Close modal
+        // Close modal first
         const modalElement = document.getElementById('createProfileModal');
-        const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-        modal.hide();
+        if (modalElement) {
+            // Try multiple approaches to close the modal
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            } else {
+                // Force close by removing the modal classes and backdrop
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.setAttribute('aria-hidden', 'true');
+                modalElement.removeAttribute('aria-modal');
+                
+                // Remove backdrop
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                
+                // Remove modal-open class from body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+        }
+
+        // Show success message after modal is closed
+        setTimeout(() => {
+            showNotification(isUpdate ? 'Profile updated successfully!' : 'Profile created successfully! You can now search for workout buddies.', 'success');
+        }, 100);
 
         // Clear form
         form.reset();
