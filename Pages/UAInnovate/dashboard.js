@@ -27,9 +27,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelSearch = document.getElementById('cancelSearch');
     const cancelSearchProfiles = document.getElementById('cancelSearchProfiles');
     const cancelEditProfile = document.getElementById('cancelEditProfile');
+    
+    // Chat modal elements
+    const groupChatModal = document.getElementById('groupChatModal');
+    const chatGroupName = document.getElementById('chatGroupName');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatMessageInput = document.getElementById('chatMessageInput');
+    const sendChatMessage = document.getElementById('sendChatMessage');
+    const closeChatModal = document.getElementById('closeChatModal');
+    
+    let currentChatGroupId = null;
+
+    // Check if user has a profile
+    function checkUserProfile() {
+        // Check localStorage for profile
+        const existingProfile = localStorage.getItem('uaInnovateProfile');
+        const existingUserId = localStorage.getItem('uaInnovateUserId');
+        
+        if (existingProfile && existingUserId) {
+            try {
+                JSON.parse(existingProfile);
+                return true;
+            } catch (error) {
+                console.error('Error parsing existing profile:', error);
+                // Clear corrupted data
+                localStorage.removeItem('uaInnovateProfile');
+                localStorage.removeItem('uaInnovateUserId');
+                return false;
+            }
+        }
+        
+        // Check shared data service for profile
+        if (window.sharedDataService) {
+            const profiles = window.sharedDataService.getProfilesFromLocalStorage();
+            const sharedProfile = profiles.find(p => p.userId === userId);
+            if (sharedProfile) {
+                // Load profile from shared data service to localStorage
+                localStorage.setItem('uaInnovateUserId', sharedProfile.userId);
+                localStorage.setItem('uaInnovateProfile', JSON.stringify(sharedProfile));
+                console.log('Profile loaded from shared data service');
+                return true;
+            }
+        }
+        
+        return false;
+    }
 
     // Load user profile and initialize dashboard
     async function initializeDashboard() {
+        // Check if user has a profile - redirect to profile creation if not
+        if (!checkUserProfile()) {
+            console.log('No profile found, redirecting to profile creation...');
+            window.location.href = './innovate.html';
+            return;
+        }
+        
         const profile = await loadUserProfile();
         displayProfileSummary(profile);
         
@@ -438,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Format technical skills
     function formatTechnicalSkills(skills) {
-        if (!skills.trim()) return 'None specified';
+        if (!skills || !skills.trim()) return 'None specified';
         
         const skillsArray = skills.split(/[,\n]/)
             .map(skill => skill.trim())
@@ -556,6 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="group-actions">
                             <button class="btn-small btn-view" onclick="viewGroup('${group.group_id}')">View Details</button>
+                            <button class="btn-small btn-primary" onclick="openGroupChat('${group.group_id}', '${group.name}')">Chat</button>
                             <button class="btn-small btn-join" onclick="leaveGroup('${group.group_id}')">Leave Group</button>
                         </div>
                     </div>
@@ -586,6 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeSearchModal.addEventListener('click', () => hideModal(searchGroupsModal));
     closeSearchProfilesModal.addEventListener('click', () => hideModal(searchProfilesModal));
     closeEditProfileModal.addEventListener('click', () => hideModal(editProfileModal));
+    closeChatModal.addEventListener('click', () => hideModal(groupChatModal));
     cancelCreateGroup.addEventListener('click', () => hideModal(createGroupModal));
     cancelSearch.addEventListener('click', () => hideModal(searchGroupsModal));
     cancelSearchProfiles.addEventListener('click', () => hideModal(searchProfilesModal));
@@ -854,6 +908,94 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
+    // Chat functionality
+    window.openGroupChat = async function(groupId, groupName) {
+        currentChatGroupId = groupId;
+        chatGroupName.textContent = `${groupName} Chat`;
+        showModal(groupChatModal);
+        await loadGroupMessages(groupId);
+    };
+
+    async function loadGroupMessages(groupId) {
+        try {
+            chatMessages.innerHTML = '';
+            
+            if (window.sharedDataService) {
+                const messages = window.sharedDataService.getGroupMessagesFromLocalStorage(groupId);
+                
+                if (messages.length === 0) {
+                    chatMessages.innerHTML = '<div class="chat-message system">No messages yet. Start the conversation!</div>';
+                    return;
+                }
+                
+                // Sort messages by timestamp
+                messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                
+                messages.forEach(message => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `chat-message ${message.messageType === 'system' ? 'system' : 'other'}`;
+                    
+                    if (message.messageType === 'system') {
+                        messageDiv.innerHTML = message.message;
+                    } else {
+                        const timestamp = new Date(message.timestamp).toLocaleTimeString();
+                        messageDiv.innerHTML = `
+                            <div class="chat-message-header">${message.userId} • ${timestamp}</div>
+                            ${message.message}
+                        `;
+                    }
+                    
+                    chatMessages.appendChild(messageDiv);
+                });
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        } catch (error) {
+            console.warn('Failed to load group messages:', error);
+            chatMessages.innerHTML = '<div class="chat-message system">Failed to load messages.</div>';
+        }
+    }
+
+    // Send chat message
+    sendChatMessage.addEventListener('click', async function() {
+        const messageText = chatMessageInput.value.trim();
+        if (!messageText || !currentChatGroupId) return;
+        
+        const userId = localStorage.getItem('uaInnovateUserId');
+        if (!userId) {
+            showMessage('Please log in to send messages.', 'error');
+            return;
+        }
+        
+        try {
+            const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
+            const userName = userProfile.name || 'Anonymous';
+            
+            const message = {
+                message: messageText,
+                messageType: 'user',
+                userId: userName
+            };
+            
+            if (window.sharedDataService) {
+                await window.sharedDataService.saveGroupMessage(currentChatGroupId, message);
+                chatMessageInput.value = '';
+                await loadGroupMessages(currentChatGroupId);
+            }
+        } catch (error) {
+            console.warn('Failed to send message:', error);
+            showMessage('Failed to send message.', 'error');
+        }
+    });
+    
+    // Send message on Enter key
+    chatMessageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendChatMessage.click();
+        }
+    });
+
     // Global functions for group actions
     window.joinGroup = async function(groupId) {
         const userId = localStorage.getItem('uaInnovateUserId');
@@ -892,6 +1034,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const updatedGroup = { ...group, current_members: (group.current_members || 1) + 1 };
         const updatedAllGroups = allGroups.map(g => g.group_id === groupId ? updatedGroup : g);
         localStorage.setItem('allGroups', JSON.stringify(updatedAllGroups));
+        
+        // Send welcome message to group
+        try {
+            const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
+            const userName = userProfile.name || 'A new member';
+            
+            const joinMessage = {
+                message: `${userName} has joined the group! Welcome to ${group.name}! 🎉`,
+                messageType: 'system',
+                userId: 'system'
+            };
+
+            if (window.sharedDataService) {
+                await window.sharedDataService.saveGroupMessage(groupId, joinMessage);
+                console.log('Join message sent to group:', groupId);
+            }
+        } catch (error) {
+            console.warn('Failed to send join message:', error);
+        }
             
             showMessage('Successfully joined the group!', 'success');
             await loadMyGroups();
@@ -917,6 +1078,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     const updatedGroup = { ...group, current_members: Math.max(1, (group.current_members || 1) - 1) };
                 const updatedAllGroups = allGroups.map(g => g.group_id === groupId ? updatedGroup : g);
                 localStorage.setItem('allGroups', JSON.stringify(updatedAllGroups));
+                
+                // Send departure message to group
+                try {
+                    const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
+                    const userName = userProfile.name || 'A member';
+                    
+                    const leaveMessage = {
+                        message: `${userName} has left the group. Good luck with your future endeavors! 👋`,
+                        messageType: 'system',
+                        userId: 'system'
+                    };
+
+                    if (window.sharedDataService) {
+                        await window.sharedDataService.saveGroupMessage(groupId, leaveMessage);
+                        console.log('Leave message sent to group:', groupId);
+                    }
+                } catch (error) {
+                    console.warn('Failed to send leave message:', error);
+                }
                 }
                 
                 showMessage('Left the group successfully.', 'info');
@@ -1067,6 +1247,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update profile in localStorage
             localStorage.setItem('uaInnovateProfile', JSON.stringify(updatedProfileData));
             
+            // Save to shared data service for cross-user access
+            if (window.sharedDataService) {
+                const uaInnovateProfile = {
+                    ...updatedProfileData,
+                    userId: userId,
+                    profileType: 'uaInnovate',
+                    lastUpdated: new Date().toISOString()
+                };
+                await window.sharedDataService.saveProfile(uaInnovateProfile);
+                console.log('Profile updated in shared data service');
+            }
+            
             // Update in allProfiles array
             const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
             const profileIndex = allProfiles.findIndex(p => p.userId === userId);
@@ -1102,22 +1294,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Logout function to clear user session
-    function logout() {
-        if (confirm('Are you sure you want to logout? You will need to create a new profile to access the system again.')) {
-            // Clear user session data
-            localStorage.removeItem('uaInnovateUserId');
-            localStorage.removeItem('uaInnovateProfile');
-            localStorage.removeItem('myGroups');
-            localStorage.removeItem('currentGroupId');
-            
-            // Redirect to profile creation page
-            window.location.href = './innovate.html';
-        }
-    }
-
-    // Make logout function globally available
-    window.logout = logout;
 
     // Initialize dashboard
     initializeDashboard();

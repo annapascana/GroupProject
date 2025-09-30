@@ -7,7 +7,7 @@
 class SharedDataService {
     constructor() {
         this.baseUrl = 'http://localhost:3000/api'; // Backend API URL
-        this.isOnline = navigator.onLine;
+        this.isOnline = false; // Force offline mode to use localStorage only
         this.syncQueue = [];
         
         // Listen for online/offline events
@@ -58,59 +58,15 @@ class SharedDataService {
             lastModified: new Date().toISOString()
         };
 
-        try {
-            if (this.isOnline) {
-                // Save to server
-                const response = await fetch(`${this.baseUrl}/trips`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(trip)
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    trip.id = result.tripId || trip.id;
-                }
-            }
-            
-            // Always save to localStorage as backup
-            this.saveTripToLocalStorage(trip);
-            
-            // Add to sync queue if offline
-            if (!this.isOnline) {
-                this.addToSyncQueue('trip', 'create', trip);
-            }
-            
-            return trip;
-        } catch (error) {
-            console.warn('Failed to save trip to server:', error);
-            // Save to localStorage as fallback
-            this.saveTripToLocalStorage(trip);
-            this.addToSyncQueue('trip', 'create', trip);
-            return trip;
-        }
+        // Save to localStorage only (offline mode)
+        this.saveTripToLocalStorage(trip);
+        console.log('Trip saved to localStorage:', trip.destination);
+        return trip;
     }
 
     async loadTripsFromServer() {
-        try {
-            if (!this.isOnline) return;
-            
-            const response = await fetch(`${this.baseUrl}/trips`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.trips) {
-                    // Merge server trips with localStorage trips
-                    const localTrips = this.getTripsFromLocalStorage();
-                    const allTrips = this.mergeTripData(data.trips, localTrips);
-                    this.saveTripsToLocalStorage(allTrips);
-                    return allTrips;
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to load trips from server:', error);
-        }
-        
-        // Fallback to localStorage
+        // Use localStorage only - no server connection
+        console.log('Using localStorage for trips (offline mode)');
         return this.getTripsFromLocalStorage();
     }
 
@@ -148,53 +104,15 @@ class SharedDataService {
             lastModified: new Date().toISOString()
         };
 
-        try {
-            if (this.isOnline) {
-                const response = await fetch(`${this.baseUrl}/groups`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(group)
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    group.id = result.groupId || group.id;
-                }
-            }
-            
-            this.saveGroupToLocalStorage(group);
-            
-            if (!this.isOnline) {
-                this.addToSyncQueue('group', 'create', group);
-            }
-            
-            return group;
-        } catch (error) {
-            console.warn('Failed to save group to server:', error);
-            this.saveGroupToLocalStorage(group);
-            this.addToSyncQueue('group', 'create', group);
-            return group;
-        }
+        // Save to localStorage only (offline mode)
+        this.saveGroupToLocalStorage(group);
+        console.log('Group saved to localStorage:', group.name);
+        return group;
     }
 
     async loadGroupsFromServer() {
-        try {
-            if (!this.isOnline) return;
-            
-            const response = await fetch(`${this.baseUrl}/groups`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.groups) {
-                    const localGroups = this.getGroupsFromLocalStorage();
-                    const allGroups = this.mergeGroupData(data.groups, localGroups);
-                    this.saveGroupsToLocalStorage(allGroups);
-                    return allGroups;
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to load groups from server:', error);
-        }
-        
+        // Use localStorage only - no server connection
+        console.log('Using localStorage for groups (offline mode)');
         return this.getGroupsFromLocalStorage();
     }
 
@@ -230,52 +148,15 @@ class SharedDataService {
             lastModified: new Date().toISOString()
         };
 
-        try {
-            if (this.isOnline) {
-                const response = await fetch(`${this.baseUrl}/users/${profile.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(profile)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to update profile on server');
-                }
-            }
-            
-            this.saveProfileToLocalStorage(profile);
-            
-            if (!this.isOnline) {
-                this.addToSyncQueue('profile', 'update', profile);
-            }
-            
-            return profile;
-        } catch (error) {
-            console.warn('Failed to save profile to server:', error);
-            this.saveProfileToLocalStorage(profile);
-            this.addToSyncQueue('profile', 'update', profile);
-            return profile;
-        }
+        // Save to localStorage only (offline mode)
+        this.saveProfileToLocalStorage(profile);
+        console.log('Profile saved to localStorage:', profile.firstName, profile.lastName);
+        return profile;
     }
 
     async loadProfilesFromServer() {
-        try {
-            if (!this.isOnline) return;
-            
-            const response = await fetch(`${this.baseUrl}/users`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.users) {
-                    const localProfiles = this.getProfilesFromLocalStorage();
-                    const allProfiles = this.mergeProfileData(data.users, localProfiles);
-                    this.saveProfilesToLocalStorage(allProfiles);
-                    return allProfiles;
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to load profiles from server:', error);
-        }
-        
+        // Use localStorage only - no server connection
+        console.log('Using localStorage for profiles (offline mode)');
         return this.getProfilesFromLocalStorage();
     }
 
@@ -313,32 +194,10 @@ class SharedDataService {
             userId: this.getCurrentUserId()
         };
 
-        try {
-            if (this.isOnline) {
-                const response = await fetch(`${this.baseUrl}/trips/${tripId}/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(message)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to save message to server');
-                }
-            }
-            
-            this.saveMessageToLocalStorage(message);
-            
-            if (!this.isOnline) {
-                this.addToSyncQueue('message', 'create', message);
-            }
-            
-            return message;
-        } catch (error) {
-            console.warn('Failed to save message to server:', error);
-            this.saveMessageToLocalStorage(message);
-            this.addToSyncQueue('message', 'create', message);
-            return message;
-        }
+        // Save to localStorage only (offline mode)
+        this.saveMessageToLocalStorage(message);
+        console.log('Message saved to localStorage for trip:', tripId);
+        return message;
     }
 
     saveMessageToLocalStorage(message) {
@@ -450,34 +309,9 @@ class SharedDataService {
     }
 
     async processSyncQueue() {
-        if (!this.isOnline || this.syncQueue.length === 0) return;
-        
-        const queue = [...this.syncQueue];
+        // No sync needed in offline mode - all data is in localStorage
+        console.log('Sync queue processing disabled (offline mode)');
         this.syncQueue = [];
-        
-        for (const item of queue) {
-            try {
-                switch (item.type) {
-                    case 'trip':
-                        await this.saveTrip(item.data);
-                        break;
-                    case 'group':
-                        await this.saveGroup(item.data);
-                        break;
-                    case 'profile':
-                        await this.saveProfile(item.data);
-                        break;
-                    case 'message':
-                        await this.saveMessage(item.data.tripId, item.data);
-                        break;
-                }
-            } catch (error) {
-                console.warn('Failed to sync item:', item, error);
-                // Re-add to queue if sync failed
-                this.syncQueue.push(item);
-            }
-        }
-        
         localStorage.setItem('sync_queue', JSON.stringify(this.syncQueue));
     }
 

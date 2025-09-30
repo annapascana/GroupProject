@@ -122,6 +122,32 @@ let currentFilters = {};
 let connections = []; // Track user connections
 let connectionRequests = []; // Track pending connection requests
 
+// Get current user ID for user-specific data
+function getCurrentUserId() {
+    // Try shared data service first - get user data and create ID from email
+    if (window.sharedDataService) {
+        const userData = window.sharedDataService.getUserData();
+        if (userData && userData.email) {
+            // Create a consistent user ID from email
+            const userId = 'user_' + userData.email.replace(/[^a-zA-Z0-9]/g, '_');
+            return userId;
+        }
+    }
+    
+    // Try UA Innovate user ID
+    let userId = localStorage.getItem('uaInnovateUserId');
+    if (userId) return userId;
+    
+    // Try travel user ID
+    userId = localStorage.getItem('travelUserId');
+    if (userId) return userId;
+    
+    // Generate a new user ID if none exists
+    userId = 'workout_user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('workoutUserId', userId);
+    return userId;
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -130,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     setupEventListeners();
     loadUserProfile();
+    checkProfileCompletion();
     loadConnections();
     setupFormValidation();
 }
@@ -162,6 +189,12 @@ function setupEventListeners() {
 function handleSearch(event) {
     if (event) {
         event.preventDefault();
+    }
+
+    // Check if user has a complete profile before allowing search
+    if (!checkProfileCompletion()) {
+        showNotification('Please complete your profile before searching for workout buddies.', 'warning');
+        return;
     }
 
     const formData = new FormData(document.getElementById('searchForm'));
@@ -763,12 +796,14 @@ function createProfile() {
         window.sharedDataService.setField('workoutProfile.bio', currentUser.bio);
     }
 
-    // Save to localStorage (in a real app, this would go to a database)
+    // Save to localStorage with user-specific key
     try {
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        const userId = getCurrentUserId();
+        localStorage.setItem(`currentUser_${userId}`, JSON.stringify(currentUser));
         
-        // Also save to a profiles list for potential future features
-        const profiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+        // Save to user-specific profiles list
+        const userProfilesKey = `userProfiles_${userId}`;
+        const profiles = JSON.parse(localStorage.getItem(userProfilesKey) || '[]');
         const existingIndex = profiles.findIndex(p => p.id === currentUser.id);
         
         if (existingIndex >= 0) {
@@ -777,7 +812,7 @@ function createProfile() {
             profiles.push(currentUser);
         }
         
-        localStorage.setItem('userProfiles', JSON.stringify(profiles));
+        localStorage.setItem(userProfilesKey, JSON.stringify(profiles));
         
         // Close modal first
         const modalElement = document.getElementById('createProfileModal');
@@ -845,7 +880,8 @@ function validateProfileForm() {
 // Load user profile from localStorage
 function loadUserProfile() {
     try {
-        const savedUser = localStorage.getItem('currentUser');
+        const userId = getCurrentUserId();
+        const savedUser = localStorage.getItem(`currentUser_${userId}`);
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
             displayUserProfile();
@@ -853,9 +889,204 @@ function loadUserProfile() {
     } catch (error) {
         console.error('Error loading user profile:', error);
         // Clear corrupted data
-        localStorage.removeItem('currentUser');
+        const userId = getCurrentUserId();
+        localStorage.removeItem(`currentUser_${userId}`);
         showNotification('Profile data was corrupted and has been reset.', 'warning');
     }
+}
+
+// Check if user profile is complete and required
+function checkProfileCompletion() {
+    const requiredFields = ['name', 'email', 'gender', 'year', 'goals', 'age', 'experience', 'preferredTime', 'location'];
+    
+    if (!currentUser) {
+        // No profile exists - show profile creation modal
+        showProfileRequiredModal();
+        return false;
+    }
+    
+    // Check if all required fields are filled
+    const missingFields = requiredFields.filter(field => {
+        const value = currentUser[field];
+        return !value || (Array.isArray(value) && value.length === 0) || value.toString().trim() === '';
+    });
+    
+    if (missingFields.length > 0) {
+        // Profile incomplete - show completion modal
+        showProfileIncompleteModal(missingFields);
+        return false;
+    }
+    
+    return true;
+}
+
+// Show modal when profile is required
+function showProfileRequiredModal() {
+    const modalHtml = `
+        <div class="modal fade" id="profileRequiredModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-crimson text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-person-plus me-2"></i>Profile Required
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-person-check display-1 text-crimson"></i>
+                        </div>
+                        <h4>Complete Your Workout Profile</h4>
+                        <p class="lead">To use the Workout Buddy Finder, you need to create a complete profile with:</p>
+                        <ul class="list-unstyled text-start d-inline-block">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Goals</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Age</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Academic Year</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Fitness Level</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Preferred Time</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Preferred Location</li>
+                        </ul>
+                        <p class="mt-3">This information helps us match you with compatible workout buddies!</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-crimson btn-lg" onclick="closeProfileRequiredModal()">
+                            <i class="bi bi-person-plus me-2"></i>Create Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if present
+    const existingModal = document.getElementById('profileRequiredModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('profileRequiredModal'));
+    modal.show();
+}
+
+// Show modal when profile is incomplete
+function showProfileIncompleteModal(missingFields) {
+    const fieldNames = {
+        'name': 'Full Name',
+        'email': 'Email',
+        'gender': 'Gender',
+        'year': 'Academic Year',
+        'goals': 'Workout Goals',
+        'age': 'Age',
+        'experience': 'Fitness Level',
+        'preferredTime': 'Preferred Time',
+        'location': 'Preferred Location'
+    };
+    
+    const missingFieldList = missingFields.map(field => fieldNames[field] || field).join(', ');
+    
+    const modalHtml = `
+        <div class="modal fade" id="profileIncompleteModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Profile Incomplete
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-person-x display-1 text-warning"></i>
+                        </div>
+                        <h4>Complete Your Profile</h4>
+                        <p class="lead">Your profile is missing the following required information:</p>
+                        <div class="alert alert-warning">
+                            <strong>Missing:</strong> ${missingFieldList}
+                        </div>
+                        <p>Please complete your profile to access all features of the Workout Buddy Finder.</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-warning btn-lg" onclick="closeProfileIncompleteModal()">
+                            <i class="bi bi-pencil me-2"></i>Complete Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if present
+    const existingModal = document.getElementById('profileIncompleteModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('profileIncompleteModal'));
+    modal.show();
+}
+
+// Close profile required modal and show create profile modal
+function closeProfileRequiredModal() {
+    const modalElement = document.getElementById('profileRequiredModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    
+    if (modal) {
+        modal.hide();
+    } else {
+        // Force close if modal instance doesn't exist
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        modalElement.removeAttribute('aria-modal');
+        
+        // Remove backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
+        // Remove modal from DOM
+        modalElement.remove();
+    }
+    
+    setTimeout(() => {
+        showCreateProfile();
+    }, 300);
+}
+
+// Close profile incomplete modal and show edit profile modal
+function closeProfileIncompleteModal() {
+    const modalElement = document.getElementById('profileIncompleteModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    
+    if (modal) {
+        modal.hide();
+    } else {
+        // Force close if modal instance doesn't exist
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        modalElement.setAttribute('aria-hidden', 'true');
+        modalElement.removeAttribute('aria-modal');
+        
+        // Remove backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
+        // Remove modal from DOM
+        modalElement.remove();
+    }
+    
+    setTimeout(() => {
+        editProfile();
+    }, 300);
 }
 
 // Display user profile
@@ -1029,8 +1260,9 @@ function setupFormValidation() {
 
 // Connection management functions
 function loadConnections() {
-    const savedConnections = localStorage.getItem('connections');
-    const savedRequests = localStorage.getItem('connectionRequests');
+    const userId = getCurrentUserId();
+    const savedConnections = localStorage.getItem(`connections_${userId}`);
+    const savedRequests = localStorage.getItem(`connectionRequests_${userId}`);
     
     if (savedConnections) {
         connections = JSON.parse(savedConnections);
@@ -1042,8 +1274,9 @@ function loadConnections() {
 }
 
 function saveConnections() {
-    localStorage.setItem('connections', JSON.stringify(connections));
-    localStorage.setItem('connectionRequests', JSON.stringify(connectionRequests));
+    const userId = getCurrentUserId();
+    localStorage.setItem(`connections_${userId}`, JSON.stringify(connections));
+    localStorage.setItem(`connectionRequests_${userId}`, JSON.stringify(connectionRequests));
 }
 
 function showConnectionNotification(buddyName, buddyEmail) {
@@ -1175,7 +1408,8 @@ function getCurrentUserEmail() {
     }
     
     // Try to get email from localStorage (simulating logged-in user)
-    const savedUser = localStorage.getItem('currentUser');
+    const userId = getCurrentUserId();
+    const savedUser = localStorage.getItem(`currentUser_${userId}`);
     if (savedUser) {
         const user = JSON.parse(savedUser);
         console.log('Email from localStorage currentUser:', user.email);
@@ -1387,6 +1621,8 @@ window.clearFilters = clearFilters;
 window.showMatches = showMatches;
 window.messageBuddy = messageBuddy;
 window.cancelRequest = cancelRequest;
+window.closeProfileRequiredModal = closeProfileRequiredModal;
+window.closeProfileIncompleteModal = closeProfileIncompleteModal;
 
 // Debug: Check if functions are properly exported
 console.log('Functions exported:', {

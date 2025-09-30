@@ -1,5 +1,35 @@
 // UA Friend Match - Simplified JavaScript
 
+// Get current user ID for user-specific data
+function getCurrentUserId() {
+    // Try shared data service first - get user data and create ID from email
+    if (window.sharedDataService) {
+        const userData = window.sharedDataService.getUserData();
+        if (userData && userData.email) {
+            // Create a consistent user ID from email
+            const userId = 'user_' + userData.email.replace(/[^a-zA-Z0-9]/g, '_');
+            return userId;
+        }
+    }
+    
+    // Try UA Innovate user ID
+    let fallbackUserId = localStorage.getItem('uaInnovateUserId');
+    if (fallbackUserId) return fallbackUserId;
+    
+    // Try travel user ID
+    fallbackUserId = localStorage.getItem('travelUserId');
+    if (fallbackUserId) return fallbackUserId;
+    
+    // Try workout user ID
+    fallbackUserId = localStorage.getItem('workoutUserId');
+    if (fallbackUserId) return fallbackUserId;
+    
+    // Generate a new user ID if none exists
+    fallbackUserId = 'friend_match_user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('friendMatchUserId', fallbackUserId);
+    return fallbackUserId;
+}
+
 // Dark Mode Functionality
 function toggleDarkMode() {
     const body = document.body;
@@ -42,19 +72,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Check if user has a profile
 function checkProfileStatus() {
-    const hasProfile = localStorage.getItem('uaFriendMatch_profileCreated') === 'true';
-    console.log('Profile exists:', hasProfile);
+    const userId = getCurrentUserId();
+    let hasProfile = localStorage.getItem(`uaFriendMatch_profileCreated_${userId}`) === 'true';
+    let profileData = JSON.parse(localStorage.getItem(`uaFriendMatch_profileData_${userId}`) || '{}');
+    
+    // Check shared data service for profile
+    if (window.sharedDataService && !hasProfile) {
+        const sharedProfile = window.sharedDataService.getField('friendMatchProfile');
+        if (sharedProfile && sharedProfile.userId === userId) {
+            // Load profile from shared data service
+            profileData = sharedProfile;
+            hasProfile = true;
+            
+            // Save to localStorage for backward compatibility
+            localStorage.setItem(`uaFriendMatch_profileCreated_${userId}`, 'true');
+            localStorage.setItem(`uaFriendMatch_profileData_${userId}`, JSON.stringify(profileData));
+            console.log('Profile loaded from shared data service');
+        }
+    }
+    
+    console.log('Profile exists for user', userId, ':', hasProfile);
     
     if (hasProfile) {
         // Check if this is a new profile (just created)
-        const profileData = JSON.parse(localStorage.getItem('uaFriendMatch_profileData') || '{}');
         const isNewProfile = profileData.isNewProfile === true;
         
         if (isNewProfile) {
             // Mark profile as no longer new
             profileData.isNewProfile = false;
-            localStorage.setItem('uaFriendMatch_profileData', JSON.stringify(profileData));
+            localStorage.setItem(`uaFriendMatch_profileData_${userId}`, JSON.stringify(profileData));
+            
+            // Update shared data service
+            if (window.sharedDataService) {
+                window.sharedDataService.setField('friendMatchProfile', profileData);
+            }
         }
+        
+        // Load connections from shared data service
+        loadConnectionsFromSharedData();
         
         showMainApp();
     } else {
@@ -77,6 +132,36 @@ function showProfileForm() {
     document.getElementById('profileCreation').style.display = 'none';
     document.getElementById('profileForm').style.display = 'block';
     document.getElementById('mainAppContent').style.display = 'none';
+}
+
+// Make function globally available
+window.showProfileForm = showProfileForm;
+
+// Load connections from shared data service
+function loadConnectionsFromSharedData() {
+    if (!window.sharedDataService) return;
+    
+    const userId = getCurrentUserId();
+    const sharedConnections = window.sharedDataService.getField('friendMatchConnections') || [];
+    const userConnections = sharedConnections.filter(conn => conn.userId === userId);
+    
+    if (userConnections.length > 0) {
+        // Load connections into localStorage for backward compatibility
+        const matchedUsers = userConnections.map(conn => ({
+            id: conn.id,
+            name: conn.name,
+            age: conn.age,
+            major: conn.major,
+            year: conn.year,
+            bio: conn.bio,
+            interests: conn.interests,
+            matchedAt: conn.matchedAt,
+            messages: conn.messages || []
+        }));
+        
+        localStorage.setItem(`uaFriendMatch_matchedUsers_${userId}`, JSON.stringify(matchedUsers));
+        console.log('Connections loaded from shared data service:', matchedUsers.length);
+    }
 }
 
 // Go back to profile creation prompt
@@ -225,9 +310,22 @@ function saveProfile() {
     
     console.log('Profile created for new user');
     
-    // Save to localStorage
-    localStorage.setItem('uaFriendMatch_profileCreated', 'true');
-    localStorage.setItem('uaFriendMatch_profileData', JSON.stringify(profileData));
+    // Save to localStorage with user-specific key (for backward compatibility)
+    const userId = getCurrentUserId();
+    localStorage.setItem(`uaFriendMatch_profileCreated_${userId}`, 'true');
+    localStorage.setItem(`uaFriendMatch_profileData_${userId}`, JSON.stringify(profileData));
+    
+    // Save to shared data service for cross-user access
+    if (window.sharedDataService) {
+        const friendMatchProfile = {
+            ...profileData,
+            userId: userId,
+            profileType: 'friendMatch',
+            createdAt: new Date().toISOString()
+        };
+        window.sharedDataService.setField('friendMatchProfile', friendMatchProfile);
+        console.log('Profile saved to shared data service');
+    }
     
     console.log('Profile saved:', profileData);
     
@@ -497,17 +595,35 @@ function viewConnections() {
 
 // Add a matched user to the list
 function addMatchedUser(matchData) {
-    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const userId = getCurrentUserId();
+    const matchedUsers = JSON.parse(localStorage.getItem(`uaFriendMatch_matchedUsers_${userId}`) || '[]');
     
     // Check if user already exists
     const existingUser = matchedUsers.find(user => user.id === matchData.id);
     if (!existingUser) {
-        matchedUsers.push({
+        const newConnection = {
             ...matchData,
             matchedAt: new Date().toISOString(),
             messages: []
-        });
-        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        };
+        matchedUsers.push(newConnection);
+        localStorage.setItem(`uaFriendMatch_matchedUsers_${userId}`, JSON.stringify(matchedUsers));
+        
+        // Save to shared data service for cross-user access
+        if (window.sharedDataService) {
+            const connections = window.sharedDataService.getField('friendMatchConnections') || [];
+            const existingConnection = connections.find(conn => conn.id === matchData.id && conn.userId === userId);
+            if (!existingConnection) {
+                connections.push({
+                    ...newConnection,
+                    userId: userId,
+                    connectionType: 'friendMatch'
+                });
+                window.sharedDataService.setField('friendMatchConnections', connections);
+                console.log('Connection saved to shared data service');
+            }
+        }
+        
         console.log('Added matched user:', matchData.name);
     }
 }
@@ -517,7 +633,8 @@ function initializeMessagesDisplay() {
     const matchedUsersList = document.getElementById('matchedUsersList');
     if (!matchedUsersList) return;
     
-    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const userId = getCurrentUserId();
+    const matchedUsers = JSON.parse(localStorage.getItem(`uaFriendMatch_matchedUsers_${userId}`) || '[]');
     
     if (matchedUsers.length === 0) {
         matchedUsersList.innerHTML = `
@@ -637,7 +754,8 @@ function sendMessage(userId) {
     if (!messageText) return;
     
     // Get matched users
-    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const currentUserId = getCurrentUserId();
+    const matchedUsers = JSON.parse(localStorage.getItem(`uaFriendMatch_matchedUsers_${currentUserId}`) || '[]');
     const user = matchedUsers.find(u => u.id === userId);
     
     if (user) {
@@ -650,7 +768,18 @@ function sendMessage(userId) {
         });
         
         // Save back to localStorage
-        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        localStorage.setItem(`uaFriendMatch_matchedUsers_${currentUserId}`, JSON.stringify(matchedUsers));
+        
+        // Save to shared data service for cross-user access
+        if (window.sharedDataService) {
+            const connections = window.sharedDataService.getField('friendMatchConnections') || [];
+            const connectionIndex = connections.findIndex(conn => conn.id === userId && conn.userId === currentUserId);
+            if (connectionIndex >= 0) {
+                connections[connectionIndex].messages = user.messages;
+                window.sharedDataService.setField('friendMatchConnections', connections);
+                console.log('Message saved to shared data service');
+            }
+        }
         
         // Clear input
         messageInput.value = '';
@@ -684,7 +813,8 @@ function simulateResponse(userId) {
         "I'm really excited to get to know you better!"
     ];
     
-    const matchedUsers = JSON.parse(localStorage.getItem('uaFriendMatch_matchedUsers') || '[]');
+    const currentUserId = getCurrentUserId();
+    const matchedUsers = JSON.parse(localStorage.getItem(`uaFriendMatch_matchedUsers_${currentUserId}`) || '[]');
     const user = matchedUsers.find(u => u.id === userId);
     
     if (user) {
@@ -698,7 +828,18 @@ function simulateResponse(userId) {
         });
         
         // Save back to localStorage
-        localStorage.setItem('uaFriendMatch_matchedUsers', JSON.stringify(matchedUsers));
+        localStorage.setItem(`uaFriendMatch_matchedUsers_${currentUserId}`, JSON.stringify(matchedUsers));
+        
+        // Save to shared data service for cross-user access
+        if (window.sharedDataService) {
+            const connections = window.sharedDataService.getField('friendMatchConnections') || [];
+            const connectionIndex = connections.findIndex(conn => conn.id === userId && conn.userId === currentUserId);
+            if (connectionIndex >= 0) {
+                connections[connectionIndex].messages = user.messages;
+                window.sharedDataService.setField('friendMatchConnections', connections);
+                console.log('AI response saved to shared data service');
+            }
+        }
         
         // Re-render messages
         const chatMessages = document.getElementById('chatMessages');
@@ -767,7 +908,8 @@ function editProfile() {
     console.log('Opening edit profile form...');
     
     // Get current profile data
-    const profileData = JSON.parse(localStorage.getItem('uaFriendMatch_profileData') || '{}');
+    const userId = getCurrentUserId();
+    const profileData = JSON.parse(localStorage.getItem(`uaFriendMatch_profileData_${userId}`) || '{}');
     
     if (!profileData.firstName) {
         showNotification('No profile data found. Please create a profile first.', 'danger');
@@ -892,7 +1034,20 @@ function updateProfile() {
     console.log('Profile updated for existing user');
     
     // Save to localStorage
-    localStorage.setItem('uaFriendMatch_profileData', JSON.stringify(updatedProfileData));
+    const userId = getCurrentUserId();
+    localStorage.setItem(`uaFriendMatch_profileData_${userId}`, JSON.stringify(updatedProfileData));
+    
+    // Save to shared data service for cross-user access
+    if (window.sharedDataService) {
+        const friendMatchProfile = {
+            ...updatedProfileData,
+            userId: userId,
+            profileType: 'friendMatch',
+            lastUpdated: new Date().toISOString()
+        };
+        window.sharedDataService.setField('friendMatchProfile', friendMatchProfile);
+        console.log('Profile updated in shared data service');
+    }
     
     console.log('Profile updated:', updatedProfileData);
     
@@ -1017,9 +1172,11 @@ function getNotificationIcon(type) {
 
 // Debug functions
 window.clearProfileData = function() {
-    localStorage.removeItem('uaFriendMatch_profileCreated');
-    localStorage.removeItem('uaFriendMatch_profileData');
-    console.log('Profile data cleared - refresh page to test');
+    const userId = getCurrentUserId();
+    localStorage.removeItem(`uaFriendMatch_profileCreated_${userId}`);
+    localStorage.removeItem(`uaFriendMatch_profileData_${userId}`);
+    localStorage.removeItem(`uaFriendMatch_matchedUsers_${userId}`);
+    console.log('Profile data cleared for user', userId, '- refresh page to test');
     location.reload();
 };
 

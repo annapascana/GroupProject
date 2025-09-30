@@ -1,13 +1,37 @@
 // Shared Data Service for CrimsonCollab
 class SharedDataService {
     constructor() {
-        this.storageKey = 'crimsonCollabUserData';
+        this.baseStorageKey = 'crimsonCollabUserData';
         this.userData = this.loadUserData();
+        this.isNewUser = this.checkIfNewUser();
+    }
+
+    getUserSpecificKey() {
+        // Get user ID from email if available
+        const email = this.userData?.email;
+        if (email) {
+            const userId = 'user_' + email.replace(/[^a-zA-Z0-9]/g, '_');
+            return `${this.baseStorageKey}_${userId}`;
+        }
+        
+        // Fall back to UA Innovate, travel, or workout user IDs
+        const uaUserId = localStorage.getItem('uaInnovateUserId');
+        if (uaUserId) return `${this.baseStorageKey}_${uaUserId}`;
+        
+        const travelUserId = localStorage.getItem('travelUserId');
+        if (travelUserId) return `${this.baseStorageKey}_${travelUserId}`;
+        
+        const workoutUserId = localStorage.getItem('workoutUserId');
+        if (workoutUserId) return `${this.baseStorageKey}_${workoutUserId}`;
+        
+        // Default to base key if no user ID found
+        return this.baseStorageKey;
     }
 
     loadUserData() {
         try {
-            const saved = localStorage.getItem(this.storageKey);
+            const storageKey = this.getUserSpecificKey();
+            const saved = localStorage.getItem(storageKey);
             return saved ? JSON.parse(saved) : this.getDefaultUserData();
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -17,7 +41,8 @@ class SharedDataService {
 
     saveUserData() {
         try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.userData));
+            const storageKey = this.getUserSpecificKey();
+            localStorage.setItem(storageKey, JSON.stringify(this.userData));
             return true;
         } catch (error) {
             console.error('Error saving user data:', error);
@@ -191,6 +216,108 @@ class SharedDataService {
     isLoggedIn() {
         return this.hasBasicInfo();
     }
+
+    // Check if this is a new user (no previous data)
+    checkIfNewUser() {
+        // Check if user has any existing data across all modules
+        const hasUserData = this.hasBasicInfo();
+        const hasUaInnovateData = localStorage.getItem('uaInnovateProfile') || localStorage.getItem('uaInnovateUserId');
+        const hasTravelData = localStorage.getItem('travelUserId') || localStorage.getItem('ua_trips');
+        const hasWorkoutData = localStorage.getItem('workoutUserId') || localStorage.getItem('workoutProfile');
+        const hasFriendMatchData = localStorage.getItem('uaFriendMatch_profileCreated');
+        
+        // Check for any existing data
+        const hasAnyData = hasUserData || hasUaInnovateData || hasTravelData || hasWorkoutData || hasFriendMatchData;
+        
+        // Check if user has visited before
+        const hasVisitedBefore = localStorage.getItem('crimsonCollab_hasVisited');
+        
+        return !hasAnyData && !hasVisitedBefore;
+    }
+
+    // Mark user as having visited
+    markUserAsVisited() {
+        localStorage.setItem('crimsonCollab_hasVisited', 'true');
+        this.isNewUser = false;
+    }
+
+    // Clear all user data for fresh start
+    clearAllUserData() {
+        try {
+            // Clear all module-specific data
+            const keysToRemove = [
+                // User data
+                'crimsonCollabUserData',
+                'crimsonCollab_hasVisited',
+                
+                // UA Innovate data
+                'uaInnovateProfile',
+                'uaInnovateUserId',
+                'allProfiles',
+                'allGroups',
+                'myGroups',
+                
+                // Travel data
+                'travelUserId',
+                'ua_trips',
+                'joined_trips',
+                'travel_notifications',
+                'travel_theme',
+                'travel_groups',
+                'social_posts',
+                'trip_groups',
+                'travel_search_history',
+                'travel_filters',
+                'travel_chat_messages',
+                'travel_analytics_cache',
+                'travel_user_preferences',
+                'travel_safety_checklist',
+                'travel_pwa_installed',
+                
+                // Workout data
+                'workoutUserId',
+                'workoutProfile',
+                'workoutGoals',
+                'workoutHistory',
+                
+                // Friend Match data
+                'uaFriendMatch_profileCreated',
+                'uaFriendMatch_profileData',
+                'uaFriendMatch_matchedUsers',
+                
+                // Dashboard data
+                'dashboard_favorites',
+                'theme'
+            ];
+
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+
+            // Clear user-specific keys (pattern matching)
+            const allKeys = Object.keys(localStorage);
+            allKeys.forEach(key => {
+                if (key.includes('user_') || key.includes('_user_') || key.includes('emergency_contacts_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // Reset user data
+            this.userData = this.getDefaultUserData();
+            this.isNewUser = true;
+            
+            console.log('All user data cleared for fresh start');
+            return true;
+        } catch (error) {
+            console.error('Error clearing user data:', error);
+            return false;
+        }
+    }
+
+    // Get new user status
+    getIsNewUser() {
+        return this.isNewUser;
+    }
 }
 
 // Create global instance
@@ -203,6 +330,9 @@ window.autofillForm = (formId, fieldMapping) => window.sharedDataService.autofil
 window.getUserDisplayName = () => window.sharedDataService.getDisplayName();
 window.getUserEmail = () => window.sharedDataService.getUserEmail();
 window.isUserLoggedIn = () => window.sharedDataService.isLoggedIn();
+window.isNewUser = () => window.sharedDataService.getIsNewUser();
+window.markUserAsVisited = () => window.sharedDataService.markUserAsVisited();
+window.clearAllUserData = () => window.sharedDataService.clearAllUserData();
 
 // Auto-fill forms when page loads
 document.addEventListener('DOMContentLoaded', function() {

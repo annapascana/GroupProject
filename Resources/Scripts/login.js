@@ -25,6 +25,13 @@ function initializeLoginPage() {
     setupAccessibility();
 }
 
+// Social Login Setup (placeholder for future implementation)
+function setupSocialLogin() {
+    // Social login functionality not yet implemented
+    // This function is called to prevent ReferenceError
+    console.log('Social login setup - not yet implemented');
+}
+
 // Form Validation
 function setupFormValidation() {
     const forms = document.querySelectorAll('.auth-form');
@@ -69,7 +76,7 @@ function validateField(field) {
             case 'resetEmail':
                 if (!isValidEmail(value)) {
                     isValid = false;
-                    errorMessage = 'Please enter a valid email address.';
+                    errorMessage = 'Please enter a valid .edu email address.';
                 }
                 break;
                 
@@ -111,10 +118,12 @@ function validateField(field) {
     return isValid;
 }
 
-// Email validation
+// Email validation - must end with .edu
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const isValidFormat = emailRegex.test(email);
+    const isEduEmail = email.toLowerCase().endsWith('.edu');
+    return isValidFormat && isEduEmail;
 }
 
 // Show field error
@@ -412,7 +421,7 @@ function handleForgotPassword(e) {
     const email = document.getElementById('resetEmail').value;
     
     if (!isValidEmail(email)) {
-        showNotification('Please enter a valid email address.', 'danger');
+        showNotification('Please enter a valid .edu email address.', 'danger');
         return;
     }
     

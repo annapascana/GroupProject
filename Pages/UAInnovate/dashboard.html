@@ -43,15 +43,9 @@
                 <div class="header-text">
                     <h1>UA Innovate</h1>
                 </div>
-                <div class="header-actions">
-                    <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
-                        <i class="bi bi-moon-fill" id="themeIcon"></i>
-                    </button>
-                    <button onclick="logout()" class="header-btn logout-btn" title="Logout">
-                        <i class="bi bi-box-arrow-right"></i>
-                        <span>Logout</span>
-                    </button>
-                </div>
+                <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
+                    <i class="bi bi-moon-fill" id="themeIcon"></i>
+                </button>
             </div>
         </header>
 
@@ -247,6 +241,23 @@
                 </div>
             </div>
 
+            <!-- Group Chat Modal -->
+            <div id="groupChatModal" class="modal" style="display: none;">
+                <div class="modal-content chat-modal">
+                    <div class="modal-header">
+                        <h3 id="chatGroupName">Group Chat</h3>
+                        <span class="close" id="closeChatModal">&times;</span>
+                    </div>
+                    <div class="chat-container">
+                        <div id="chatMessages" class="chat-messages"></div>
+                        <div class="chat-input-container">
+                            <input type="text" id="chatMessageInput" placeholder="Type your message..." maxlength="500">
+                            <button id="sendChatMessage" class="btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Edit Profile Modal -->
             <div id="editProfileModal" class="modal" style="display: none;">
                 <div class="modal-content">
@@ -319,6 +330,7 @@
     </div>
 
     <script src="api.js"></script>
+    <script src="shared-data-service.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

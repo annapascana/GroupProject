@@ -196,6 +196,18 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('uaInnovateUserId', userId);
             localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
             
+            // Save to shared data service for cross-user access
+            if (window.sharedDataService) {
+                const uaInnovateProfile = {
+                    ...profileData,
+                    userId: userId,
+                    profileType: 'uaInnovate',
+                    createdAt: new Date().toISOString()
+                };
+                await window.sharedDataService.saveProfile(uaInnovateProfile);
+                console.log('Profile saved to shared data service');
+            }
+            
             // Add/update in allProfiles for search functionality
             const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
             const userProfile = { ...profileData, userId: userId };

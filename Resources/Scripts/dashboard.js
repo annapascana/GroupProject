@@ -3,8 +3,8 @@
 // Global variables
 let currentTab = 'dashboard';
 let currentConversation = null;
-let userActivity = JSON.parse(localStorage.getItem('userActivity') || '[]');
-let userMessages = JSON.parse(localStorage.getItem('userMessages') || '[]');
+let userActivity = [];
+let userMessages = [];
 
 // Convert date strings back to Date objects
 function restoreDateObjects() {
@@ -30,53 +30,188 @@ function restoreDateObjects() {
     });
 }
 
-// Restore date objects on initialization
-restoreDateObjects();
+// Initialize user data based on new user status
+function initializeUserData() {
+    // Check if this is a new user
+    if (window.isNewUser && window.isNewUser()) {
+        console.log('New user detected - initializing with empty data');
+        userActivity = [];
+        userMessages = [];
+        return;
+    }
+    
+    // Load existing user data
+    const currentUserId = getCurrentUserId();
+    if (currentUserId) {
+        loadUserSpecificData(currentUserId);
+    } else {
+        // Fallback to global data if no user ID
+        userActivity = JSON.parse(localStorage.getItem('userActivity') || '[]');
+        userMessages = JSON.parse(localStorage.getItem('userMessages') || '[]');
+        restoreDateObjects();
+    }
+}
+
+// Initialize user data
+initializeUserData();
+
+// Show welcome modal for new users
+function showWelcomeModal() {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            showWelcomeModal();
+        });
+        return;
+    }
+    
+    const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+    welcomeModal.show();
+    
+    // Handle start exploring button
+    document.getElementById('startExploringBtn').addEventListener('click', function() {
+        welcomeModal.hide();
+        // Mark user as having visited
+        if (window.markUserAsVisited) {
+            window.markUserAsVisited();
+        }
+    });
+}
 
 // Fresh Start System for New Users
 function initializeFreshStart() {
     console.log('Checking for fresh start initialization...');
     
-    // Check if this is a new user (no data in localStorage)
-    const hasExistingData = localStorage.getItem('userActivity') || 
-                           localStorage.getItem('userMessages') ||
-                           localStorage.getItem('dashboard_favorites');
+    // Check if this is a new user using shared data service
+    if (window.isNewUser && window.isNewUser()) {
+        console.log('New user detected - showing welcome modal');
+        showWelcomeModal();
+        return;
+    }
+    
+    // Get current user ID to ensure fresh start per user
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) {
+        console.log('No user ID found, cannot initialize fresh start');
+        return;
+    }
+    
+    // Check if this is a new user (no data in localStorage for this specific user)
+    const userActivityKey = `userActivity_${currentUserId}`;
+    const userMessagesKey = `userMessages_${currentUserId}`;
+    const userFavoritesKey = `dashboard_favorites_${currentUserId}`;
+    
+    const hasExistingData = localStorage.getItem(userActivityKey) || 
+                           localStorage.getItem(userMessagesKey) ||
+                           localStorage.getItem(userFavoritesKey);
     
     if (!hasExistingData) {
         console.log('New user detected! Setting up fresh start...');
-        setupFreshStartData();
+        setupFreshStartData(currentUserId);
     } else {
         console.log('Existing user detected, loading saved data...');
+        loadUserSpecificData(currentUserId);
     }
 }
 
-function setupFreshStartData() {
-    console.log('Setting up fresh start data for new user...');
+function setupFreshStartData(userId) {
+    console.log('Setting up fresh start data for new user:', userId);
     
-    // Create sample activities
-    createSampleActivities();
+    // Don't create sample data for new users - they should have a clean experience
+    // Just initialize empty arrays
+    userActivity = [];
+    userMessages = [];
     
-    // Create sample messages
-    generateSampleMessages();
+    // Save empty data to user-specific storage
+    localStorage.setItem(`userActivity_${userId}`, JSON.stringify(userActivity));
+    localStorage.setItem(`userMessages_${userId}`, JSON.stringify(userMessages));
     
-    // Set up some initial favorites
-    const initialFavorites = ['Travel Group - Nashville Trip', 'Study Group - CS 101'];
-    localStorage.setItem('dashboard_favorites', JSON.stringify(initialFavorites));
-    
-    // Set initial view preferences
+    // Set initial view preferences (global)
     localStorage.setItem('dashboard_view', 'grid');
     localStorage.setItem('dashboard_theme', 'light');
     
-    // Set initial notification preferences
+    // Set initial notification preferences (global)
     localStorage.setItem('notifications_enabled', 'true');
     localStorage.setItem('email_notifications', 'true');
     
-    console.log('Fresh start data setup complete!');
+    console.log('Fresh start data setup complete for user:', userId);
     
     // Show welcome notification
     setTimeout(() => {
         showNotification('Welcome to CrimsonCollab! Your dashboard is ready.', 'success');
     }, 1000);
+}
+
+// Get current user ID
+function getCurrentUserId() {
+    // Try userManager first
+    if (typeof userManager !== 'undefined') {
+        const session = userManager.getCurrentSession();
+        if (session && session.id) {
+            return session.id;
+        }
+        const currentUser = userManager.getCurrentUser();
+        if (currentUser && currentUser.id) {
+            return currentUser.id;
+        }
+    }
+    
+    // Try localStorage fallback
+    const fallbackUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (fallbackUser.id) {
+        return fallbackUser.id;
+    }
+    
+    // Try shared data service
+    if (typeof window.sharedDataService !== 'undefined') {
+        const sharedUserData = window.sharedDataService.getUserData();
+        if (sharedUserData && sharedUserData.id) {
+            return sharedUserData.id;
+        }
+    }
+    
+    // Generate a unique ID if none exists
+    const generatedId = 'user_' + Date.now();
+    console.log('Generated new user ID:', generatedId);
+    return generatedId;
+}
+
+// Load user-specific data
+function loadUserSpecificData(userId) {
+    console.log('Loading user-specific data for user:', userId);
+    
+    // Load user-specific activity
+    const userActivityKey = `userActivity_${userId}`;
+    const savedActivity = localStorage.getItem(userActivityKey);
+    if (savedActivity) {
+        userActivity = JSON.parse(savedActivity);
+        // Restore date objects
+        userActivity.forEach(activity => {
+            if (typeof activity.time === 'string') {
+                activity.time = new Date(activity.time);
+            }
+        });
+    }
+    
+    // Load user-specific messages
+    const userMessagesKey = `userMessages_${userId}`;
+    const savedMessages = localStorage.getItem(userMessagesKey);
+    if (savedMessages) {
+        userMessages = JSON.parse(savedMessages);
+        // Restore date objects
+        userMessages.forEach(conversation => {
+            if (typeof conversation.time === 'string') {
+                conversation.time = new Date(conversation.time);
+            }
+            conversation.messages.forEach(message => {
+                if (typeof message.time === 'string') {
+                    message.time = new Date(message.time);
+                }
+            });
+        });
+    }
+    
+    console.log('User-specific data loaded for user:', userId);
 }
 
 // Calendar deletion test removed - calendar features no longer available
@@ -262,11 +397,7 @@ function initializeDashboard() {
         refreshUserInfo();
     }, 500);
     
-    // Force avatar generation test after 2 seconds
-    setTimeout(() => {
-        console.log('Running forced avatar test...');
-        window.testAvatarGeneration();
-    }, 2000);
+    // Avatar generation test removed - function not defined
     
     
     // Ensure favorites are loaded after everything is set up
@@ -286,13 +417,8 @@ function syncSharedData() {
         return;
     }
     
-    // Sync pending user activities
-    syncPendingUserActivities();
-    
-    // Set up periodic sync (every 30 seconds)
-    setInterval(() => {
-        syncPendingUserActivities();
-    }, 30000);
+    // Activity sync no longer needed - using user-specific storage
+    console.log('Activity sync disabled - using user-specific storage');
 }
 
 // Calendar sync function removed - calendar features no longer available
@@ -300,58 +426,10 @@ function syncSharedData() {
 function syncPendingUserActivities() {
     if (typeof sharedDataService === 'undefined') return;
     
-    const pendingActivities = sharedDataService.getPendingUserActivities();
-    if (pendingActivities.length === 0) return;
+    // Activity sync no longer needed - using user-specific storage
+    return;
     
-    console.log(`Syncing ${pendingActivities.length} pending user activities`);
-    
-    const processedActivityIds = [];
-    
-    pendingActivities.forEach(activity => {
-        // Check if activity already exists
-        const existingActivity = userActivity.find(a => 
-            a.title === activity.title && 
-            a.description === activity.description &&
-            Math.abs(new Date(a.time) - new Date(activity.time)) < 60000 // Within 1 minute
-        );
-        
-        if (!existingActivity) {
-            // Add activity to user's activity feed
-            const activityItem = {
-                id: activity.id,
-                type: activity.type,
-                title: activity.title,
-                description: activity.description,
-                time: new Date(activity.time),
-                icon: activity.icon,
-                collaborationCode: activity.collaborationCode
-            };
-            
-            userActivity.unshift(activityItem);
-            processedActivityIds.push(activity.id);
-            
-            console.log('Added user activity:', activityItem);
-        } else {
-            // Activity already exists, mark as processed
-            processedActivityIds.push(activity.id);
-        }
-    });
-    
-    // Save updated activities to localStorage
-    if (processedActivityIds.length > 0) {
-        localStorage.setItem('userActivity', JSON.stringify(userActivity));
-        
-        // Mark activities as processed in shared data
-        sharedDataService.markUserActivitiesProcessed(processedActivityIds);
-        
-        // Refresh activity feed if it's currently visible
-        if (currentTab === 'activity') {
-            loadActivityFeed();
-        }
-        
-        // Update activity badge
-        updateActivityBadge();
-    }
+    console.log('Activity sync no longer needed - using user-specific storage');
 }
 
 // Ensure user info is displayed
@@ -675,6 +753,12 @@ function loadActivityFeed() {
 
 // Add real activity when user joins a collaboration
 function addActivity(type, title, description, collaborationCode = null) {
+    const userId = getCurrentUserId();
+    if (!userId) {
+        console.error('No user ID found, cannot add activity');
+        return;
+    }
+    
     const activity = {
         id: Date.now().toString(),
         type: type,
@@ -692,8 +776,9 @@ function addActivity(type, title, description, collaborationCode = null) {
         userActivity = userActivity.slice(0, 50);
     }
     
-    // Save to localStorage
-    localStorage.setItem('userActivity', JSON.stringify(userActivity));
+    // Save to user-specific localStorage
+    const userActivityKey = `userActivity_${userId}`;
+    localStorage.setItem(userActivityKey, JSON.stringify(userActivity));
     
     // Refresh activity feed if currently viewing
     if (currentTab === 'activity') {
@@ -706,7 +791,7 @@ function addActivity(type, title, description, collaborationCode = null) {
     // Update profile statistics if profile page is loaded
     updateProfileStatistics();
     
-    console.log('Activity added:', activity);
+    console.log('Activity added for user:', userId, activity);
 }
 
 // Update Profile Statistics (for cross-page communication)
@@ -882,10 +967,9 @@ function loadActivityFeed() {
     console.log('Loading activity feed...');
     console.log('Current userActivity:', userActivity);
     
-    // Create sample activities if none exist
+    // Don't create sample activities for new users
     if (userActivity.length === 0) {
-        console.log('No activities found, creating sample activities...');
-        createSampleActivities();
+        console.log('No activities found - showing empty state');
     }
     
     const activityFeed = document.getElementById('activityFeed');
@@ -898,12 +982,15 @@ function loadActivityFeed() {
     activityFeed.innerHTML = '';
     
     if (userActivity.length === 0) {
-        // Show empty state
+        // Show empty state for new users
         activityFeed.innerHTML = `
-            <div class="empty-activity">
+            <div class="empty-activity-state">
                 <i class="bi bi-activity"></i>
-                <h3>No Activity Yet</h3>
-                <p>Start exploring collaborations to see your activity here!</p>
+                <h4>No Recent Activity</h4>
+                <p>Your activity will appear here when you join trips or participate in collaborations.</p>
+                <button class="btn btn-primary btn-sm" onclick="switchTab('dashboard')">
+                    <i class="bi bi-compass me-1"></i>Explore Collaborations
+                </button>
             </div>
         `;
         console.log('No activities found, showing empty state');
@@ -923,7 +1010,7 @@ function loadActivityFeed() {
 }
 
 // Create sample activities for testing
-function createSampleActivities() {
+function createSampleActivities(userId) {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
@@ -957,8 +1044,9 @@ function createSampleActivities() {
     ];
     
     userActivity = sampleActivities;
-    localStorage.setItem('userActivity', JSON.stringify(userActivity));
-    console.log('Sample activities created:', userActivity);
+    const userActivityKey = `userActivity_${userId}`;
+    localStorage.setItem(userActivityKey, JSON.stringify(userActivity));
+    console.log('Sample activities created for user:', userId, userActivity);
 }
 
 // Calendar functions removed - calendar features no longer available
@@ -984,9 +1072,9 @@ function createSampleActivities() {
 // Messages Functions
 function setupMessages() {
     // Messages functionality will be implemented here
-    // For now, we'll create some sample conversations
+    // Don't create sample messages for new users
     if (userMessages.length === 0) {
-        generateSampleMessages();
+        console.log('No messages found - new user with clean state');
     }
 }
 
@@ -999,6 +1087,21 @@ function loadMessages() {
     // Clear loading state
     conversationsList.innerHTML = '';
     
+    if (userMessages.length === 0) {
+        // Show empty state for new users
+        conversationsList.innerHTML = `
+            <div class="empty-messages-state">
+                <i class="bi bi-chat-dots"></i>
+                <h4>No Messages Yet</h4>
+                <p>Your messages will appear here when you start collaborating with other students.</p>
+                <button class="btn btn-primary btn-sm" onclick="switchTab('dashboard')">
+                    <i class="bi bi-compass me-1"></i>Explore Collaborations
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
     // Display conversations
     userMessages.forEach((conversation, index) => {
         const conversationItem = createConversationItem(conversation, index);
@@ -1009,7 +1112,7 @@ function loadMessages() {
     updateMessagesBadge();
 }
 
-function generateSampleMessages() {
+function generateSampleMessages(userId) {
     const sampleMessages = [
         {
             name: 'Travel Group - Nashville Trip',
@@ -1071,7 +1174,9 @@ function generateSampleMessages() {
     ];
     
     userMessages = sampleMessages;
-    localStorage.setItem('userMessages', JSON.stringify(userMessages));
+    const userMessagesKey = `userMessages_${userId}`;
+    localStorage.setItem(userMessagesKey, JSON.stringify(userMessages));
+    console.log('Sample messages created for user:', userId);
 }
 
 function createConversationItem(conversation, index) {
@@ -1211,8 +1316,12 @@ function sendMessage() {
     // Add message to conversation
     userMessages[currentConversation].messages.push(newMessage);
     
-    // Save to localStorage
-    localStorage.setItem('userMessages', JSON.stringify(userMessages));
+    // Save to user-specific localStorage
+    const userId = getCurrentUserId();
+    if (userId) {
+        const userMessagesKey = `userMessages_${userId}`;
+        localStorage.setItem(userMessagesKey, JSON.stringify(userMessages));
+    }
     
     // Clear input
     messageInput.value = '';
@@ -1255,7 +1364,13 @@ function simulateResponse(conversationIndex) {
     };
     
     conversation.messages.push(responseMessage);
-    localStorage.setItem('userMessages', JSON.stringify(userMessages));
+    
+    // Save to user-specific localStorage
+    const userId = getCurrentUserId();
+    if (userId) {
+        const userMessagesKey = `userMessages_${userId}`;
+        localStorage.setItem(userMessagesKey, JSON.stringify(userMessages));
+    }
     
     // Refresh messages if this conversation is currently selected
     if (currentConversation === conversationIndex) {
@@ -1852,7 +1967,11 @@ function setupFavoritesFilter() {
 // Apply favorites filter
 function applyFavoritesFilter(filter) {
     const cards = document.querySelectorAll('.collaboration-card');
-    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    
+    const userFavoritesKey = `dashboard_favorites_${userId}`;
+    const favorites = JSON.parse(localStorage.getItem(userFavoritesKey) || '[]');
     
     cards.forEach(card => {
         const cardCode = card.querySelector('.card-code').textContent;
@@ -2060,7 +2179,11 @@ function setupAccessibility() { console.log('Accessibility setup'); }
 function setupAnimations() { console.log('Animations setup'); }
 // Load favorites from localStorage
 function loadFavorites() {
-    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    
+    const userFavoritesKey = `dashboard_favorites_${userId}`;
+    const favorites = JSON.parse(localStorage.getItem(userFavoritesKey) || '[]');
     const cards = document.querySelectorAll('.collaboration-card');
     
     cards.forEach(card => {
@@ -2076,7 +2199,11 @@ function loadFavorites() {
 
 // Save favorites to localStorage
 function saveFavorites(favorites) {
-    localStorage.setItem('dashboard_favorites', JSON.stringify(favorites));
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    
+    const userFavoritesKey = `dashboard_favorites_${userId}`;
+    localStorage.setItem(userFavoritesKey, JSON.stringify(favorites));
 }
 
 // Toggle favorite
@@ -2097,7 +2224,11 @@ function toggleFavorite(button) {
     
     const cardCode = cardCodeElement.textContent;
     const icon = button.querySelector('i');
-    const favorites = JSON.parse(localStorage.getItem('dashboard_favorites') || '[]');
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    
+    const userFavoritesKey = `dashboard_favorites_${userId}`;
+    const favorites = JSON.parse(localStorage.getItem(userFavoritesKey) || '[]');
     
     console.log('Card code:', cardCode);
     console.log('Current favorites:', favorites);
