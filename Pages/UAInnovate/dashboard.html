@@ -43,9 +43,15 @@
                 <div class="header-text">
                     <h1>UA Innovate</h1>
                 </div>
-                <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
-                    <i class="bi bi-moon-fill" id="themeIcon"></i>
-                </button>
+                <div class="header-actions">
+                    <button id="themeToggle" class="theme-toggle-btn" title="Toggle dark mode">
+                        <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                    <button onclick="logout()" class="header-btn logout-btn" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -127,30 +133,6 @@
                                     rows="3"></textarea>
                         </div>
 
-                        <!-- Group Messaging Section -->
-                        <div class="messaging-section" id="groupMessagingSection" style="display: none;">
-                            <h4>Group Communication</h4>
-                            <p>Invite members and start collaborating!</p>
-                            
-                            <div class="messaging-interface">
-                                <div class="message-input-container">
-                                    <input type="text" id="groupMessageInput" placeholder="Type a message to invite members or discuss the group..." maxlength="500">
-                                    <button type="button" id="sendGroupMessage" class="btn-primary btn-small">Send</button>
-                                </div>
-                                
-                                <div class="message-list" id="groupMessageList">
-                                    <!-- Messages will be displayed here -->
-                                </div>
-                                
-                                <div class="invite-section">
-                                    <h5>Invite Members</h5>
-                                    <div class="invite-input-container">
-                                        <input type="email" id="inviteEmail" placeholder="Enter email address to invite">
-                                        <button type="button" id="sendInvite" class="btn-secondary btn-small">Invite</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">Create Group</button>
@@ -332,14 +314,11 @@
                     <p class="no-groups">You haven't joined any groups yet. Create or search for groups to get started!</p>
                 </div>
             </div>
+
         </main>
     </div>
 
     <script src="api.js"></script>
-    <!-- Shared Data Service -->
-    <script src="shared-data-service.js"></script>
-    <!-- Cross-User Data Test (remove in production) -->
-    <script src="test-cross-user-data.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

@@ -174,34 +174,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 interests: interestsTextarea.value.trim()
             };
 
-            // Create user profile via API (with fallback to localStorage)
-            try {
-                const response = await innovateAPI.createUser(profileData);
-                const userId = response.userId;
+            // Check if user already has a profile
+            const existingUserId = localStorage.getItem('uaInnovateUserId');
+            const existingProfile = localStorage.getItem('uaInnovateProfile');
+            
+            let userId;
+            if (existingUserId && existingProfile) {
+                // User already has a profile, keep the same ID
+                userId = existingUserId;
+                console.log('Updating existing profile for user:', userId);
+            } else {
+                // Create new user profile
+                userId = 'user_' + Date.now();
+                console.log('Creating new profile for user:', userId);
                 
-                // Store user ID in localStorage for session management
-                localStorage.setItem('uaInnovateUserId', userId);
-                localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
-                
-                // Add to allProfiles for search functionality
-                const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
-                const userProfile = { ...profileData, userId: userId };
-                allProfiles.push(userProfile);
-                localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
-            } catch (apiError) {
-                console.warn('API not available, using localStorage fallback:', apiError);
-                
-                // Fallback to localStorage when API is not available
-                const userId = 'user_' + Date.now();
-                localStorage.setItem('uaInnovateUserId', userId);
-                localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
-                
-                // Add to allProfiles for search functionality
-                const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
-                const userProfile = { ...profileData, userId: userId };
-                allProfiles.push(userProfile);
-                localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
+                // Initialize empty groups array for new user
+                localStorage.setItem('myGroups', JSON.stringify([]));
             }
+            
+            // Save/update user profile
+            localStorage.setItem('uaInnovateUserId', userId);
+            localStorage.setItem('uaInnovateProfile', JSON.stringify(profileData));
+            
+            // Add/update in allProfiles for search functionality
+            const allProfiles = JSON.parse(localStorage.getItem('allProfiles') || '[]');
+            const userProfile = { ...profileData, userId: userId };
+            
+            // Check if user already exists in allProfiles
+            const existingIndex = allProfiles.findIndex(p => p.userId === userId);
+            if (existingIndex !== -1) {
+                // Update existing profile
+                allProfiles[existingIndex] = userProfile;
+            } else {
+                // Add new profile
+                allProfiles.push(userProfile);
+            }
+            
+            localStorage.setItem('allProfiles', JSON.stringify(allProfiles));
 
             // Remove loading state
             profileForm.classList.remove('loading');
@@ -242,37 +251,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Load existing profile if available
-    function loadExistingProfile() {
-        const savedProfile = localStorage.getItem('uaInnovateProfile');
-        if (savedProfile) {
+    // Check for existing profile and redirect if found
+    function checkExistingProfile() {
+        const existingProfile = localStorage.getItem('uaInnovateProfile');
+        const existingUserId = localStorage.getItem('uaInnovateUserId');
+        
+        if (existingProfile && existingUserId) {
             try {
-                const profileData = JSON.parse(savedProfile);
-                
-                // Populate form fields
-                yearSelect.value = profileData.year || '';
-                majorInput.value = profileData.major || '';
-                technicalSkillsTextarea.value = profileData.technicalSkills || '';
-                interestsTextarea.value = profileData.interests || '';
-                
-                // Handle MIS semester
-                if (profileData.misSemester) {
-                    misSemesterSelect.value = profileData.misSemester;
-                    toggleMISSemester();
-                }
-                
-                // Redirect to dashboard if profile already exists
+                const profileData = JSON.parse(existingProfile);
+                console.log('Existing profile found, redirecting to dashboard...');
                 window.location.href = './dashboard.html';
-                
+                return;
             } catch (error) {
-                console.error('Error loading saved profile:', error);
+                console.error('Error parsing existing profile:', error);
+                // Clear corrupted data and continue with fresh start
                 localStorage.removeItem('uaInnovateProfile');
+                localStorage.removeItem('uaInnovateUserId');
             }
         }
+        
+        console.log('No existing profile found, showing profile creation form');
     }
 
     // Initialize the page
-    loadExistingProfile();
+    checkExistingProfile();
 
     // Add some interactive enhancements
     majorInput.addEventListener('input', function() {

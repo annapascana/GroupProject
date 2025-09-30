@@ -1074,15 +1074,15 @@ small,
 }
 
 [data-theme="dark"] .notification-item h6 {
-    color: var(--text-primary) !important;
+    color: #000000 !important;
 }
 
 [data-theme="dark"] .notification-item p {
-    color: var(--text-primary) !important;
+    color: #000000 !important;
 }
 
 [data-theme="dark"] .notification-time {
-    color: var(--text-secondary) !important;
+    color: #333333 !important;
 }
 
 [data-theme="dark"] .notification-item .btn-outline-secondary:hover {

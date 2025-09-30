@@ -9,7 +9,7 @@
   --crimson-gradient-light: linear-gradient(135deg, #C22B4A 0%, #9E1B32 100%);
   --dark-bg: #1a1a1a;
   --card-bg: rgba(255, 255, 255, 0.95);
-  --text-primary: #2c3e50;
+  --text-primary: #000000;
   --text-secondary: #6c757d;
   --border-color: #e9ecef;
   --success-color: #28a745;
@@ -177,7 +177,7 @@ body {
 
 .form-label {
   font-weight: 600;
-  color: var(--text-primary);
+  color: #000000 !important;
   margin-bottom: 0.5rem;
 }
 
