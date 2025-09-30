@@ -264,8 +264,11 @@
         studyStyle: focus
       });
     }
+
+  
     
     document.getElementById('sg-form').reset();
+
     // Hide all other fields when form resets
     [els.courseOther, els.locOther, els.focusOther].forEach(field => {
       if (field) field.style.display = 'none';
@@ -296,6 +299,8 @@
     // Show confirmation modal (robust) and ensure create modal closes
     const createModalEl = document.getElementById('sg-create-modal');
     const createdModalEl = document.getElementById('group-created-modal');
+
+
     const showCreated = () => {
       if (!createdModalEl) return;
       const m = (bootstrap.Modal.getInstance(createdModalEl) || (bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(createdModalEl) : new bootstrap.Modal(createdModalEl)));
