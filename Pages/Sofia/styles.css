@@ -505,6 +505,16 @@ p, span, div, small, strong, em, i {
   color: #ffffff !important;
 }
 
+/* Dark mode availability badge colors */
+.dark-mode .badge.bg-success {
+  background-color: #28a745 !important; /* Open = green */
+  color: #ffffff !important;
+}
+.dark-mode .badge.bg-warning {
+  background-color: #ffc107 !important; /* Almost Full = yellow */
+  color: #ffffff !important;
+}
+
 /* Button icons - White in light mode */
 .btn-primary .bi-search,
 .btn-primary .bi-plus-circle,

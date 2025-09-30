@@ -139,7 +139,13 @@
       render(groups);
     });
     [els.course, els.size, els.time, els.location, els.focus].forEach(x => x && x.addEventListener('change', applyFilters));
-    if (els.save) els.save.addEventListener('click', createGroup);
+    if (els.save) {
+      // Handle form submit so native submit works
+      const formEl = document.getElementById('sg-form');
+      if (formEl) formEl.addEventListener('submit', (e) => { e.preventDefault(); createGroup(); });
+      // Also keep click for safety if needed
+      els.save.addEventListener('click', (e) => { e.preventDefault(); createGroup(); });
+    }
     
     // Handle "Other" dropdown selections
     if (els.courseIn) els.courseIn.addEventListener('change', () => toggleOtherField('course'));
@@ -264,10 +270,56 @@
     [els.courseOther, els.locOther, els.focusOther].forEach(field => {
       if (field) field.style.display = 'none';
     });
-    bootstrap.Modal.getInstance(document.getElementById('sg-create-modal')).hide();
-    applyFilters();
-    
-    // Show success message
+    // Prepare confirmation modal content BEFORE showing
+    const createdHtml = `
+      <div class="vstack gap-2">
+        <div><strong>Group Name:</strong> ${escapeHtml(name)}</div>
+        <div><strong>Course:</strong> ${escapeHtml(course)}</div>
+        <div><strong>Group Size:</strong> ${escapeHtml(size)} (max ${max})</div>
+        <div><strong>Meeting Time:</strong> ${timeLabel(time)}</div>
+        <div><strong>Location:</strong> ${locationLabel(location)}</div>
+        <div><strong>Focus Type:</strong> ${focusLabel(focus)}</div>
+        ${desc ? `<div><strong>Description:</strong> ${escapeHtml(desc)}</div>` : ''}
+        ${specific ? `<div><strong>Specific Location:</strong> ${escapeHtml(specific)}</div>` : ''}
+      </div>`;
+    const createdContentEl = document.getElementById('group-created-content');
+    if (createdContentEl) createdContentEl.innerHTML = createdHtml;
+
+    // Clear any active filters and re-render full list so the new group is visible immediately
+    if (els.course) els.course.value = '';
+    if (els.size) els.size.value = '';
+    if (els.time) els.time.value = '';
+    if (els.location) els.location.value = '';
+    if (els.focus) els.focus.value = '';
+    render(groups);
+
+    // Show confirmation modal (robust) and ensure create modal closes
+    const createModalEl = document.getElementById('sg-create-modal');
+    const createdModalEl = document.getElementById('group-created-modal');
+    const showCreated = () => {
+      if (!createdModalEl) return;
+      const m = (bootstrap.Modal.getInstance(createdModalEl) || (bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(createdModalEl) : new bootstrap.Modal(createdModalEl)));
+      m.show();
+    };
+    if (createModalEl) {
+      const onHidden = () => {
+        createModalEl.removeEventListener('hidden.bs.modal', onHidden);
+        showCreated();
+      };
+      createModalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+      const createModal = (bootstrap.Modal.getInstance(createModalEl) || (bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(createModalEl) : new bootstrap.Modal(createModalEl)));
+      createModal.hide();
+      // Fallback in case hidden event doesn't fire (edge timing)
+      setTimeout(() => {
+        if (!createModalEl.classList.contains('show')) {
+          showCreated();
+        }
+      }, 400);
+    } else {
+      showCreated();
+    }
+
+    // Optional toast success
     showAlert(`Successfully created study group "${name}"!`, 'success');
   }
 
