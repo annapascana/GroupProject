@@ -2055,7 +2055,8 @@ function setupCreateTrip() {
         i.addEventListener('input', () => {
             const cost = parseFloat(gasInput.value) || 0;
             const seats = parseInt(seatInput.value) || 1;
-            preview.textContent = `$${(cost / seats).toFixed(2)} per person`;
+            const estimatedCost = (cost / seats).toFixed(2);
+            preview.textContent = `Estimated: $${estimatedCost} per person (if full)`;
         });
     });
 
@@ -2192,7 +2193,9 @@ async function createTrip(data) {
         return_time: data.returnTime || null,
         total_seats: data.totalSeats,
         available_seats: data.totalSeats - 1, // Creator takes one seat
-        cost_per_person: parseFloat((data.gasCost / data.totalSeats).toFixed(2)),
+        total_gas_cost: data.gasCost, // Store total gas cost
+        estimated_cost_per_person: parseFloat((data.gasCost / data.totalSeats).toFixed(2)), // Based on max seats
+        current_cost_per_person: parseFloat((data.gasCost / 1).toFixed(2)), // Currently only creator (1 person)
         trip_type: data.type,
         description: data.notes || '',
         created_by: window.sharedDataService.getCurrentUserId()
@@ -2212,7 +2215,9 @@ async function createTrip(data) {
     card.dataset.type = data.type;
     card.dataset.destination = data.destination;
 
-    const costPerPerson = (data.gasCost / data.totalSeats).toFixed(2);
+    const estimatedCostPerPerson = (data.gasCost / data.totalSeats).toFixed(2);
+    const currentParticipants = 1; // Creator only initially
+    const currentCostPerPerson = (data.gasCost / currentParticipants).toFixed(2);
     card.innerHTML = `
         <div class="trip-header">
             <h5><i class="bi ${getIcon(data.type)}"></i> ${getLabel(data.type)}</h5>
@@ -2223,7 +2228,9 @@ async function createTrip(data) {
             <p><strong>Date:</strong> ${formatDate(data.date)}</p>
             <p><strong>Time:</strong> ${formatTime(data.time)}</p>
             <p><strong>Seats Available:</strong> ${data.totalSeats - 1}/${data.totalSeats}</p>
-            <p class="cost-highlight"><strong>Gas Cost per Person:</strong> $${costPerPerson}</p>
+            <p><strong>Total Gas Cost:</strong> $${data.gasCost.toFixed(2)}</p>
+            <p class="cost-highlight"><strong>Estimated Cost per Person:</strong> $${estimatedCostPerPerson} <small>(if full)</small></p>
+            <p class="cost-highlight"><strong>Current Cost per Person:</strong> $${currentCostPerPerson} <small>(${currentParticipants} participant${currentParticipants !== 1 ? 's' : ''})</small></p>
             ${data.notes ? `<p><strong>Notes:</strong> ${data.notes}</p>` : ''}
         </div>
         <div class="trip-footer">
@@ -2286,7 +2293,12 @@ function createTripCardFromData(tripData) {
     card.dataset.destination = tripData.destination;
     card.dataset.tripId = tripData.id;
 
-    const costPerPerson = tripData.cost_per_person.toFixed(2);
+    // Calculate costs based on stored data or calculate from available info
+    const totalGasCost = tripData.total_gas_cost || (tripData.cost_per_person * tripData.total_seats) || 0;
+    const estimatedCostPerPerson = tripData.estimated_cost_per_person || (totalGasCost / tripData.total_seats).toFixed(2);
+    const currentParticipants = tripData.total_seats - tripData.available_seats;
+    const currentCostPerPerson = tripData.current_cost_per_person || (totalGasCost / Math.max(1, currentParticipants)).toFixed(2);
+    
     card.innerHTML = `
         <div class="trip-header">
             <h5><i class="bi ${getIcon(tripData.trip_type)}"></i> ${getLabel(tripData.trip_type)}</h5>
@@ -2297,7 +2309,9 @@ function createTripCardFromData(tripData) {
             <p><strong>Date:</strong> ${formatDate(tripData.departure_date)}</p>
             <p><strong>Time:</strong> ${formatTime(tripData.departure_time)}</p>
             <p><strong>Seats Available:</strong> ${tripData.available_seats}/${tripData.total_seats}</p>
-            <p class="cost-highlight"><strong>Gas Cost per Person:</strong> $${costPerPerson}</p>
+            <p><strong>Total Gas Cost:</strong> $${totalGasCost.toFixed(2)}</p>
+            <p class="cost-highlight"><strong>Estimated Cost per Person:</strong> $${parseFloat(estimatedCostPerPerson).toFixed(2)} <small>(if full)</small></p>
+            <p class="cost-highlight"><strong>Current Cost per Person:</strong> $${parseFloat(currentCostPerPerson).toFixed(2)} <small>(${currentParticipants} participant${currentParticipants !== 1 ? 's' : ''})</small></p>
             ${tripData.description ? `<p><strong>Notes:</strong> ${tripData.description}</p>` : ''}
         </div>
         <div class="trip-footer">
@@ -2509,6 +2523,9 @@ async function joinTrip(btn) {
         addParticipant(card);
         updateBadge(card, available);
         
+        // Update gas cost display with new participant count
+        updateGasCostDisplay(card, total, available);
+        
         // Show participants section
         const participantsSection = card.querySelector('.trip-participants');
         if (participantsSection) {
@@ -2535,6 +2552,9 @@ async function joinTrip(btn) {
                 clonedJoinBtn.classList.add('btn-warning');
                 clonedJoinBtn.classList.add('joined');
             }
+            
+            // Update gas cost display on cloned card
+            updateGasCostDisplay(clonedCard, total, available);
             
             // Show chat button on cloned card
             const clonedChatBtn = clonedCard.querySelector('.chat-trip-btn');
@@ -2620,6 +2640,9 @@ async function leaveTrip(btn) {
         removeParticipant(card);
         updateBadge(card, available);
         
+        // Update gas cost display with new participant count
+        updateGasCostDisplay(card, total, available);
+        
         // Hide chat button
         const chatBtn = card.querySelector('.chat-trip-btn');
         if (chatBtn) {
@@ -2657,6 +2680,9 @@ async function leaveTrip(btn) {
                     // Update the badge in the cloned card
                     updateBadge(clonedCard, available);
                     
+                    // Update gas cost display on cloned card
+                    updateGasCostDisplay(clonedCard, total, available);
+                    
                     // Add back to Available Trips grid
                     availableTripsGrid.appendChild(clonedCard);
                     console.log('Moved trip back to Available Trips:', card.dataset.destination);
@@ -2680,6 +2706,9 @@ async function leaveTrip(btn) {
                     
                     // Update the badge in the cloned card
                     updateBadge(clonedCard, available);
+                    
+                    // Update gas cost display on cloned card
+                    updateGasCostDisplay(clonedCard, total, available);
                     
                     // Add to Full Trips grid
                     fullTripsGrid.appendChild(clonedCard);
@@ -2772,6 +2801,68 @@ function updateBadge(card, seats) {
             if(!joinBtn.classList.contains('joined')){
                 joinBtn.textContent = 'Join Trip';
                 joinBtn.title = '';
+            }
+        }
+    }
+}
+
+// Update gas cost display when participants change
+function updateGasCostDisplay(card, totalSeats, availableSeats) {
+    let totalGasCost = 0;
+    
+    // Try to get total gas cost from existing display
+    const tripDetails = card.querySelector('.trip-details');
+    if (tripDetails) {
+        // Find the total gas cost paragraph
+        const allPs = Array.from(tripDetails.querySelectorAll('p'));
+        const totalCostP = allPs.find(p => p.textContent.includes('Total Gas Cost'));
+        
+        if (totalCostP) {
+            const totalCostText = totalCostP.textContent.match(/Total Gas Cost:\s*\$?(\d+\.?\d*)/);
+            if (totalCostText) {
+                totalGasCost = parseFloat(totalCostText[1]);
+            }
+        } else {
+            // Try to calculate from estimated cost if available
+            const estimatedCostP = allPs.find(p => p.textContent.includes('Estimated Cost per Person'));
+            if (estimatedCostP) {
+                const estimatedCostText = estimatedCostP.textContent.match(/Estimated Cost per Person:\s*\$?(\d+\.?\d*)/);
+                if (estimatedCostText) {
+                    const estimatedCost = parseFloat(estimatedCostText[1]);
+                    totalGasCost = estimatedCost * totalSeats;
+                }
+            }
+        }
+    }
+    
+    if (totalGasCost > 0) {
+        const estimatedCostPerPerson = (totalGasCost / totalSeats).toFixed(2);
+        const currentParticipants = totalSeats - availableSeats;
+        const currentCostPerPerson = (totalGasCost / Math.max(1, currentParticipants)).toFixed(2);
+        
+        // Find and update cost display elements
+        const costHighlights = card.querySelectorAll('.cost-highlight');
+        if (costHighlights.length >= 2) {
+            costHighlights[0].innerHTML = `<strong>Estimated Cost per Person:</strong> $${estimatedCostPerPerson} <small>(if full)</small>`;
+            costHighlights[1].innerHTML = `<strong>Current Cost per Person:</strong> $${currentCostPerPerson} <small>(${currentParticipants} participant${currentParticipants !== 1 ? 's' : ''})</small>`;
+        } else if (tripDetails) {
+            // If cost highlights don't exist, find the total cost element and add after it
+            const allPs = Array.from(tripDetails.querySelectorAll('p'));
+            const totalCostP = allPs.find(p => p.textContent.includes('Total Gas Cost'));
+            if (totalCostP) {
+                // Remove old cost highlights
+                costHighlights.forEach(el => el.remove());
+                
+                // Add new cost displays
+                const estimatedP = document.createElement('p');
+                estimatedP.className = 'cost-highlight';
+                estimatedP.innerHTML = `<strong>Estimated Cost per Person:</strong> $${estimatedCostPerPerson} <small>(if full)</small>`;
+                totalCostP.after(estimatedP);
+                
+                const currentP = document.createElement('p');
+                currentP.className = 'cost-highlight';
+                currentP.innerHTML = `<strong>Current Cost per Person:</strong> $${currentCostPerPerson} <small>(${currentParticipants} participant${currentParticipants !== 1 ? 's' : ''})</small>`;
+                estimatedP.after(currentP);
             }
         }
     }
@@ -3595,8 +3686,10 @@ function createExampleTripCard(tripData) {
     card.setAttribute('data-type', tripData.type);
     card.setAttribute('data-destination', tripData.destination);
     
-    const costPerPerson = tripData.totalCost / (tripData.totalSeats - tripData.availableSeats);
+    // Calculate estimated (max seats) and current (actual participants) costs
+    const estimatedCostPerPerson = tripData.totalCost / tripData.totalSeats;
     const actualParticipants = tripData.totalSeats - tripData.availableSeats;
+    const currentCostPerPerson = tripData.totalCost / Math.max(1, actualParticipants);
     
     const typeIcons = {
         'airport': 'bi-airplane-fill',
@@ -3646,7 +3739,8 @@ function createExampleTripCard(tripData) {
             <p><strong>Time:</strong> ${formatTime(tripData.time)}</p>
             <p><strong>Seats Available:</strong> ${tripData.availableSeats}/${tripData.totalSeats}</p>
             <p><strong>Total Gas Cost:</strong> $${tripData.totalCost.toFixed(2)}</p>
-            <p class="cost-highlight"><strong>Gas Cost per Person:</strong> $${costPerPerson.toFixed(2)}</p>
+            <p class="cost-highlight"><strong>Estimated Cost per Person:</strong> $${estimatedCostPerPerson.toFixed(2)} <small>(if full)</small></p>
+            <p class="cost-highlight"><strong>Current Cost per Person:</strong> $${currentCostPerPerson.toFixed(2)} <small>(${actualParticipants} participant${actualParticipants !== 1 ? 's' : ''})</small></p>
             ${tripData.notes ? `<p><strong>Notes:</strong> ${tripData.notes}</p>` : ''}
         </div>
         <div class="trip-footer">
@@ -4002,6 +4096,9 @@ function restoreJoinedTrips() {
                         const newSeats = availableSeats - 1;
                         seatsInfo.innerHTML = `<strong>Seats Available:</strong> ${newSeats}/${totalSeats}`;
                         updateBadge(tripCard, newSeats);
+                        
+                        // Update gas cost display
+                        updateGasCostDisplay(tripCard, totalSeats, newSeats);
                     }
                 }
                 

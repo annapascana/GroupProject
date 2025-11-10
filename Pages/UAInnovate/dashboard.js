@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchProfilesForm = document.getElementById('searchProfilesForm');
     const editProfileForm = document.getElementById('editProfileForm');
     const myGroupsList = document.getElementById('myGroupsList');
+    const availableGroupsList = document.getElementById('availableGroupsList');
 
     // Modal close buttons
     const closeCreateModal = document.getElementById('closeCreateModal');
@@ -93,7 +94,268 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize test data if not already present
         initializeTestData();
         
+        // Clean up any groups with more than 4 members
+        cleanupInvalidGroups();
+        
+        // Ensure demo groups are always available
+        ensureDemoGroups();
+        
         await loadMyGroups();
+        await loadAvailableGroups();
+    }
+
+    // Clean up groups that have more than 4 members
+    function cleanupInvalidGroups() {
+        try {
+            const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
+            
+            // Filter out groups with more than 4 members
+            const validGroups = allGroups.filter(group => {
+                const memberCount = group.current_members || 0;
+                return memberCount <= 4;
+            });
+            
+            // Also remove invalid groups from myGroups
+            const validMyGroups = myGroups.filter(group => {
+                const memberCount = group.current_members || 0;
+                return memberCount <= 4;
+            });
+            
+            // Check if any groups were removed
+            if (allGroups.length !== validGroups.length) {
+                const removedCount = allGroups.length - validGroups.length;
+                console.log(`Removed ${removedCount} group(s) with more than 4 members`);
+                
+                // Update localStorage
+                localStorage.setItem('allGroups', JSON.stringify(validGroups));
+                localStorage.setItem('myGroups', JSON.stringify(validMyGroups));
+            }
+        } catch (error) {
+            console.warn('Error cleaning up invalid groups:', error);
+        }
+    }
+
+    // Ensure demo groups are always available for demo purposes
+    function ensureDemoGroups() {
+        try {
+            const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+            const existingGroupIds = allGroups.map(g => g.group_id);
+            
+            // Define demo groups with varying member counts (1-4)
+            const demoGroups = [
+                {
+                    group_id: 'demo_group_001',
+                    name: 'AI Innovation Lab',
+                    description: 'Exploring cutting-edge AI technologies and building innovative machine learning solutions. Perfect for students interested in artificial intelligence and data science.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python, Machine Learning basics, Data Analysis',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-01-15').toISOString()
+                },
+                {
+                    group_id: 'demo_group_002',
+                    name: 'Full Stack Developers',
+                    description: 'Building modern web applications using React, Node.js, and cloud technologies. Join us to create real-world projects and enhance your portfolio.',
+                    focus: 'full-stack-development',
+                    size_preference: '3-4 members',
+                    required_skills: 'JavaScript, React or Node.js experience',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-01-20').toISOString()
+                },
+                {
+                    group_id: 'demo_group_003',
+                    name: 'FinTech Pioneers',
+                    description: 'Developing innovative financial technology solutions. Explore blockchain, payment systems, and digital banking technologies.',
+                    focus: 'fintech',
+                    size_preference: '2-3 members',
+                    required_skills: 'Programming skills, Interest in finance/blockchain',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-01').toISOString()
+                },
+                {
+                    group_id: 'demo_group_004',
+                    name: 'Cybersecurity Squad',
+                    description: 'Learning and implementing security best practices. Work on security projects, ethical hacking, and secure coding practices.',
+                    focus: 'cybersecurity',
+                    size_preference: '3-4 members',
+                    required_skills: 'Networking basics, Programming, Security interest',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-10').toISOString()
+                },
+                {
+                    group_id: 'demo_group_005',
+                    name: 'Web Development Warriors',
+                    description: 'Mastering modern web development technologies including React, Node.js, and full-stack development. Build portfolio projects together.',
+                    focus: 'full-stack-development',
+                    size_preference: '4 members',
+                    required_skills: 'HTML, CSS, JavaScript basics',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-25').toISOString()
+                },
+                {
+                    group_id: 'demo_group_006',
+                    name: 'Blockchain Builders',
+                    description: 'Exploring blockchain technology, cryptocurrency, and decentralized applications. Learn smart contracts and DeFi development.',
+                    focus: 'fintech',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Interest in blockchain/crypto',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-03-05').toISOString()
+                },
+                {
+                    group_id: 'demo_group_007',
+                    name: 'Prototype Builders',
+                    description: 'Rapid prototyping and MVP development. Learn to quickly build and test innovative product ideas using modern development tools.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Basic programming, Design thinking',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-05').toISOString()
+                },
+                {
+                    group_id: 'demo_group_008',
+                    name: 'Mobile App Innovators',
+                    description: 'Creating innovative mobile applications for iOS and Android. Learn cross-platform development and native app design.',
+                    focus: 'prototype-innovation',
+                    size_preference: '2-3 members',
+                    required_skills: 'JavaScript or Swift/Java, Mobile development interest',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-20').toISOString()
+                },
+                {
+                    group_id: 'demo_group_009',
+                    name: 'Community Tech Solutions',
+                    description: 'Building technology solutions for local community needs. Work on projects that help nonprofits and community organizations.',
+                    focus: 'social-innovation',
+                    size_preference: '3-4 members',
+                    required_skills: 'Programming skills, Community engagement interest',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-03-01').toISOString()
+                },
+                {
+                    group_id: 'demo_group_010',
+                    name: 'Security Guardians',
+                    description: 'Advanced cybersecurity and ethical hacking. Prepare for security certifications and work on real-world security challenges.',
+                    focus: 'cybersecurity',
+                    size_preference: '4 members',
+                    required_skills: 'Networking, Programming, Security fundamentals',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-03-10').toISOString()
+                },
+                {
+                    group_id: 'demo_group_011',
+                    name: 'Social Impact Innovators',
+                    description: 'Creating technology solutions that address real-world social challenges. We focus on projects that make a positive difference in our community.',
+                    focus: 'social-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Any programming language, Passion for social good',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-01-25').toISOString()
+                },
+                {
+                    group_id: 'demo_group_012',
+                    name: 'Data Analytics Team',
+                    description: 'Transforming data into insights. Work with real datasets, build dashboards, and create data-driven solutions for business problems.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python or R, SQL, Statistics basics',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-15').toISOString()
+                },
+                {
+                    group_id: 'demo_group_013',
+                    name: 'IoT Innovators',
+                    description: 'Building Internet of Things solutions and smart devices. Work with sensors, microcontrollers, and connected systems.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Electronics basics, Programming, Hardware interest',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-03-18').toISOString()
+                },
+                {
+                    group_id: 'demo_group_014',
+                    name: 'Game Development Studio',
+                    description: 'Creating interactive games and learning game development engines. Build fun projects and learn game design principles.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Game design interest',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-03-20').toISOString()
+                },
+                {
+                    group_id: 'demo_group_015',
+                    name: 'Machine Learning Masters',
+                    description: 'Advanced machine learning and deep learning projects. Work on neural networks, computer vision, and NLP applications.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python, TensorFlow/PyTorch, ML experience',
+                    current_members: 4,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-01-10').toISOString()
+                },
+                {
+                    group_id: 'demo_group_016',
+                    name: 'E-Commerce Solutions',
+                    description: 'Building e-commerce platforms and payment systems. Learn about online business, digital payments, and marketplace development.',
+                    focus: 'fintech',
+                    size_preference: '4 members',
+                    required_skills: 'Web development, Business interest',
+                    current_members: 4,
+                    max_members: 4,
+                    created_by: 'demo_user',
+                    created_at: new Date('2024-02-08').toISOString()
+                }
+            ];
+            
+            // Add demo groups that don't already exist
+            let addedCount = 0;
+            demoGroups.forEach(demoGroup => {
+                if (!existingGroupIds.includes(demoGroup.group_id)) {
+                    allGroups.push(demoGroup);
+                    addedCount++;
+                }
+            });
+            
+            if (addedCount > 0) {
+                localStorage.setItem('allGroups', JSON.stringify(allGroups));
+                console.log(`Added ${addedCount} demo groups for your demo tomorrow! Total groups: ${allGroups.length}`);
+            } else {
+                console.log(`All ${demoGroups.length} demo groups are ready for your demo!`);
+            }
+        } catch (error) {
+            console.warn('Error ensuring demo groups:', error);
+        }
     }
 
     // Initialize test data if not already present
@@ -102,7 +364,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const existingGroups = localStorage.getItem('allGroups');
         const existingProfiles = localStorage.getItem('allProfiles');
         
-        if (!existingGroups || !existingProfiles) {
+        // Always ensure groups exist for the "Groups" section
+        let shouldInitializeGroups = false;
+        if (!existingGroups) {
+            shouldInitializeGroups = true;
+        } else {
+            try {
+                const groups = JSON.parse(existingGroups);
+                if (!Array.isArray(groups) || groups.length === 0) {
+                    shouldInitializeGroups = true;
+                }
+            } catch (e) {
+                shouldInitializeGroups = true;
+            }
+        }
+        
+        if (shouldInitializeGroups || !existingProfiles) {
             console.log('Initializing test data for UA Innovate...');
             
             // Sample user profiles
@@ -192,217 +469,251 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             ];
 
-            // Sample groups with diverse names and categories
+            // Sample groups with diverse focus areas and varying member counts (1-4 members)
             const testGroups = [
+                // Groups with 1 member
                 {
                     group_id: 'group_001',
-                    name: 'Crimson Code Warriors',
-                    description: 'A competitive programming group for students who love solving algorithmic challenges and participating in coding contests.',
-                    category: 'Programming',
-                    max_members: 20,
-                    current_members: 14,
+                    name: 'AI Innovation Lab',
+                    description: 'Exploring cutting-edge AI technologies and building innovative machine learning solutions. Perfect for students interested in artificial intelligence and data science.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python, Machine Learning basics, Data Analysis',
+                    current_members: 1,
+                    max_members: 4,
                     created_by: 'user_001',
-                    created_at: new Date('2024-01-15').toISOString(),
-                    tags: ['competitive programming', 'algorithms', 'data structures', 'coding contests', 'leetcode'],
-                    requirements: 'Basic programming knowledge in any language',
-                    meeting_schedule: 'Every Monday 7:00 PM - 9:00 PM',
-                    location: 'Computer Science Building, Room 205'
+                    created_at: new Date('2024-01-15').toISOString()
                 },
                 {
                     group_id: 'group_002',
-                    name: 'Data Dragons',
-                    description: 'Exploring the world of data science, machine learning, and artificial intelligence through hands-on projects and research.',
-                    category: 'Data Science',
-                    max_members: 25,
-                    current_members: 18,
+                    name: 'Full Stack Developers',
+                    description: 'Building modern web applications using React, Node.js, and cloud technologies. Join us to create real-world projects and enhance your portfolio.',
+                    focus: 'full-stack-development',
+                    size_preference: '3-4 members',
+                    required_skills: 'JavaScript, React or Node.js experience',
+                    current_members: 1,
+                    max_members: 4,
                     created_by: 'user_002',
-                    created_at: new Date('2024-01-20').toISOString(),
-                    tags: ['data science', 'machine learning', 'python', 'statistics', 'analytics'],
-                    requirements: 'Python or R programming experience preferred',
-                    meeting_schedule: 'Every Wednesday 6:00 PM - 8:00 PM',
-                    location: 'Business School, Room 301'
+                    created_at: new Date('2024-01-20').toISOString()
                 },
                 {
                     group_id: 'group_003',
-                    name: 'Tech Titans',
-                    description: 'Building innovative tech solutions and exploring emerging technologies. Perfect for students passionate about technology innovation.',
-                    category: 'Technology',
-                    max_members: 30,
-                    current_members: 22,
-                    created_by: 'user_003',
-                    created_at: new Date('2024-01-25').toISOString(),
-                    tags: ['innovation', 'emerging tech', 'startups', 'product development', 'tech trends'],
-                    requirements: 'Open to all majors with tech interest',
-                    meeting_schedule: 'Every Friday 5:00 PM - 7:00 PM',
-                    location: 'Engineering Building, Innovation Lab'
+                    name: 'FinTech Pioneers',
+                    description: 'Developing innovative financial technology solutions. Explore blockchain, payment systems, and digital banking technologies.',
+                    focus: 'fintech',
+                    size_preference: '2-3 members',
+                    required_skills: 'Programming skills, Interest in finance/blockchain',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'user_004',
+                    created_at: new Date('2024-02-01').toISOString()
                 },
                 {
                     group_id: 'group_004',
-                    name: 'Web Wizards',
-                    description: 'Mastering modern web development technologies including React, Node.js, and full-stack development.',
-                    category: 'Web Development',
-                    max_members: 18,
-                    current_members: 12,
-                    created_by: 'user_004',
-                    created_at: new Date('2024-02-01').toISOString(),
-                    tags: ['web development', 'react', 'node.js', 'javascript', 'full-stack'],
-                    requirements: 'Basic HTML, CSS, and JavaScript knowledge',
-                    meeting_schedule: 'Every Tuesday 6:30 PM - 8:30 PM',
-                    location: 'Computer Science Building, Room 180'
+                    name: 'Cybersecurity Squad',
+                    description: 'Learning and implementing security best practices. Work on security projects, ethical hacking, and secure coding practices.',
+                    focus: 'cybersecurity',
+                    size_preference: '3-4 members',
+                    required_skills: 'Networking basics, Programming, Security interest',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'user_006',
+                    created_at: new Date('2024-02-10').toISOString()
                 },
                 {
                     group_id: 'group_005',
-                    name: 'MIS Mavericks',
-                    description: 'Connecting Management Information Systems students for networking, career development, and academic excellence.',
-                    category: 'Academic',
-                    max_members: 35,
-                    current_members: 28,
-                    created_by: 'user_002',
-                    created_at: new Date('2024-02-05').toISOString(),
-                    tags: ['mis', 'business', 'networking', 'career', 'academic support'],
-                    requirements: 'Must be an MIS major or minor',
-                    meeting_schedule: 'Every Thursday 6:00 PM - 7:30 PM',
-                    location: 'Business School, Conference Room B'
+                    name: 'Web Development Warriors',
+                    description: 'Mastering modern web development technologies including React, Node.js, and full-stack development. Build portfolio projects together.',
+                    focus: 'full-stack-development',
+                    size_preference: '4 members',
+                    required_skills: 'HTML, CSS, JavaScript basics',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'user_001',
+                    created_at: new Date('2024-02-25').toISOString()
                 },
                 {
                     group_id: 'group_006',
-                    name: 'Startup Squad',
-                    description: 'For aspiring entrepreneurs and startup enthusiasts. Learn about business development, pitching, and building successful companies.',
-                    category: 'Entrepreneurship',
-                    max_members: 25,
-                    current_members: 19,
-                    created_by: 'user_007',
-                    created_at: new Date('2024-02-10').toISOString(),
-                    tags: ['entrepreneurship', 'startups', 'business', 'pitching', 'venture capital'],
-                    requirements: 'Open to all majors with entrepreneurial interest',
-                    meeting_schedule: 'Every Saturday 10:00 AM - 12:00 PM',
-                    location: 'Business School, Entrepreneurship Center'
+                    name: 'Blockchain Builders',
+                    description: 'Exploring blockchain technology, cryptocurrency, and decentralized applications. Learn smart contracts and DeFi development.',
+                    focus: 'fintech',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Interest in blockchain/crypto',
+                    current_members: 1,
+                    max_members: 4,
+                    created_by: 'user_003',
+                    created_at: new Date('2024-03-05').toISOString()
                 },
+                // Groups with 2 members
                 {
                     group_id: 'group_007',
-                    name: 'Cyber Guardians',
-                    description: 'Learning cybersecurity, ethical hacking, and digital forensics. Preparing for careers in information security.',
-                    category: 'Security',
-                    max_members: 20,
-                    current_members: 15,
+                    name: 'Prototype Builders',
+                    description: 'Rapid prototyping and MVP development. Learn to quickly build and test innovative product ideas using modern development tools.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Basic programming, Design thinking',
+                    current_members: 2,
+                    max_members: 4,
                     created_by: 'user_005',
-                    created_at: new Date('2024-02-15').toISOString(),
-                    tags: ['cybersecurity', 'ethical hacking', 'digital forensics', 'penetration testing', 'security'],
-                    requirements: 'Basic networking and programming knowledge',
-                    meeting_schedule: 'Every Sunday 2:00 PM - 4:00 PM',
-                    location: 'Computer Science Building, Security Lab'
+                    created_at: new Date('2024-02-05').toISOString()
                 },
                 {
                     group_id: 'group_008',
-                    name: 'Mobile Masters',
-                    description: 'Creating innovative mobile applications for iOS and Android platforms using cutting-edge technologies.',
-                    category: 'Mobile Development',
-                    max_members: 22,
-                    current_members: 16,
-                    created_by: 'user_001',
-                    created_at: new Date('2024-02-20').toISOString(),
-                    tags: ['mobile development', 'ios', 'android', 'react native', 'flutter', 'swift'],
-                    requirements: 'JavaScript or Swift/Java experience helpful',
-                    meeting_schedule: 'Every Wednesday 7:00 PM - 9:00 PM',
-                    location: 'Computer Science Building, Mobile Lab'
+                    name: 'Mobile App Innovators',
+                    description: 'Creating innovative mobile applications for iOS and Android. Learn cross-platform development and native app design.',
+                    focus: 'prototype-innovation',
+                    size_preference: '2-3 members',
+                    required_skills: 'JavaScript or Swift/Java, Mobile development interest',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'user_008',
+                    created_at: new Date('2024-02-20').toISOString()
                 },
                 {
                     group_id: 'group_009',
-                    name: 'AI Architects',
-                    description: 'Advanced artificial intelligence research group focusing on deep learning, computer vision, and natural language processing.',
-                    category: 'Research',
-                    max_members: 15,
-                    current_members: 11,
-                    created_by: 'user_004',
-                    created_at: new Date('2024-02-25').toISOString(),
-                    tags: ['artificial intelligence', 'deep learning', 'computer vision', 'nlp', 'research'],
-                    requirements: 'Strong programming skills and machine learning background',
-                    meeting_schedule: 'Every Monday 4:00 PM - 6:00 PM',
-                    location: 'Computer Science Building, AI Research Lab'
+                    name: 'Community Tech Solutions',
+                    description: 'Building technology solutions for local community needs. Work on projects that help nonprofits and community organizations.',
+                    focus: 'social-innovation',
+                    size_preference: '3-4 members',
+                    required_skills: 'Programming skills, Community engagement interest',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'user_002',
+                    created_at: new Date('2024-03-01').toISOString()
                 },
                 {
                     group_id: 'group_010',
-                    name: 'Game Dev Guild',
-                    description: 'Creating video games, learning game development tools, and exploring interactive media design.',
-                    category: 'Game Development',
-                    max_members: 20,
-                    current_members: 13,
-                    created_by: 'user_006',
-                    created_at: new Date('2024-03-01').toISOString(),
-                    tags: ['game development', 'unity', 'unreal engine', 'game design', 'interactive media'],
-                    requirements: 'Basic programming knowledge and creativity',
-                    meeting_schedule: 'Every Friday 6:00 PM - 8:00 PM',
-                    location: 'Engineering Building, Game Development Lab'
+                    name: 'Security Guardians',
+                    description: 'Advanced cybersecurity and ethical hacking. Prepare for security certifications and work on real-world security challenges.',
+                    focus: 'cybersecurity',
+                    size_preference: '4 members',
+                    required_skills: 'Networking, Programming, Security fundamentals',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'user_004',
+                    created_at: new Date('2024-03-10').toISOString()
                 },
                 {
                     group_id: 'group_011',
-                    name: 'Cloud Commanders',
-                    description: 'Mastering cloud computing technologies including AWS, Azure, and Google Cloud Platform.',
-                    category: 'Cloud Computing',
-                    max_members: 18,
-                    current_members: 12,
+                    name: 'Cloud Computing Experts',
+                    description: 'Mastering cloud platforms like AWS, Azure, and Google Cloud. Build scalable applications and learn DevOps practices.',
+                    focus: 'full-stack-development',
+                    size_preference: '4 members',
+                    required_skills: 'Basic cloud knowledge, Programming experience',
+                    current_members: 2,
+                    max_members: 4,
                     created_by: 'user_007',
-                    created_at: new Date('2024-03-05').toISOString(),
-                    tags: ['cloud computing', 'aws', 'azure', 'google cloud', 'devops', 'containers'],
-                    requirements: 'Basic programming and system administration knowledge',
-                    meeting_schedule: 'Every Tuesday 5:00 PM - 7:00 PM',
-                    location: 'Computer Science Building, Cloud Lab'
+                    created_at: new Date('2024-03-12').toISOString()
                 },
                 {
                     group_id: 'group_012',
-                    name: 'Blockchain Builders',
-                    description: 'Exploring blockchain technology, cryptocurrency, and decentralized applications (DApps).',
-                    category: 'Blockchain',
-                    max_members: 16,
-                    current_members: 9,
-                    created_by: 'user_008',
-                    created_at: new Date('2024-03-10').toISOString(),
-                    tags: ['blockchain', 'cryptocurrency', 'smart contracts', 'defi', 'web3'],
-                    requirements: 'Basic programming knowledge and interest in blockchain',
-                    meeting_schedule: 'Every Thursday 7:00 PM - 9:00 PM',
-                    location: 'Business School, FinTech Lab'
+                    name: 'Digital Health Innovators',
+                    description: 'Creating technology solutions for healthcare and wellness. Explore telemedicine, health apps, and medical data analysis.',
+                    focus: 'social-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Interest in healthcare technology',
+                    current_members: 2,
+                    max_members: 4,
+                    created_by: 'user_005',
+                    created_at: new Date('2024-03-15').toISOString()
                 },
+                // Groups with 3 members
                 {
                     group_id: 'group_013',
-                    name: 'Robotics Revolution',
-                    description: 'Building robots, drones, and autonomous systems. Perfect for engineering students passionate about robotics.',
-                    category: 'Robotics',
-                    max_members: 14,
-                    current_members: 8,
+                    name: 'Social Impact Innovators',
+                    description: 'Creating technology solutions that address real-world social challenges. We focus on projects that make a positive difference in our community.',
+                    focus: 'social-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Any programming language, Passion for social good',
+                    current_members: 3,
+                    max_members: 4,
                     created_by: 'user_003',
-                    created_at: new Date('2024-03-15').toISOString(),
-                    tags: ['robotics', 'drones', 'autonomous systems', 'arduino', 'raspberry pi'],
-                    requirements: 'Basic programming and electronics knowledge',
-                    meeting_schedule: 'Every Saturday 1:00 PM - 3:00 PM',
-                    location: 'Engineering Building, Robotics Lab'
+                    created_at: new Date('2024-01-25').toISOString()
                 },
                 {
                     group_id: 'group_014',
-                    name: 'UX/UI Designers',
-                    description: 'Creating beautiful and functional user interfaces and experiences. Learning design principles and prototyping tools.',
-                    category: 'Design',
-                    max_members: 20,
-                    current_members: 14,
-                    created_by: 'user_005',
-                    created_at: new Date('2024-03-20').toISOString(),
-                    tags: ['ux design', 'ui design', 'figma', 'prototyping', 'user research'],
-                    requirements: 'Creative mindset and interest in design',
-                    meeting_schedule: 'Every Monday 6:00 PM - 8:00 PM',
-                    location: 'Art Building, Design Studio'
+                    name: 'Data Analytics Team',
+                    description: 'Transforming data into insights. Work with real datasets, build dashboards, and create data-driven solutions for business problems.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python or R, SQL, Statistics basics',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'user_007',
+                    created_at: new Date('2024-02-15').toISOString()
                 },
                 {
                     group_id: 'group_015',
-                    name: 'Database Dynamos',
-                    description: 'Mastering database design, SQL, and data management systems. Perfect for students interested in data architecture.',
-                    category: 'Database',
-                    max_members: 16,
-                    current_members: 10,
+                    name: 'IoT Innovators',
+                    description: 'Building Internet of Things solutions and smart devices. Work with sensors, microcontrollers, and connected systems.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Electronics basics, Programming, Hardware interest',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'user_003',
+                    created_at: new Date('2024-03-18').toISOString()
+                },
+                {
+                    group_id: 'group_016',
+                    name: 'Game Development Studio',
+                    description: 'Creating interactive games and learning game development engines. Build fun projects and learn game design principles.',
+                    focus: 'prototype-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Game design interest',
+                    current_members: 3,
+                    max_members: 4,
+                    created_by: 'user_006',
+                    created_at: new Date('2024-03-20').toISOString()
+                },
+                // Groups with 4 members (full)
+                {
+                    group_id: 'group_017',
+                    name: 'Machine Learning Masters',
+                    description: 'Advanced machine learning and deep learning projects. Work on neural networks, computer vision, and NLP applications.',
+                    focus: 'data-analytics',
+                    size_preference: '4 members',
+                    required_skills: 'Python, TensorFlow/PyTorch, ML experience',
+                    current_members: 4,
+                    max_members: 4,
+                    created_by: 'user_004',
+                    created_at: new Date('2024-01-10').toISOString()
+                },
+                {
+                    group_id: 'group_018',
+                    name: 'E-Commerce Solutions',
+                    description: 'Building e-commerce platforms and payment systems. Learn about online business, digital payments, and marketplace development.',
+                    focus: 'fintech',
+                    size_preference: '4 members',
+                    required_skills: 'Web development, Business interest',
+                    current_members: 4,
+                    max_members: 4,
                     created_by: 'user_002',
-                    created_at: new Date('2024-03-25').toISOString(),
-                    tags: ['database', 'sql', 'data modeling', 'mysql', 'postgresql', 'mongodb'],
-                    requirements: 'Basic programming knowledge and interest in data',
-                    meeting_schedule: 'Every Wednesday 5:00 PM - 7:00 PM',
-                    location: 'Computer Science Building, Database Lab'
+                    created_at: new Date('2024-02-08').toISOString()
+                },
+                {
+                    group_id: 'group_019',
+                    name: 'Open Source Contributors',
+                    description: 'Contributing to open source projects and building community-driven software. Learn collaboration and version control best practices.',
+                    focus: 'full-stack-development',
+                    size_preference: '4 members',
+                    required_skills: 'Git, Programming, Open source interest',
+                    current_members: 4,
+                    max_members: 4,
+                    created_by: 'user_001',
+                    created_at: new Date('2024-02-12').toISOString()
+                },
+                {
+                    group_id: 'group_020',
+                    name: 'Sustainable Tech Solutions',
+                    description: 'Developing technology for environmental sustainability. Work on green tech, renewable energy systems, and eco-friendly applications.',
+                    focus: 'social-innovation',
+                    size_preference: '4 members',
+                    required_skills: 'Programming, Environmental interest',
+                    current_members: 4,
+                    max_members: 4,
+                    created_by: 'user_008',
+                    created_at: new Date('2024-03-22').toISOString()
                 }
             ];
 
@@ -410,8 +721,40 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!existingProfiles) {
                 localStorage.setItem('allProfiles', JSON.stringify(testProfiles));
             }
-            if (!existingGroups) {
+            if (shouldInitializeGroups) {
                 localStorage.setItem('allGroups', JSON.stringify(testGroups));
+                console.log(`Initialized ${testGroups.length} groups for browsing`);
+            }
+            
+            // Add some sample groups to "My Groups" for demo purposes (if user has no groups)
+            const existingMyGroups = localStorage.getItem('myGroups');
+            let myGroups = [];
+            try {
+                myGroups = existingMyGroups ? JSON.parse(existingMyGroups) : [];
+            } catch (e) {
+                myGroups = [];
+            }
+            
+            if (myGroups.length === 0) {
+                // Get all groups (either newly created or existing)
+                let allGroups = [];
+                try {
+                    const allGroupsStr = localStorage.getItem('allGroups');
+                    allGroups = allGroupsStr ? JSON.parse(allGroupsStr) : [];
+                } catch (e) {
+                    allGroups = testGroups; // Fallback to test groups if parsing fails
+                }
+                
+                // Select a few diverse groups to show in the user's groups section
+                if (allGroups.length >= 3) {
+                    const demoMyGroups = [
+                        allGroups[0], // AI Innovation Lab
+                        allGroups[1], // Full Stack Developers
+                        allGroups[2]  // Social Impact Innovators
+                    ];
+                    localStorage.setItem('myGroups', JSON.stringify(demoMyGroups));
+                    console.log('Added demo groups to My Groups section');
+                }
             }
             
             console.log('Test data initialized successfully!');
@@ -590,13 +933,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
     // Display user's groups
     function displayMyGroups(myGroups) {
-            if (myGroups.length === 0) {
+            // Filter out invalid groups (more than 4 members)
+            const validGroups = myGroups.filter(group => {
+                const memberCount = group.current_members || 0;
+                return memberCount <= 4;
+            });
+            
+            // Update myGroups if any were filtered out
+            if (validGroups.length !== myGroups.length) {
+                localStorage.setItem('myGroups', JSON.stringify(validGroups));
+            }
+            
+            if (validGroups.length === 0) {
                 myGroupsList.innerHTML = '<p class="no-groups">You haven\'t joined any groups yet. Create or search for groups to get started!</p>';
                 return;
             }
 
             let groupsHTML = '';
-            myGroups.forEach(group => {
+            validGroups.forEach(group => {
+                const memberCount = Math.min(group.current_members || 1, 4); // Cap at 4 for display
                 groupsHTML += `
                     <div class="group-item">
                         <h5>${group.name}</h5>
@@ -604,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="group-meta">
                             <span>${getFocusAreaName(group.focus)}</span>
                             <span>${group.size_preference || 'Any size'}</span>
-                            <span>${group.current_members || 1}/4 members</span>
+                            <span>${memberCount}/4 members</span>
                         </div>
                         <div class="group-actions">
                             <button class="btn-small btn-view" onclick="viewGroup('${group.group_id}')">View Details</button>
@@ -616,6 +971,70 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             myGroupsList.innerHTML = groupsHTML;
+    }
+
+    // Load available groups (groups user hasn't joined)
+    async function loadAvailableGroups() {
+        const userId = localStorage.getItem('uaInnovateUserId');
+        if (!userId) return;
+
+        try {
+            const allGroups = JSON.parse(localStorage.getItem('allGroups') || '[]');
+            const myGroups = JSON.parse(localStorage.getItem('myGroups') || '[]');
+            const myGroupIds = myGroups.map(g => g.group_id);
+            
+            // Filter out groups user has already joined and invalid groups
+            const availableGroups = allGroups.filter(group => {
+                const memberCount = group.current_members || 0;
+                // Only show groups with at least 1 member, max 4 members, and user hasn't joined
+                const hasMembers = memberCount >= 1;
+                const validMemberCount = memberCount <= 4;
+                const notFull = memberCount < 4;
+                const notJoined = !myGroupIds.includes(group.group_id);
+                
+                return hasMembers && validMemberCount && notFull && notJoined;
+            });
+            
+            displayAvailableGroups(availableGroups);
+        } catch (error) {
+            console.warn('Failed to load available groups:', error);
+            availableGroupsList.innerHTML = '<p class="no-groups">Failed to load groups.</p>';
+        }
+    }
+
+    // Display available groups
+    function displayAvailableGroups(groups) {
+        if (groups.length === 0) {
+            availableGroupsList.innerHTML = '<p class="no-groups">No available groups at the moment. Create a new group to get started!</p>';
+            return;
+        }
+
+        let groupsHTML = '';
+        groups.forEach(group => {
+            // Check if group is full
+            const isFull = (group.current_members || 0) >= 4;
+            const joinButtonText = isFull ? 'Group Full' : 'Join Group';
+            const joinButtonClass = isFull ? 'btn-small btn-view' : 'btn-small btn-join';
+            const joinButtonDisabled = isFull ? 'disabled' : '';
+            
+            groupsHTML += `
+                <div class="group-item">
+                    <h5>${group.name}</h5>
+                    <p>${group.description}</p>
+                    <div class="group-meta">
+                        <span>${getFocusAreaName(group.focus)}</span>
+                        <span>${group.size_preference || 'Any size'}</span>
+                        <span>${group.current_members || 1}/4 members</span>
+                    </div>
+                    <div class="group-actions">
+                        <button class="btn-small btn-view" onclick="viewGroup('${group.group_id}')">View Details</button>
+                        <button class="${joinButtonClass}" onclick="joinGroup('${group.group_id}')" ${joinButtonDisabled}>${joinButtonText}</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        availableGroupsList.innerHTML = groupsHTML;
     }
 
     // Show modal
@@ -713,6 +1132,7 @@ document.addEventListener('DOMContentLoaded', function() {
             createGroupForm.reset();
             hideModal(createGroupModal);
             await loadMyGroups();
+            await loadAvailableGroups(); // Refresh available groups
     });
 
     // Handle search groups form submission
@@ -734,7 +1154,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Filter groups
             let filteredGroups = allGroups.filter(group => {
                 // Don't show groups user is already in
-            if (myGroupIds.includes(group.group_id)) return false;
+                if (myGroupIds.includes(group.group_id)) return false;
+                
+                // Only show groups with valid member counts (1-4 members)
+                const memberCount = group.current_members || 0;
+                if (memberCount < 1 || memberCount > 4) return false;
                 
                 // Text search
                 if (filters.searchQuery) {
@@ -916,6 +1340,81 @@ document.addEventListener('DOMContentLoaded', function() {
         await loadGroupMessages(groupId);
     };
 
+    // Helper function to get user's display name from profile
+    function getUserDisplayName(userId) {
+        // If this is the current user, try to get their name from session first
+        const currentUserId = localStorage.getItem('uaInnovateUserId');
+        if (userId === currentUserId) {
+            // Try to get from main profile system (userManager)
+            try {
+                if (typeof userManager !== 'undefined') {
+                    const session = userManager.getCurrentSession();
+                    if (session) {
+                        const name = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                        if (name) return name;
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not access userManager:', e);
+            }
+            
+            // Fallback: try localStorage session
+            try {
+                const session = JSON.parse(localStorage.getItem('crimsonCollab_session') || '{}');
+                if (session.firstName || session.lastName) {
+                    const name = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                    if (name) return name;
+                }
+            } catch (e) {
+                console.warn('Could not access session:', e);
+            }
+        }
+        
+        // Try to get from main profile system (userManager) by userId
+        try {
+            if (typeof userManager !== 'undefined') {
+                const user = userManager.findUserById(userId);
+                if (user) {
+                    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+                    if (name) return name;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not access userManager:', e);
+        }
+        
+        // Try to get from localStorage session by userId
+        try {
+            const session = JSON.parse(localStorage.getItem('crimsonCollab_session') || '{}');
+            if (session && (session.userId === userId || session.id === userId)) {
+                const name = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                if (name) return name;
+            }
+        } catch (e) {
+            console.warn('Could not access session:', e);
+        }
+        
+        // Try to get from shared data service
+        try {
+            if (window.sharedDataService) {
+                const profiles = window.sharedDataService.getProfilesFromLocalStorage();
+                const profile = profiles.find(p => p.userId === userId || p.id === userId);
+                if (profile && profile.name) {
+                    return profile.name;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not access shared profiles:', e);
+        }
+        
+        // Fallback: return a formatted version of userId or "User"
+        if (userId && userId !== 'system') {
+            return userId.replace(/^user_/, '').replace(/_/g, ' ') || 'User';
+        }
+        
+        return 'User';
+    }
+
     async function loadGroupMessages(groupId) {
         try {
             chatMessages.innerHTML = '';
@@ -939,8 +1438,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         messageDiv.innerHTML = message.message;
                     } else {
                         const timestamp = new Date(message.timestamp).toLocaleTimeString();
+                        // Use stored userName if available, otherwise look it up
+                        const displayName = message.userName || getUserDisplayName(message.userId);
                         messageDiv.innerHTML = `
-                            <div class="chat-message-header">${message.userId} • ${timestamp}</div>
+                            <div class="chat-message-header">${displayName} • ${timestamp}</div>
                             ${message.message}
                         `;
                     }
@@ -969,13 +1470,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
-            const userName = userProfile.name || 'Anonymous';
+            // Get user's display name from their profile
+            let userName = 'User';
+            
+            // Try to get from main profile system (userManager)
+            try {
+                if (typeof userManager !== 'undefined') {
+                    const session = userManager.getCurrentSession();
+                    if (session) {
+                        userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not access userManager:', e);
+            }
+            
+            // Fallback: try localStorage session
+            if (!userName || userName === 'User') {
+                try {
+                    const session = JSON.parse(localStorage.getItem('crimsonCollab_session') || '{}');
+                    if (session.firstName || session.lastName) {
+                        userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                    }
+                } catch (e) {
+                    console.warn('Could not access session:', e);
+                }
+            }
+            
+            // Final fallback
+            if (!userName || userName === 'User') {
+                userName = getUserDisplayName(userId);
+            }
             
             const message = {
                 message: messageText,
                 messageType: 'user',
-                userId: userName
+                userId: userId,
+                userName: userName  // Store the name so we don't have to look it up later
             };
             
             if (window.sharedDataService) {
@@ -1037,8 +1568,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Send welcome message to group
         try {
-            const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
-            const userName = userProfile.name || 'A new member';
+            let userName = 'A new member';
+            
+            // Try to get from main profile system (userManager)
+            try {
+                if (typeof userManager !== 'undefined') {
+                    const session = userManager.getCurrentSession();
+                    if (session) {
+                        userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not access userManager:', e);
+            }
+            
+            // Fallback: try localStorage session
+            if (!userName || userName === 'A new member') {
+                try {
+                    const session = JSON.parse(localStorage.getItem('crimsonCollab_session') || '{}');
+                    if (session.firstName || session.lastName) {
+                        userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                    }
+                } catch (e) {
+                    console.warn('Could not access session:', e);
+                }
+            }
+            
+            // Final fallback
+            if (!userName || userName === 'A new member') {
+                userName = getUserDisplayName(userId);
+            }
             
             const joinMessage = {
                 message: `${userName} has joined the group! Welcome to ${group.name}! 🎉`,
@@ -1056,6 +1615,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             showMessage('Successfully joined the group!', 'success');
             await loadMyGroups();
+            await loadAvailableGroups(); // Refresh available groups
     };
 
     window.leaveGroup = async function(groupId) {
@@ -1081,8 +1641,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Send departure message to group
                 try {
-                    const userProfile = JSON.parse(localStorage.getItem('uaInnovateProfile') || '{}');
-                    const userName = userProfile.name || 'A member';
+                    let userName = 'A member';
+                    
+                    // Try to get from main profile system (userManager)
+                    try {
+                        if (typeof userManager !== 'undefined') {
+                            const session = userManager.getCurrentSession();
+                            if (session) {
+                                userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Could not access userManager:', e);
+                    }
+                    
+                    // Fallback: try localStorage session
+                    if (!userName || userName === 'A member') {
+                        try {
+                            const session = JSON.parse(localStorage.getItem('crimsonCollab_session') || '{}');
+                            if (session.firstName || session.lastName) {
+                                userName = `${session.firstName || ''} ${session.lastName || ''}`.trim();
+                            }
+                        } catch (e) {
+                            console.warn('Could not access session:', e);
+                        }
+                    }
+                    
+                    // Final fallback
+                    if (!userName || userName === 'A member') {
+                        userName = getUserDisplayName(userId);
+                    }
                     
                     const leaveMessage = {
                         message: `${userName} has left the group. Good luck with your future endeavors! 👋`,
@@ -1101,6 +1689,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 showMessage('Left the group successfully.', 'info');
                 await loadMyGroups();
+                await loadAvailableGroups(); // Refresh available groups
         }
     };
 
